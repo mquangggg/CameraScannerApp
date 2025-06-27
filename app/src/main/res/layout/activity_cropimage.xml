@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".CropActivity">
+
+    <com.canhub.cropper.CropImageView
+        android:id="@+id/cropImageView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#A0A0A0"
+        app:cropShowCropOverlay="false" />
+    <com.example.camerascanner.CustomCropView
+        android:id="@+id/customCropView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <com.example.camerascanner.MagnifierView
+        android:id="@+id/magnifierView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible"
+        android:background="#000000" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="bottom"
+        android:padding="16dp"
+        android:gravity="center"
+        android:background="#ffffff">
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnHuyCrop"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Hủy"
+        android:background="#3d3d"
+        android:layout_marginEnd="8dp"
+        android:textColor="@color/black"/>
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnYesCrop"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Cắt"
+        android:background="#3d3d"
+        android:layout_marginStart="8dp"
+        android:textColor="@color/black"/>
+</LinearLayout>
+
+</FrameLayout>
