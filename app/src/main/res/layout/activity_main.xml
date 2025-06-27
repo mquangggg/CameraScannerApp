@@ -5,18 +5,19 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#ADD8E6"
     tools:context=".MainActivity">
 
     <TextView
         android:id="@+id/textViewCameraTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Camera của bạn"
+        android:text="Camera Scanner"
         android:gravity="center"
         android:textSize="24sp"
         android:textStyle="bold"
         android:padding="16dp"
-        android:background="#FFFF00"
+        android:background="#ADD8E6"
         android:textColor="@color/black"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
