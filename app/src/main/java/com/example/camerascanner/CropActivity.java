@@ -16,7 +16,6 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -31,7 +30,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List; // Vẫn cần List cho TextRecognition, nhưng không cần recognizedTextRects nữa
 
 public class CropActivity extends AppCompatActivity {
 

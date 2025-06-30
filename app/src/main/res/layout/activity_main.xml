@@ -5,124 +5,172 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#ADD8E6"
+    android:background="#2E2E2E"
     tools:context=".MainActivity">
 
     <TextView
-        android:id="@+id/textViewCameraTitle"
+        android:id="@+id/tvHeaderTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Camera Scanner"
-        android:gravity="center"
+        android:text="Recents"
+        android:textColor="@android:color/white"
         android:textSize="24sp"
         android:textStyle="bold"
-        android:padding="16dp"
-        android:background="#ADD8E6"
-        android:textColor="@color/black"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="8dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <androidx.camera.view.PreviewView
-        android:id="@+id/previewView"
+    <EditText
+        android:id="@+id/etSearch"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@+id/textViewCameraTitle" app:layout_constraintBottom_toTopOf="@id/bottom_controls_guideline"
+        android:layout_height="48dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/search_background"
+        android:hint="Search"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:textColor="@android:color/white"
+        android:textColorHint="#AAAAAA"
+        android:drawableStart="@drawable/ic_search_white"
+        android:drawablePadding="8dp"
+        app:layout_constraintTop_toBottomOf="@id/tvHeaderTitle"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:background="@drawable/rounded_corner_background" android:clipToOutline="true" /> <com.example.camerascanner.CustomOverlayView
-    android:id="@+id/customOverlayView"
-    android:layout_width="0dp"
-    android:layout_height="0dp"
-    app:layout_constraintTop_toTopOf="@id/previewView"
-    app:layout_constraintBottom_toBottomOf="@id/previewView"
-    app:layout_constraintStart_toStartOf="@id/previewView"
-    app:layout_constraintEnd_toEndOf="@id/previewView" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
-    <ImageView
-        android:id="@+id/imageView"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewFiles"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@+id/textViewCameraTitle" app:layout_constraintBottom_toTopOf="@id/bottom_controls_guideline"
+        android:layout_marginTop="8dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        app:layout_constraintTop_toBottomOf="@id/etSearch"
+        app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:scaleType="fitCenter"
-        android:background="@drawable/rounded_corner_background" android:src="@drawable/ic_launcher_foreground"
-        android:visibility="gone"
-        android:clipToOutline="true" /> <androidx.constraintlayout.widget.Guideline
-    android:id="@+id/bottom_controls_guideline"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    app:layout_constraintGuide_percent="0.80" />
+        android:background="#2E2E2E"
+        tools:listitem="@layout/item_file_entry" />
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnStartCamera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/ic_camera_white"
+        app:backgroundTint="#00FF00"
+        app:tint="@android:color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
+        app:fabSize="normal"
+        app:borderWidth="0dp" />
 
     <LinearLayout
+        android:id="@+id/bottomNavigationView"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:orientation="vertical"
-        android:gravity="top"
-        android:padding="8dp"
-        android:background="#d3d3d3"
-        android:layout_marginTop="20dp"
-        app:layout_constraintTop_toBottomOf="@id/bottom_controls_guideline"
+        android:layout_height="56dp" android:orientation="horizontal"
+        android:background="#3A3A3A" android:gravity="center_vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center">
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btnTakePhoto"
-                android:layout_width="0dp"
+            android:id="@+id/btnHome"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground">
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_home_white"
+                app:tint="@color/green_accent" />
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@drawable/rounded_background"
-                android:text="@string/take_photo"
-                android:textColor="@color/black"
-                android:layout_marginEnd="8dp" />
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btnSelectImage"
-                android:text="@string/gallery"
-                android:textColor="@color/black"
-                android:layout_width="0dp"
-                android:background="@drawable/rounded_background"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"/>
+                android:text="Home"
+                android:textSize="12sp"
+                android:textColor="@color/green_accent" />
         </LinearLayout>
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:id="@+id/btnFiles"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
             android:gravity="center"
-            android:layout_marginTop="8dp">
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btnXoay"
-                android:text="@string/rotate"
-                android:layout_width="0dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground">
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_files_white"
+                app:tint="@android:color/white" />
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:textColor="@color/black"
-                android:background="@drawable/rounded_background"
-                android:visibility="gone" />
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btnConfirm"
-                android:text="@string/confirm"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textColor="@color/black"
-                android:background="@drawable/rounded_background"
-                android:layout_marginStart="8dp"
-                android:visibility="gone" />
+                android:text="Files"
+                android:textSize="12sp"
+                android:textColor="@android:color/white" />
         </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btnTools"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground">
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_tools_white"
+                app:tint="@android:color/white" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tools"
+                android:textSize="12sp"
+                android:textColor="@android:color/white" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btnMe"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground">
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_me_white"
+                app:tint="@android:color/white" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Me"
+                android:textSize="12sp"
+                android:textColor="@android:color/white" />
+        </LinearLayout>
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

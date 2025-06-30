@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dp"
+    android:background="#2E2E2E">
+    <ImageView
+    android:id="@+id/ivFileThumbnail"
+    android:layout_width="60dp"
+    android:layout_height="80dp"
+    android:scaleType="centerCrop"
+    android:background="#444444"
+    android:src="@drawable/ic_launcher_foreground" app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintBottom_toBottomOf="parent" />
+
+    <TextView
+        android:id="@+id/tvFileName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        tools:text="CamScanner 23-06-2025 09.14"
+        app:layout_constraintStart_toEndOf="@id/ivFileThumbnail"
+        app:layout_constraintEnd_toStartOf="@id/checkboxFile"
+        app:layout_constraintTop_toTopOf="@id/ivFileThumbnail" />
+
+    <TextView
+        android:id="@+id/tvFileDate"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:textColor="#AAAAAA"
+        android:textSize="14sp"
+        tools:text="06/30/2025 14:45"
+        app:layout_constraintStart_toEndOf="@id/ivFileThumbnail"
+        app:layout_constraintEnd_toStartOf="@id/checkboxFile"
+        app:layout_constraintTop_toBottomOf="@id/tvFileName" />
+
+    <TextView
+        android:id="@+id/tvPageCount"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:textColor="#AAAAAA"
+        android:textSize="14sp"
+        tools:text="1 Trang"
+        app:layout_constraintStart_toEndOf="@id/ivFileThumbnail"
+        app:layout_constraintEnd_toStartOf="@id/checkboxFile"
+        app:layout_constraintTop_toBottomOf="@id/tvFileDate" />
+
+    <CheckBox
+        android:id="@+id/checkboxFile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:buttonTint="@color/green_accent" /> <LinearLayout
+        android:id="@+id/llActions"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        android:gravity="end"
+        app:layout_constraintTop_toBottomOf="@id/tvPageCount"
+        app:layout_constraintStart_toEndOf="@id/ivFileThumbnail"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:visibility="gone"> <Button
+        android:id="@+id/btnShare"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Share"
+        android:textColor="@android:color/white"
+        android:backgroundTint="#555555"
+        android:layout_marginEnd="8dp"
+        style="@style/Widget.AppCompat.Button.Borderless" />
+
+        <Button
+            android:id="@+id/btnToWord"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="To Word"
+            android:textColor="@android:color/white"
+            android:backgroundTint="#555555"
+            android:layout_marginEnd="8dp"
+            style="@style/Widget.AppCompat.Button.Borderless" />
+
+        <Button
+            android:id="@+id/btnView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="View"
+            android:textColor="@android:color/white"
+            android:backgroundTint="#555555"
+            style="@style/Widget.AppCompat.Button.Borderless" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

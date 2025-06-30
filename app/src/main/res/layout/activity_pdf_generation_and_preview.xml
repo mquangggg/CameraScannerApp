@@ -28,6 +28,30 @@
         android:paddingStart="16dp"
         android:paddingEnd="16dp"/>
 
+    <RadioGroup
+        android:id="@+id/rgPdfStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="8dp"
+        android:padding="8dp">
+
+        <RadioButton
+            android:id="@+id/rbOriginal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Gốc"
+            android:checked="true"
+            android:layout_marginEnd="16dp"/>
+
+        <RadioButton
+            android:id="@+id/rbBlackWhite"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Trắng đen"/>
+    </RadioGroup>
+
     <ImageView
         android:id="@+id/ivPdfPreview"
         android:layout_width="match_parent"
@@ -58,6 +82,16 @@
             android:layout_marginEnd="8dp"/>
 
         <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnRegeneratePdf"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Tạo lại PDF"
+            android:background="#3d3d"
+            android:textColor="@color/black"
+            android:layout_marginEnd="8dp"/>
+
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnSavePdf"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -66,7 +100,6 @@
             android:background="#3d3d"
             android:textColor="@color/black"
             android:layout_marginStart="8dp"/>
-
-
     </LinearLayout>
+
 </LinearLayout>
