@@ -89,15 +89,15 @@ public class CropActivity extends AppCompatActivity {
                         });
                     }
                 } catch (IOException e) {
-                    Log.e(TAG, "Lỗi khi tải Bitmap gốc: " + e.getMessage(), e);
+                    Log.e(TAG, getString(R.string.error_loading_original_bitmap) + e.getMessage(), e);
                     Toast.makeText(this, "Lỗi khi tải ảnh gốc để nhận diện văn bản.", Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(this, "Không nhận được URI ảnh để cắt!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.no_image_uri_received_for_cropping), Toast.LENGTH_SHORT).show();
                 finish();
             }
         } else {
-            Toast.makeText(this, "Không có ảnh để cắt!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.no_image_to_crop), Toast.LENGTH_SHORT).show();
             finish();
         }
 
@@ -109,7 +109,7 @@ public class CropActivity extends AppCompatActivity {
         btnYesCrop.setOnClickListener(v -> {
             ArrayList<PointF> cropPoints = customCropView.getCropPoints();
             if (cropPoints.size() != 4) {
-                Toast.makeText(this, "Vui lòng chọn đúng 4 điểm để cắt!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.please_select_4_points_to_crop), Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -127,7 +127,7 @@ public class CropActivity extends AppCompatActivity {
                 startActivity(intent);
                 finish();
             } else {
-                Toast.makeText(this, "Lỗi khi cắt ảnh!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.error_cropping_image), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -183,7 +183,7 @@ public class CropActivity extends AppCompatActivity {
             fos.flush();
             return Uri.fromFile(file);
         } catch (IOException e) {
-            Log.e(TAG, "Lỗi khi lưu bitmap đã cắt: " + e.getMessage(), e);
+            Log.e(TAG, getString(R.string.error_saving_cropped_bitmap) + e.getMessage(), e);
             return null;
         }
     }
@@ -208,11 +208,11 @@ public class CropActivity extends AppCompatActivity {
                     })
                     .addOnFailureListener(e -> {
                         Log.e(TAG, "Lỗi khi nhận dạng văn bản: " + e.getMessage(), e);
-                        Toast.makeText(this, "Không thể nhận dạng văn bản tự động.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.error_text_recognition_failed), Toast.LENGTH_SHORT).show();
                     });
         } catch (Exception e) {
             Log.e(TAG, "Lỗi khi tạo InputImage từ URI: " + e.getMessage(), e);
-            Toast.makeText(this, "Lỗi xử lý ảnh cho nhận diện văn bản.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.error_creating_input_image_for_text_detection), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -254,7 +254,7 @@ public class CropActivity extends AppCompatActivity {
             initialBitmapPoints.add(new PointF(maxX, maxY)); // Bottom-right
             initialBitmapPoints.add(new PointF(minX, maxY)); // Bottom-left
             Log.d(TAG, "Đã thiết lập các điểm cắt tự động theo văn bản.");
-            Toast.makeText(this, "Đã tự động phát hiện vùng văn bản.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.text_area_auto_detected), Toast.LENGTH_SHORT).show();
         }
 
         customCropView.clearPoints();

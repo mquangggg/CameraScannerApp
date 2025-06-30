@@ -159,10 +159,10 @@ public class MainActivity extends AppCompatActivity {
                     }
                 } catch (IOException e) {
                     Log.e(TAG, "Lỗi khi xoay ảnh: " + e.getMessage(), e);
-                    Toast.makeText(this, "Lỗi khi xoay ảnh!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.error_rotating_image), Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(this, "Vui lòng chọn hoặc chụp ảnh trước để xoay!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.please_select_capture_image_first), Toast.LENGTH_SHORT).show();
                 Log.w(TAG, "Nút xoay được nhấn nhưng không có URI ảnh nào được chọn.");
             }
         });
@@ -174,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
                 cropIntent.putExtra("imageUri", selectedImageUri);
                 cropActivityLauncher.launch(cropIntent);
             } else {
-                Toast.makeText(this, "Vui lòng chọn hoặc chụp ảnh trước!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.please_select_capture_image_first), Toast.LENGTH_SHORT).show();
                 Log.w(TAG, "Nút xác nhận được nhấn nhưng không có URI ảnh nào được chọn.");
             }
         });
@@ -192,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
                 showImageView(); // Hiển thị ImageView và ẩn xem trước camera
                 Log.d(TAG, "Ảnh được tải từ thư viện, URI gốc: " + selectedImageUri);
             } else {
-                Toast.makeText(this, "Không thể lấy ảnh từ thư viện.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.failed_to_get_image_from_gallery), Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "selectedImageUri rỗng sau khi xử lý kết quả thư viện.");
                 showCameraPreview(); // Quay lại camera nếu không có gì được chọn
             }
@@ -209,18 +209,18 @@ public class MainActivity extends AppCompatActivity {
                         pdfPreviewIntent.putExtra("croppedUri", croppedUri);
                         startActivity(pdfPreviewIntent);
                     } else {
-                        Toast.makeText(this, "Không nhận được ảnh đã cắt từ CropActivity!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.no_cropped_image_received), Toast.LENGTH_SHORT).show();
                         Log.e(TAG, "URI đã cắt rỗng từ CropActivity.");
                     }
                 } else {
-                    Toast.makeText(this, "Kết quả cắt ảnh từ CropActivity không có dữ liệu.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.crop_activity_no_data), Toast.LENGTH_SHORT).show();
                     Log.e(TAG, "Dữ liệu kết quả CropActivity rỗng.");
                 }
             } else if (result.getResultCode() == RESULT_CANCELED) {
-                Toast.makeText(this, "Cắt ảnh bị hủy.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.crop_canceled), Toast.LENGTH_SHORT).show();
                 Log.d(TAG, "Thao tác CropActivity bị hủy.");
             } else {
-                Toast.makeText(this, "Cắt ảnh không thành công.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.crop_failed), Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "Thao tác CropActivity thất bại với mã kết quả: " + result.getResultCode());
             }
             // Sau khi quay lại từ CropActivity, hiển thị lại xem trước camera
@@ -361,7 +361,7 @@ public class MainActivity extends AppCompatActivity {
     private void takePhoto() {
         if (imageCapture == null) {
             Log.e(TAG, "ImageCapture chưa được khởi tạo.");
-            Toast.makeText(this, "Camera chưa sẵn sàng.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.camera_not_ready), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -375,7 +375,7 @@ public class MainActivity extends AppCompatActivity {
             public void onImageSaved(ImageCapture.OutputFileResults outputFileResults) {
                 Uri savedUri = outputFileResults.getSavedUri();
                 if (savedUri != null) {
-                    Toast.makeText(MainActivity.this, "Ảnh đã chụp và lưu.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, getString(R.string.photo_captured_saved), Toast.LENGTH_SHORT).show();
                     Log.d(TAG, "Ảnh đã chụp và lưu: " + savedUri);
 
                     // --- BẮT ĐẦU LOGIC CẮT ẢNH DỰA TRÊN KHUNG NHẬN DIỆN VÀ HIỂN THỊ ---
@@ -384,7 +384,7 @@ public class MainActivity extends AppCompatActivity {
                         originalFullBitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), savedUri);
                     } catch (IOException e) {
                         Log.e(TAG, "Không thể tải full bitmap để xử lý: " + e.getMessage(), e);
-                        Toast.makeText(MainActivity.this, "Không thể tải ảnh đã chụp.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, getString(R.string.failed_to_load_captured_image), Toast.LENGTH_SHORT).show();
                         selectedImageUri = savedUri;
                         imageView.setImageURI(selectedImageUri);
                         showImageView();
@@ -501,7 +501,7 @@ public class MainActivity extends AppCompatActivity {
                         showImageView();
                     }
                 } else {
-                    Toast.makeText(MainActivity.this, "Không thể lưu ảnh.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, getString(R.string.failed_to_save_image), Toast.LENGTH_SHORT).show();
                     Log.e(TAG, "Không thể lưu ảnh: Uri null");
                 }
             }
@@ -591,7 +591,7 @@ public class MainActivity extends AppCompatActivity {
             }
         } else {
             String permissionName = (permissions.length > 0) ? permissions[0] : "Quyền không xác định";
-            Toast.makeText(this, permissionName + " bị từ chối. Ứng dụng không thể thực hiện chức năng này.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, permissionName + getString(R.string.permission_denied_function_unavailable), Toast.LENGTH_LONG).show();
             Log.w(TAG, "Quyền bị từ chối cho: " + permissionName + " (Mã yêu cầu: " + requestCode + ")");
             // Nếu quyền camera bị từ chối, bạn có thể muốn chuyển sang giao diện người dùng dự phòng hoặc thoát
             // Hiện tại, nó sẽ chỉ hiển thị một thông báo và xem trước camera sẽ không bắt đầu.
@@ -607,7 +607,7 @@ public class MainActivity extends AppCompatActivity {
             showCameraPreview();
             selectedImageUri = null; // Xóa URI ảnh đã chọn
             lastDetectedBoundingBox = null; // Xóa khung nhận diện đã lưu
-            Toast.makeText(this, "Quay lại chế độ chụp ảnh.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.back_to_camera_mode), Toast.LENGTH_SHORT).show();
         } else {
             // Nếu camera preview đã hoạt động, thực hiện hành động back mặc định (thoát ứng dụng)
             super.onBackPressed();

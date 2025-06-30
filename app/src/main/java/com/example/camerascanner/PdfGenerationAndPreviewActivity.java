@@ -77,12 +77,12 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                 if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Đang tải ảnh và xử lý...");
                 loadAndProcessImageAsync(); // Gọi hàm mới để tải và xử lý ảnh
             } else {
-                Toast.makeText(this, "Không nhận được URI ảnh hợp lệ.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.error_invalid_image_uri), Toast.LENGTH_SHORT).show();
                 if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Lỗi: Không có URI ảnh.");
                 finish();
             }
         } else {
-            Toast.makeText(this, "Không có ảnh để xử lý.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.error_no_image_to_process), Toast.LENGTH_SHORT).show();
             if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Lỗi: Không có ảnh.");
             finish();
         }
@@ -90,13 +90,13 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
         btnSavePdf.setOnClickListener(v -> {
             // PDF đã được tạo và lưu trong generatePdf().
             // Nút này giờ chỉ để xác nhận và đóng Activity.
-            Toast.makeText(this, "PDF đã được lưu!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.pdf_saved_confirmation), Toast.LENGTH_SHORT).show();
             finish();
         });
 
         btnDeletePdf.setOnClickListener(v -> {
             deletePdfDocument(finalPdfUri);
-            Toast.makeText(this, "PDF đã bị xóa và hủy.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.pdf_deleted_and_canceled), Toast.LENGTH_SHORT).show();
             finish();
         });
     }
@@ -119,12 +119,12 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
 
                 // *** CHUYỂN ĐỔI SANG TRẮNG ĐEN TẠI ĐÂY ***
                 mainHandler.post(() -> {
-                    if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Đang chuyển đổi ảnh sang trắng đen...");
+                    if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.status_converting_to_black_white));
                 });
                 processedBitmap = convertToBlackAndWhite(croppedBitmap);
 
                 mainHandler.post(() -> {
-                    if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Đang tạo PDF...");
+                    if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.status_generating_pdf));
                 });
 
                 checkPermissionsAndGeneratePdfInternal(); // Sau khi xử lý ảnh, tiếp tục tạo PDF
@@ -201,7 +201,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                 executorService.execute(this::generatePdf);
             } else {
                 mainHandler.post(() -> {
-                    Toast.makeText(this, "Cần quyền truy cập bộ nhớ để lưu PDF.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, getString(R.string.permission_required_to_save_pdf), Toast.LENGTH_LONG).show();
                     if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Lỗi: Không có quyền lưu PDF.");
                 });
             }
@@ -212,14 +212,14 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
         // Sử dụng processedBitmap (ảnh đã trắng đen) thay vì croppedBitmap
         if (processedBitmap == null) {
             mainHandler.post(() -> {
-                Toast.makeText(this, "Không có ảnh đã xử lý để tạo PDF.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.error_no_processed_image_for_pdf), Toast.LENGTH_SHORT).show();
                 if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Lỗi: Không có ảnh để tạo PDF.");
             });
             return;
         }
 
         mainHandler.post(() -> {
-            if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Đang tạo PDF...");
+            if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.status_generating_pdf));
         });
 
         PdfDocument document = new PdfDocument();
@@ -270,8 +270,8 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
             if (outputStream != null) {
                 document.writeTo(outputStream);
                 mainHandler.post(() -> {
-                    Toast.makeText(this, "Đã tạo PDF thành công: " + pdfFileName, Toast.LENGTH_LONG).show();
-                    if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Đã lưu PDF tại: " + (finalPdfUri != null ? finalPdfUri.getPath() : "Không xác định"));
+                    Toast.makeText(this, getString(R.string.pdf_creation_successful) + pdfFileName, Toast.LENGTH_LONG).show();
+                    if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.pdf_saved_at) + (finalPdfUri != null ? finalPdfUri.getPath() : "Không xác định"));
                     Log.d(TAG, "PDF saved at: " + (finalPdfUri != null ? finalPdfUri.toString() : "null"));
                 });
 
@@ -279,7 +279,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                     final Uri uriToPreview = finalPdfUri;
                     executorService.execute(() -> displayPdfPreview(uriToPreview));
                 } else {
-                    mainHandler.post(() -> Toast.makeText(this, "Không có URI PDF để xem trước.", Toast.LENGTH_SHORT).show());
+                    mainHandler.post(() -> Toast.makeText(this, getString(R.string.error_no_pdf_uri_for_preview), Toast.LENGTH_SHORT).show());
                 }
 
             } else {
@@ -289,8 +289,8 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
         } catch (IOException e) {
             Log.e(TAG, "Lỗi khi tạo hoặc lưu PDF: " + e.getMessage(), e);
             mainHandler.post(() -> {
-                Toast.makeText(this, "Lỗi khi tạo PDF: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Lỗi: " + e.getMessage());
+                Toast.makeText(this, getString(R.string.error_creating_pdf) + e.getMessage(), Toast.LENGTH_LONG).show();
+                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Error: " + e.getMessage());
             });
             finalPdfUri = null;
         } finally {
@@ -308,8 +308,8 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
     private void displayPdfPreview(Uri pdfUri) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             mainHandler.post(() -> {
-                Toast.makeText(this, "Xem trước PDF chỉ hỗ trợ từ Android 5.0 (API 21) trở lên.", Toast.LENGTH_LONG).show();
-                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Không hỗ trợ xem trước PDF.");
+                Toast.makeText(this, getString(R.string.pdf_preview_unsupported_android_version), Toast.LENGTH_LONG).show();
+                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.pdf_preview_unsupported));
             });
             return;
         }
@@ -346,14 +346,14 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
             Bitmap finalRenderedBitmap = renderedBitmap;
             mainHandler.post(() -> {
                 ivPdfPreview.setImageBitmap(finalRenderedBitmap);
-                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Đã tạo PDF thành công. Vui lòng xác nhận.");
+                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.pdf_generation_successful_confirm));
             });
 
         } catch (IOException e) {
             Log.e(TAG, "Lỗi khi hiển thị PDF: " + e.getMessage(), e);
             mainHandler.post(() -> {
-                Toast.makeText(this, "Lỗi khi tải PDF xem trước.", Toast.LENGTH_LONG).show();
-                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Lỗi: Không thể xem trước PDF.");
+                Toast.makeText(this, getString(R.string.error_loading_pdf_preview), Toast.LENGTH_LONG).show();
+                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.error_cannot_preview_pdf));
             });
         } finally {
             if (currentPage != null) {
@@ -380,17 +380,17 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                     int rowsDeleted = resolver.delete(pdfUri, null, null);
                     if (rowsDeleted > 0) {
                         Log.d(TAG, "Đã xóa PDF thành công: " + pdfUri.toString());
-                        mainHandler.post(() -> Toast.makeText(this, "Đã xóa PDF đã lưu.", Toast.LENGTH_SHORT).show());
+                        mainHandler.post(() -> Toast.makeText(this, getString(R.string.pdf_deleted_successfully), Toast.LENGTH_SHORT).show());
                     } else {
                         Log.e(TAG, "Không thể xóa PDF: " + pdfUri.toString());
-                        mainHandler.post(() -> Toast.makeText(this, "Không thể xóa PDF đã lưu.", Toast.LENGTH_SHORT).show());
+                        mainHandler.post(() -> Toast.makeText(this, getString(R.string.error_cannot_delete_pdf), Toast.LENGTH_SHORT).show());
                     }
                 } catch (SecurityException e) {
                     Log.e(TAG, "Không có quyền xóa PDF: " + e.getMessage(), e);
-                    mainHandler.post(() -> Toast.makeText(this, "Không có quyền xóa PDF. " + e.getMessage(), Toast.LENGTH_LONG).show());
+                    mainHandler.post(() -> Toast.makeText(this, getString(R.string.error_no_permission_to_delete_pdf) + e.getMessage(), Toast.LENGTH_LONG).show());
                 } catch (Exception e) {
                     Log.e(TAG, "Lỗi khi xóa PDF: " + e.getMessage(), e);
-                    mainHandler.post(() -> Toast.makeText(this, "Lỗi khi xóa PDF: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                    mainHandler.post(() -> Toast.makeText(this, getString(R.string.error_deleting_pdf) + e.getMessage(), Toast.LENGTH_LONG).show());
                 }
             });
         }

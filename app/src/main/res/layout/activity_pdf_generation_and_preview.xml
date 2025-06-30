@@ -9,7 +9,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Xem trước PDF"
+        android:text="@string/preview_PDF"
         android:textSize="24sp"
         android:textStyle="bold"
         android:gravity="center"
@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:gravity="center"
-        android:text="Đang tạo và tải PDF xem trước..."
+        android:text="@string/status_generating_and_loading_pdf_preview"
         android:textColor="@android:color/darker_gray"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"/>
@@ -52,7 +52,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Xóa &amp; Hủy"
+            android:text="@string/delete_and_cancel"
             android:background="#3d3d"
             android:textColor="@color/black"
             android:layout_marginEnd="8dp"/>
@@ -62,7 +62,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Lưu PDF"
+            android:text="@string/save_PDF"
             android:background="#3d3d"
             android:textColor="@color/black"
             android:layout_marginStart="8dp"/>

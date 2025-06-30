@@ -1,0 +1,76 @@
+<resources>
+    <string name="app_name">CameraScanner</string>
+    <string name="action_settings">Settings</string>
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+    <string name="camera_not_ready">Camera is not ready.</string>
+    <string name="photo_captured_saved">Photo captured and saved.</string>
+    <string name="failed_to_load_captured_image">Failed to load captured image.</string>
+    <string name="failed_to_save_image">Failed to save image.</string>
+    <string name="failed_to_get_image_from_gallery">Failed to get image from gallery.</string>
+    <string name="please_select_capture_image_first">Please select or capture an image first!</string>
+    <string name="failed_to_load_image_for_rotation">Failed to load image for rotation.</string>
+    <string name="error_rotating_image">Error rotating image!</string>
+    <string name="image_rotation_successful">Image rotated 90 degrees.</string>
+    <string name="no_cropped_image_received">No cropped image received from CropActivity!</string>
+    <string name="crop_activity_no_data">Crop activity result has no data.</string>
+    <string name="crop_canceled">Image cropping canceled.</string>
+    <string name="crop_failed">Image cropping failed.</string>
+    <string name="permission_denied_function_unavailable">%1$s denied. The app cannot perform this function.</string>
+    <string name="back_to_camera_mode">Return to camera mode.</string>
+
+    <string name="take_photo">Take Photo</string>
+    <string name="gallery">Gallery</string>
+    <string name="rotate">Rotate Image</string>
+    <string name="confirm">Confirm</string>
+
+    <string name="error_loading_original_bitmap">Error loading original Bitmap: %1$s</string>
+    <string name="error_loading_original_image_for_text_detection">Error loading original image for text detection.</string>
+    <string name="no_image_uri_received_for_cropping">No image URI received for cropping!</string>
+    <string name="no_image_to_crop">No image to crop!</string>
+    <string name="please_select_4_points_to_crop">Please select exactly 4 points to crop!</string>
+    <string name="error_cropping_image">Error cropping image!</string>
+    <string name="error_saving_cropped_bitmap">Error saving cropped bitmap: %1$s</string>
+    <string name="error_text_recognition_failed">Could not automatically recognize text.</string>
+    <string name="error_creating_input_image_for_text_detection">Error processing image for text detection.</string>
+    <string name="text_area_auto_detected">Text area automatically detected.</string>
+
+    <string name="edit_image">Edit Image</string>
+    <string name="cancel">Cancel</string>
+    <string name="crop">Crop</string>
+
+    <string name="error_invalid_image_uri">No valid image URI received.</string>
+    <string name="error_no_image_to_process">No image to process.</string>
+    <string name="status_loading_and_processing_image">Loading and processing image...</string>
+    <string name="error_loading_image_uri">Error: No image URI.</string>
+    <string name="pdf_saved_confirmation">PDF has been saved!</string>
+    <string name="pdf_deleted_and_canceled">PDF deleted and canceled.</string>
+    <string name="error_loading_processing_image_background">Error loading or processing image in background: %1$s</string>
+    <string name="error_failed_to_load_image">Error: Failed to load image.</string>
+    <string name="status_converting_to_black_white">Converting image to black and white...</string>
+    <string name="status_generating_pdf">Generating PDF...</string>
+    <string name="permission_required_to_save_pdf">Storage access permission is required to save PDF.</string>
+    <string name="error_no_permission_to_save_pdf">Error: No permission to save PDF.</string>
+    <string name="error_no_processed_image_for_pdf">No processed image to create PDF.</string>
+    <string name="error_no_image_to_create_pdf">Error: No image to create PDF.</string>
+    <string name="pdf_creation_successful">PDF created successfully: %1$s</string>
+    <string name="pdf_saved_at">PDF saved at: %1$s</string>
+    <string name="error_no_pdf_uri_for_preview">No PDF URI for preview.</string>
+    <string name="pdf_preview_unsupported_android_version">PDF preview is only supported from Android 5.0 (API 21) or higher.</string>
+    <string name="pdf_preview_unsupported">PDF preview not supported.</string>
+    <string name="error_loading_pdf_preview">Error loading PDF preview.</string>
+    <string name="error_cannot_preview_pdf">Error: Cannot preview PDF.</string>
+    <string name="pdf_deleted_successfully">Saved PDF deleted.</string>
+    <string name="error_cannot_delete_pdf">Could not delete saved PDF.</string>
+    <string name="error_no_permission_to_delete_pdf">No permission to delete PDF. %1$s</string>
+    <string name="error_deleting_pdf">Error deleting PDF: %1$s</string>
+    <string name="pdf_generation_successful_confirm">PDF generated successfully. Please confirm.</string>
+    <string name="error_creating_pdf">Error creating PDF: %1$s</string>
+
+    <string name="status_generating_and_loading_pdf_preview">Generating and loading PDF preview...</string>
+    <string name="delete_and_cancel">Delete &amp; Cancel</string>
+    <string name="save_PDF">Save PDF</string>
+    <string name="preview_PDF">Preview PDF</string>
+</resources>

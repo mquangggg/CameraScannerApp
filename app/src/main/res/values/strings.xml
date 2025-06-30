@@ -6,41 +6,86 @@
     <string name="second_fragment_label">Second Fragment</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
+    <!-- Main -->
+    <string name="camera_not_ready">Camera chưa sẵn sàng.</string>
+    <string name="photo_captured_saved">Ảnh đã chụp và lưu.</string>
+    <string name="failed_to_load_captured_image">Không thể tải ảnh đã chụp.</string>
+    <string name="failed_to_save_image">Không thể lưu ảnh.</string>
+    <string name="failed_to_get_image_from_gallery">Không thể lấy ảnh từ thư viện.</string>
+    <string name="please_select_capture_image_first">Vui lòng chọn hoặc chụp ảnh trước!</string>
+    <string name="failed_to_load_image_for_rotation">Không thể tải ảnh để xoay.</string>
+    <string name="error_rotating_image">Lỗi khi xoay ảnh!</string>
+    <string name="image_rotation_successful">Ảnh đã xoay 90 độ.</string>
+    <string name="no_cropped_image_received">Không nhận được ảnh đã cắt từ CropActivity!</string>
+    <string name="crop_activity_no_data">Kết quả cắt ảnh từ CropActivity không có dữ liệu.</string>
+    <string name="crop_canceled">Cắt ảnh bị hủy.</string>
+    <string name="crop_failed">Cắt ảnh không thành công.</string>
+    <string name="permission_denied_function_unavailable">%1$s bị từ chối. Ứng dụng không thể thực hiện chức năng này.</string>
+    <string name="back_to_camera_mode">Quay lại chế độ chụp ảnh.</string>
 
-    <string name="lorem_ipsum">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris
-        volutpat, dolor id interdum ullamcorper, risus dolor egestas lectus, sit amet mattis purus
-        dui nec risus. Maecenas non sodales nisi, vel dictum dolor. Class aptent taciti sociosqu ad
-        litora torquent per conubia nostra, per inceptos himenaeos. Suspendisse blandit eleifend
-        diam, vel rutrum tellus vulputate quis. Aliquam eget libero aliquet, imperdiet nisl a,
-        ornare ex. Sed rhoncus est ut libero porta lobortis. Fusce in dictum tellus.\n\n
-        Suspendisse interdum ornare ante. Aliquam nec cursus lorem. Morbi id magna felis. Vivamus
-        egestas, est a condimentum egestas, turpis nisl iaculis ipsum, in dictum tellus dolor sed
-        neque. Morbi tellus erat, dapibus ut sem a, iaculis tincidunt dui. Interdum et malesuada
-        fames ac ante ipsum primis in faucibus. Curabitur et eros porttitor, ultricies urna vitae,
-        molestie nibh. Phasellus at commodo eros, non aliquet metus. Sed maximus nisl nec dolor
-        bibendum, vel congue leo egestas.\n\n
-        Sed interdum tortor nibh, in sagittis risus mollis quis. Curabitur mi odio, condimentum sit
-        amet auctor at, mollis non turpis. Nullam pretium libero vestibulum, finibus orci vel,
-        molestie quam. Fusce blandit tincidunt nulla, quis sollicitudin libero facilisis et. Integer
-        interdum nunc ligula, et fermentum metus hendrerit id. Vestibulum lectus felis, dictum at
-        lacinia sit amet, tristique id quam. Cras eu consequat dui. Suspendisse sodales nunc ligula,
-        in lobortis sem porta sed. Integer id ultrices magna, in luctus elit. Sed a pellentesque
-        est.\n\n
-        Aenean nunc velit, lacinia sed dolor sed, ultrices viverra nulla. Etiam a venenatis nibh.
-        Morbi laoreet, tortor sed facilisis varius, nibh orci rhoncus nulla, id elementum leo dui
-        non lorem. Nam mollis ipsum quis auctor varius. Quisque elementum eu libero sed commodo. In
-        eros nisl, imperdiet vel imperdiet et, scelerisque a mauris. Pellentesque varius ex nunc,
-        quis imperdiet eros placerat ac. Duis finibus orci et est auctor tincidunt. Sed non viverra
-        ipsum. Nunc quis augue egestas, cursus lorem at, molestie sem. Morbi a consectetur ipsum, a
-        placerat diam. Etiam vulputate dignissim convallis. Integer faucibus mauris sit amet finibus
-        convallis.\n\n
-        Phasellus in aliquet mi. Pellentesque habitant morbi tristique senectus et netus et
-        malesuada fames ac turpis egestas. In volutpat arcu ut felis sagittis, in finibus massa
-        gravida. Pellentesque id tellus orci. Integer dictum, lorem sed efficitur ullamcorper,
-        libero justo consectetur ipsum, in mollis nisl ex sed nisl. Donec maximus ullamcorper
-        sodales. Praesent bibendum rhoncus tellus nec feugiat. In a ornare nulla. Donec rhoncus
-        libero vel nunc consequat, quis tincidunt nisl eleifend. Cras bibendum enim a justo luctus
-        vestibulum. Fusce dictum libero quis erat maximus, vitae volutpat diam dignissim.
-    </string>
+    <string name="take_photo">Chụp ảnh</string>
+    <string name="gallery">Thư viện</string>
+    <string name="rotate">Xoay ảnh</string>
+    <string name="confirm">Xác nhận</string>
+
+
+
+    <!-- CropActivity -->
+
+    <string name="error_loading_original_bitmap">Lỗi khi tải Bitmap gốc: %1$s</string>
+    <string name="error_loading_original_image_for_text_detection">Lỗi khi tải ảnh gốc để nhận diện văn bản.</string>
+    <string name="no_image_uri_received_for_cropping">Không nhận được URI ảnh để cắt!</string>
+    <string name="no_image_to_crop">Không có ảnh để cắt!</string>
+    <string name="please_select_4_points_to_crop">Vui lòng chọn đúng 4 điểm để cắt!</string>
+    <string name="error_cropping_image">Lỗi khi cắt ảnh!</string>
+    <string name="error_saving_cropped_bitmap">Lỗi khi lưu bitmap đã cắt: %1$s</string>
+    <string name="error_text_recognition_failed">Không thể nhận dạng văn bản tự động.</string>
+    <string name="error_creating_input_image_for_text_detection">Lỗi xử lý ảnh cho nhận diện văn bản.</string>
+    <string name="text_area_auto_detected">Đã tự động phát hiện vùng văn bản.</string>
+
+
+    <string name="edit_image">Chỉnh sửa ảnh</string>
+    <string name="cancel">Hủy</string>
+    <string name="crop">Cắt</string>
+
+
+
+
+    <!-- PdfGenerationAndPreviewAct -->
+
+    <string name="error_invalid_image_uri">Không nhận được URI ảnh hợp lệ.</string>
+    <string name="error_no_image_to_process">Không có ảnh để xử lý.</string>
+    <string name="status_loading_and_processing_image">Đang tải ảnh và xử lý...</string>
+    <string name="error_loading_image_uri">Lỗi: Không có URI ảnh.</string>
+    <string name="pdf_saved_confirmation">PDF đã được lưu!</string>
+    <string name="pdf_deleted_and_canceled">PDF đã bị xóa và hủy.</string>
+    <string name="error_loading_processing_image_background">Lỗi khi tải hoặc xử lý ảnh trong background: %1$s</string>
+    <string name="error_failed_to_load_image">Lỗi: Không tải được ảnh.</string>
+    <string name="status_converting_to_black_white">Đang chuyển đổi ảnh sang trắng đen...</string>
+    <string name="status_generating_pdf">Đang tạo PDF...</string>
+    <string name="permission_required_to_save_pdf">Cần quyền truy cập bộ nhớ để lưu PDF.</string>
+    <string name="error_no_permission_to_save_pdf">Lỗi: Không có quyền lưu PDF.</string>
+    <string name="error_no_processed_image_for_pdf">Không có ảnh đã xử lý để tạo PDF.</string>
+    <string name="error_no_image_to_create_pdf">Lỗi: Không có ảnh để tạo PDF.</string>
+    <string name="pdf_creation_successful">Đã tạo PDF thành công: %1$s</string>
+    <string name="pdf_saved_at">Đã lưu PDF tại: %1$s</string>
+    <string name="error_no_pdf_uri_for_preview">Không có URI PDF để xem trước.</string>
+    <string name="pdf_preview_unsupported_android_version">Xem trước PDF chỉ hỗ trợ từ Android 5.0 (API 21) trở lên.</string>
+    <string name="pdf_preview_unsupported">Không hỗ trợ xem trước PDF.</string>
+    <string name="error_loading_pdf_preview">Lỗi khi tải PDF xem trước.</string>
+    <string name="error_cannot_preview_pdf">Lỗi: Không thể xem trước PDF.</string>
+    <string name="pdf_deleted_successfully">Đã xóa PDF đã lưu.</string>
+    <string name="error_cannot_delete_pdf">Không thể xóa PDF đã lưu.</string>
+    <string name="error_no_permission_to_delete_pdf">Không có quyền xóa PDF. %1$s</string>
+    <string name="error_deleting_pdf">Lỗi khi xóa PDF: %1$s</string>
+    <string name="pdf_generation_successful_confirm">Đã tạo PDF thành công. Vui lòng xác nhận.</string>
+    <string name="error_creating_pdf">Lỗi khi tạo PDF: %1$s</string>
+
+
+    <string name="status_generating_and_loading_pdf_preview">Đang tạo và tải PDF xem trước...</string>
+    <string name="delete_and_cancel">Xóa &amp; Hủy</string>
+    <string name="save_PDF">Lưu PDF</string>
+    <string name="preview_PDF">Xem trước PDF</string>
+
+
 </resources>

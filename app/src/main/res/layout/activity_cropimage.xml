@@ -11,7 +11,7 @@
         android:id="@+id/textViewCropTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Chỉnh sửa ảnh"
+        android:text="@string/edit_image"
         android:gravity="center"
         android:textSize="24sp"
         android:textStyle="bold"
@@ -58,7 +58,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Hủy"
+            android:text="@string/cancel"
             android:background="#3d3d"
             android:layout_marginEnd="8dp"
             android:textColor="@color/black"/>
@@ -68,7 +68,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Cắt"
+            android:text="@string/crop"
             android:background="#3d3d"
             android:layout_marginStart="8dp"
             android:textColor="@color/black"/>
