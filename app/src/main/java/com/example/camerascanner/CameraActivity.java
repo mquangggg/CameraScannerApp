@@ -1,11 +1,11 @@
-// MainActivity.java
+// CameraActivity.java
 package com.example.camerascanner;
 
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.Matrix; // Nhập Matrix để xoay Bitmap
+import android.graphics.Matrix; // Nhập Matrix để xoay Bitmap (vẫn giữ nếu cần cho logic bên trong)
 import android.graphics.RectF; // Nhập RectF cho ML Kit
 import android.net.Uri;
 import android.os.Build;
@@ -13,13 +13,14 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 import android.util.Log;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull; // Giữ nguyên @NonNull cho các phần khác
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -42,6 +43,7 @@ import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.common.util.concurrent.ListenableFuture;
 
 // Các import của ML Kit
@@ -51,40 +53,46 @@ import com.google.mlkit.vision.objects.ObjectDetector;
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions;
 import com.google.mlkit.vision.objects.DetectedObject;
 
+// Thêm import cho Glide nếu bạn muốn hiển thị ảnh trong ImageView (CameraActivity)
+import com.bumptech.glide.Glide;
 
 public class CameraActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private static final int CAMERA_PERMISSION_REQUEST_CODE = 100;
-    private static final int STORAGE_PERMISSION_REQUEST_CODE = 101; // Để đọc/ghi ảnh từ thư viện
+    private static final int STORAGE_PERMISSION_REQUEST_CODE = 101;
+
+    // Request code cho ImagePreviewActivity, để biết khi nào ImagePreviewActivity trả về kết quả
+    private static final int REQUEST_CODE_IMAGE_PREVIEW = 200;
+
 
     // Các phần tử UI
-    private PreviewView previewView; // Xem trước camera
-    private CustomOverlayView customOverlayView; // Lớp phủ cho khung nhận diện đối tượng
-    private ImageView imageView; // Để hiển thị ảnh đã chụp/chọn sau khi xử lý
-    private Button btnTakePhoto, btnSelectImage, btnConfirm, btnXoay;
+    private PreviewView previewView;
+    private CustomOverlayView customOverlayView;
+    private ImageView imageView; // Vẫn cần để hiển thị ảnh tạm thời
+    private FloatingActionButton btnTakePhoto;
+    private ImageButton btnSelectImage; // Đã bỏ btnConfirm, btnXoay ở đây
 
     // Các thành phần của CameraX
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private ImageCapture imageCapture;
-    private ImageAnalysis imageAnalysis; // Thêm để phân tích thời gian thực
-    private ExecutorService cameraExecutor; // Executor cho phân tích hình ảnh
+    private ImageAnalysis imageAnalysis;
+    private ExecutorService cameraExecutor;
 
     // Thành phần của ML Kit
     private ObjectDetector objectDetector;
 
-    // Để chọn ảnh từ thư viện và chuyển sang màn hình cắt ảnh
+    // Để chọn ảnh từ thư viện
     private Uri selectedImageUri;
-    private ActivityResultLauncher<String> galleryLauncher; // Đổi sang GetContent để chọn thư viện đơn giản hơn
-    private ActivityResultLauncher<Intent> cropActivityLauncher;
+    private ActivityResultLauncher<String> galleryLauncher;
+
+    // Launcher cho ImagePreviewActivity
+    private ActivityResultLauncher<Intent> imagePreviewLauncher;
 
     // Biến để lưu trữ thông tin khung nhận diện cuối cùng từ ML Kit
-    // Bounding Box từ ML Kit luôn ở hệ tọa độ ảnh gốc (unrotated) của ImageProxy
     private RectF lastDetectedBoundingBox;
-    // Chiều rộng và chiều cao gốc của ImageProxy (trước khi xoay)
     private int lastImageProxyWidth;
     private int lastImageProxyHeight;
-    // Độ xoay cần thiết để đưa ImageProxy về hướng thẳng đứng (từ ImageProxy.getImageInfo().getRotationDegrees())
     private int lastRotationDegrees;
 
     @Override
@@ -95,13 +103,10 @@ public class CameraActivity extends AppCompatActivity {
         // Khởi tạo các phần tử UI
         previewView = findViewById(R.id.previewView);
         customOverlayView = findViewById(R.id.customOverlayView);
-        imageView = findViewById(R.id.imageView); // Giữ ImageView để hiển thị sau khi chụp/chọn
+        imageView = findViewById(R.id.imageView); // Giữ ImageView
         btnTakePhoto = findViewById(R.id.btnTakePhoto);
         btnSelectImage = findViewById(R.id.btnSelectImage);
-        btnConfirm = findViewById(R.id.btnConfirm);
-        btnXoay = findViewById(R.id.btnXoay);
 
-        // Đảm bảo PreviewView sử dụng FIT_CENTER để khớp với logic chuyển đổi bounding box
         previewView.setScaleType(PreviewView.ScaleType.FIT_CENTER);
 
         // Khởi tạo CameraX executor
@@ -110,69 +115,34 @@ public class CameraActivity extends AppCompatActivity {
         // Khởi tạo Bộ phát hiện đối tượng ML Kit
         ObjectDetectorOptions options =
                 new ObjectDetectorOptions.Builder()
-                        .setDetectorMode(ObjectDetectorOptions.STREAM_MODE) // Phát hiện thời gian thực
+                        .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
                         .enableMultipleObjects()
-                        .enableClassification() // Bật nếu bạn cần nhãn đối tượng
+                        .enableClassification()
                         .build();
         objectDetector = ObjectDetection.getClient(options);
 
         // --- Xử lý quyền và thiết lập Camera/Thư viện ---
         if (checkCameraPermission()) {
-            startCamera(); // Bắt đầu camera trong ứng dụng ngay lập tức nếu đã cấp quyền
+            startCamera();
         } else {
             requestCameraPermission();
         }
 
-        // Khởi tạo các launcher cho thư viện và hoạt động cắt ảnh
+        // Khởi tạo các launcher
         initLaunchers();
 
         // --- Lắng nghe sự kiện nút ---
-        btnTakePhoto.setOnClickListener(v -> takePhoto()); // Gọi chức năng chụp ảnh trong ứng dụng
+        btnTakePhoto.setOnClickListener(v -> takePhoto());
 
         btnSelectImage.setOnClickListener(v -> {
             if (checkStoragePermission()) {
-                openGallery(); // Mở thư viện bằng launcher
+                openGallery();
             } else {
                 requestStoragePermission();
             }
         });
 
-        btnXoay.setOnClickListener(v -> {
-            if (selectedImageUri != null) {
-                try {
-                    Bitmap currentBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImageUri);
-                    if (currentBitmap != null) {
-                        Bitmap rotatedBitmap = rotateBitmap(currentBitmap, 90);
-                        imageView.setImageBitmap(rotatedBitmap);
-                        selectedImageUri = saveBitmapToCache(rotatedBitmap);
-                        Log.d(TAG, "Ảnh đã xoay 90 độ. URI mới: " + selectedImageUri);
-                    } else {
-                        Toast.makeText(this, "Không thể tải ảnh để xoay.", Toast.LENGTH_SHORT).show();
-                        Log.e(TAG, "Bitmap rỗng khi cố gắng xoay từ URI: " + selectedImageUri);
-                    }
-                } catch (IOException e) {
-                    Log.e(TAG, "Lỗi khi xoay ảnh: " + e.getMessage(), e);
-                    Toast.makeText(this, getString(R.string.error_rotating_image), Toast.LENGTH_SHORT).show();
-                }
-            } else {
-                Toast.makeText(this, getString(R.string.please_select_capture_image_first), Toast.LENGTH_SHORT).show();
-                Log.w(TAG, "Nút xoay được nhấn nhưng không có URI ảnh nào được chọn.");
-            }
-        });
-
-        btnConfirm.setOnClickListener(v -> {
-            if (selectedImageUri != null) {
-                Log.d(TAG, "Khởi chạy CropActivity với URI đã xử lý: " + selectedImageUri);
-                Intent cropIntent = new Intent(CameraActivity.this, CropActivity.class);
-                cropIntent.putExtra("imageUri", selectedImageUri);
-                cropActivityLauncher.launch(cropIntent);
-            } else {
-                Toast.makeText(this, getString(R.string.please_select_capture_image_first), Toast.LENGTH_SHORT).show();
-                Log.w(TAG, "Nút xác nhận được nhấn nhưng không có URI ảnh nào được chọn.");
-            }
-        });
-
-        // Trạng thái UI ban đầu: camera hiển thị, image view ẩn, nút xác nhận/xoay ẩn
+        // Trạng thái UI ban đầu: camera hiển thị, image view ẩn
         showCameraPreview();
     }
 
@@ -181,9 +151,12 @@ public class CameraActivity extends AppCompatActivity {
         galleryLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
             if (uri != null) {
                 selectedImageUri = uri;
-                imageView.setImageURI(selectedImageUri);
-                showImageView(); // Hiển thị ImageView và ẩn xem trước camera
                 Log.d(TAG, "Ảnh được tải từ thư viện, URI gốc: " + selectedImageUri);
+                // Hiển thị ảnh đã chọn trong ImageView tạm thời
+                Glide.with(this).load(selectedImageUri).into(imageView);
+                showImageView(); // Chuyển sang chế độ xem ảnh
+                // Gửi URI này đến ImagePreviewActivity
+                startImagePreviewActivity(selectedImageUri); // Không có bounding box từ thư viện
             } else {
                 Toast.makeText(this, getString(R.string.failed_to_get_image_from_gallery), Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "selectedImageUri rỗng sau khi xử lý kết quả thư viện.");
@@ -191,35 +164,40 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
 
-        // Launcher cho kết quả từ CropActivity
-        cropActivityLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+        // Launcher cho kết quả từ ImagePreviewActivity
+        imagePreviewLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
             if (result.getResultCode() == RESULT_OK) {
                 if (result.getData() != null) {
-                    Uri croppedUri = result.getData().getParcelableExtra("croppedUri");
-                    if (croppedUri != null) {
-                        Log.d(TAG, "URI ảnh đã cắt nhận được từ CropActivity: " + croppedUri);
-                        Intent pdfPreviewIntent = new Intent(CameraActivity.this, PdfGenerationAndPreviewActivity.class);
-                        pdfPreviewIntent.putExtra("croppedUri", croppedUri);
-                        startActivity(pdfPreviewIntent);
+                    Uri confirmedImageUri = result.getData().getData();
+                    if (confirmedImageUri != null) {
+                        Log.d(TAG, "URI ảnh đã xác nhận từ ImagePreviewActivity: " + confirmedImageUri);
+                        // Chuyển URI này sang CropActivity
+                        Intent cropIntent = new Intent(CameraActivity.this, CropActivity.class);
+                        cropIntent.putExtra("imageUri", confirmedImageUri);
+                        startActivity(cropIntent); // Khởi chạy CropActivity, CropActivity sẽ tự xử lý kết quả
                     } else {
-                        Toast.makeText(this, getString(R.string.no_cropped_image_received), Toast.LENGTH_SHORT).show();
-                        Log.e(TAG, "URI đã cắt rỗng từ CropActivity.");
+                        Toast.makeText(this, getString(R.string.no_cropped_image_received), Toast.LENGTH_SHORT).show(); // Có thể đổi chuỗi này thành "Không có ảnh được xác nhận"
+                        Log.e(TAG, "URI đã xác nhận rỗng từ ImagePreviewActivity.");
                     }
-                } else {
-                    Toast.makeText(this, getString(R.string.crop_activity_no_data), Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, "Dữ liệu kết quả CropActivity rỗng.");
                 }
             } else if (result.getResultCode() == RESULT_CANCELED) {
-                Toast.makeText(this, getString(R.string.crop_canceled), Toast.LENGTH_SHORT).show();
-                Log.d(TAG, "Thao tác CropActivity bị hủy.");
+                Toast.makeText(this, getString(R.string.crop_canceled), Toast.LENGTH_SHORT).show(); // Có thể đổi chuỗi này thành "Xem trước ảnh bị hủy"
+                Log.d(TAG, "Thao tác ImagePreviewActivity bị hủy.");
             } else {
-                Toast.makeText(this, getString(R.string.crop_failed), Toast.LENGTH_SHORT).show();
-                Log.e(TAG, "Thao tác CropActivity thất bại với mã kết quả: " + result.getResultCode());
+                Toast.makeText(this, getString(R.string.crop_failed), Toast.LENGTH_SHORT).show(); // Có thể đổi chuỗi này thành "Xem trước ảnh thất bại"
+                Log.e(TAG, "Thao tác ImagePreviewActivity thất bại với mã kết quả: " + result.getResultCode());
             }
-            // Sau khi quay lại từ CropActivity, hiển thị lại xem trước camera
+            // Sau khi quay lại từ ImagePreviewActivity, luôn hiển thị lại xem trước camera
             showCameraPreview();
         });
     }
+
+    private void startImagePreviewActivity(Uri imageUri) {
+        Intent intent = new Intent(CameraActivity.this, ImagePreviewActivity.class);
+        intent.putExtra("imageUri", imageUri.toString()); // Chuyển URI dưới dạng String
+        imagePreviewLauncher.launch(intent);
+    }
+
 
     // --- Tích hợp CameraX và ML Kit ---
     private void startCamera() {
@@ -235,34 +213,28 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     private void bindCameraUseCases(@NonNull ProcessCameraProvider cameraProvider) {
-        // Trường hợp sử dụng Preview
         Preview preview = new Preview.Builder().build();
         preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
-        // Chọn camera sau
         CameraSelector cameraSelector = new CameraSelector.Builder()
                 .requireLensFacing(CameraSelector.LENS_FACING_BACK)
                 .build();
 
-        // Trường hợp sử dụng ImageAnalysis để xử lý thời gian thực
         imageAnalysis = new ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
 
         imageAnalysis.setAnalyzer(cameraExecutor, imageProxy -> {
-            processImageProxy(imageProxy); // Xử lý từng khung hình
+            processImageProxy(imageProxy);
         });
 
-        // Trường hợp sử dụng ImageCapture để chụp ảnh
         imageCapture = new ImageCapture.Builder()
                 .setTargetRotation(previewView.getDisplay().getRotation())
                 .build();
 
-        // Hủy liên kết tất cả các trường hợp sử dụng trước khi liên kết lại
         cameraProvider.unbindAll();
 
         try {
-            // Liên kết tất cả các trường hợp sử dụng với vòng đời
             cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalysis, imageCapture);
         } catch (Exception e) {
             Log.e(TAG, "Lỗi khi liên kết các trường hợp sử dụng camera: " + e.getMessage(), e);
@@ -273,69 +245,51 @@ public class CameraActivity extends AppCompatActivity {
     private void processImageProxy(ImageProxy imageProxy) {
         android.media.Image mediaImage = imageProxy.getImage();
         if (mediaImage != null) {
-            // Tạo InputImage cho ML Kit. ML Kit sẽ tự xử lý rotationDegrees để nội bộ xử lý ảnh thẳng đứng.
-            // Tuy nhiên, bounding box mà ML Kit trả về vẫn dựa trên ảnh gốc (unrotated).
             InputImage image = InputImage.fromMediaImage(mediaImage, imageProxy.getImageInfo().getRotationDegrees());
 
             objectDetector.process(image)
                     .addOnSuccessListener(detectedObjects -> {
                         if (!detectedObjects.isEmpty()) {
-                            // Giả sử chúng ta chỉ hiển thị khung của đối tượng đầu tiên được phát hiện
                             DetectedObject firstObject = detectedObjects.get(0);
-                            RectF boundingBox = new RectF(firstObject.getBoundingBox()); // Bounding box từ ML Kit, luôn ở hệ tọa độ ảnh gốc (unrotated)
+                            RectF boundingBox = new RectF(firstObject.getBoundingBox());
 
-                            // Lưu trữ thông tin này để sử dụng khi chụp ảnh
                             lastDetectedBoundingBox = new RectF(boundingBox);
                             lastImageProxyWidth = imageProxy.getWidth();
                             lastImageProxyHeight = imageProxy.getHeight();
-                            lastRotationDegrees = imageProxy.getImageInfo().getRotationDegrees(); // Độ xoay của cảm biến
+                            lastRotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
 
-                            // --- Logic chuyển đổi cho lớp phủ PreviewView (đã xác nhận hoạt động tốt) ---
-                            // Lấy kích thước của PreviewView
+                            // --- Logic chuyển đổi cho lớp phủ PreviewView ---
                             int previewWidth = previewView.getWidth();
                             int previewHeight = previewView.getHeight();
 
-                            // Lấy kích thước gốc của ImageProxy (trước khi ML Kit xử lý xoay)
-                            // QUAN TRỌNG: imageProxy.getWidth() và getHeight() là kích thước THÔ của khung hình
                             int imageProxyWidth = imageProxy.getWidth();
                             int imageProxyHeight = imageProxy.getHeight();
                             int rotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
 
-                            // Tính toán kích thước ảnh "hiệu quả" sau khi được xoay để thẳng đứng
-                            // Nếu rotationDegrees là 90 hoặc 270, chiều rộng và chiều cao sẽ hoán đổi
                             int effectiveImageWidth = (rotationDegrees == 90 || rotationDegrees == 270) ? imageProxyHeight : imageProxyWidth;
                             int effectiveImageHeight = (rotationDegrees == 90 || rotationDegrees == 270) ? imageProxyWidth : imageProxyHeight;
 
-                            // Tạo Matrix để chuyển đổi tọa độ từ không gian ảnh hiệu quả sang không gian PreviewView
                             Matrix matrix = new Matrix();
 
-                            // Bước 1: Tỷ lệ ảnh để khớp với PreviewView.
-                            // Logic này phải khớp với PreviewView.ScaleType bạn đã đặt (FIT_CENTER)
                             float scaleX = (float) previewWidth / effectiveImageWidth;
                             float scaleY = (float) previewHeight / effectiveImageHeight;
-                            float scale = Math.min(scaleX, scaleY); // Dùng cho FIT_CENTER
+                            float scale = Math.min(scaleX, scaleY);
 
                             matrix.postScale(scale, scale);
 
-                            // Bước 2: Dịch chuyển ảnh để căn giữa nếu dùng FIT_CENTER
                             float dx = (previewWidth - effectiveImageWidth * scale) / 2f;
                             float dy = (previewHeight - effectiveImageHeight * scale) / 2f;
                             matrix.postTranslate(dx, dy);
 
-                            // Áp dụng matrix lên bounding box ML Kit
-                            // boundingBox từ ML Kit là trên ảnh unrotated, nhưng nếu PreviewView đã xoay,
-                            // thì mapping trực tiếp này sẽ được người dùng cho là "hoạt động tốt"
                             RectF transformedBoundingBox = new RectF();
                             matrix.mapRect(transformedBoundingBox, boundingBox);
 
-                            // Cập nhật lớp phủ tùy chỉnh với bounding box đã chuyển đổi
-                            customOverlayView.setBoundingBox(transformedBoundingBox); // Truyền RectF
-                            customOverlayView.postInvalidate(); // Vẽ lại lớp phủ
+                            customOverlayView.setBoundingBox(transformedBoundingBox);
+                            customOverlayView.postInvalidate();
 
                         } else {
-                            customOverlayView.clearBoundingBox(); // Xóa khung nếu không phát hiện đối tượng nào
-                            customOverlayView.postInvalidate(); // Vẽ lại lớp phủ
-                            // Nếu không có đối tượng được phát hiện, hãy xóa thông tin bounding box đã lưu
+                            customOverlayView.clearBoundingBox();
+                            customOverlayView.postInvalidate();
                             lastDetectedBoundingBox = null;
                         }
                     })
@@ -343,10 +297,10 @@ public class CameraActivity extends AppCompatActivity {
                         Log.e(TAG, "Phát hiện đối tượng thất bại: " + e.getMessage(), e);
                         customOverlayView.clearBoundingBox();
                         customOverlayView.postInvalidate();
-                        lastDetectedBoundingBox = null; // Xóa thông tin bounding box khi phát hiện lỗi
+                        lastDetectedBoundingBox = null;
                     })
                     .addOnCompleteListener(task -> {
-                        imageProxy.close(); // Quan trọng: Đóng ImageProxy để giải phóng tài nguyên
+                        imageProxy.close();
                     });
         }
     }
@@ -379,14 +333,15 @@ public class CameraActivity extends AppCompatActivity {
                         Log.e(TAG, "Không thể tải full bitmap để xử lý: " + e.getMessage(), e);
                         Toast.makeText(CameraActivity.this, getString(R.string.failed_to_load_captured_image), Toast.LENGTH_SHORT).show();
                         selectedImageUri = savedUri;
-                        imageView.setImageURI(selectedImageUri);
+                        Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
                         showImageView();
+                        // Gửi ảnh gốc đã lưu sang ImagePreviewActivity
+                        startImagePreviewActivity(selectedImageUri);
                         return;
                     }
 
                     if (originalFullBitmap != null) {
                         if (lastDetectedBoundingBox != null && lastImageProxyWidth > 0 && lastImageProxyHeight > 0) {
-                            // lastDetectedBoundingBox từ ML Kit đã được làm thẳng đứng
                             RectF mlKitUprightBox = new RectF(lastDetectedBoundingBox);
 
                             float rawImageWidth = lastImageProxyWidth;
@@ -394,27 +349,12 @@ public class CameraActivity extends AppCompatActivity {
                             float fullBitmapWidth = originalFullBitmap.getWidth();
                             float fullBitmapHeight = originalFullBitmap.getHeight();
 
-                            Log.d(TAG, "DEBUG_CROP_FINAL: ML Kit Upright Box (từ ML Kit): " + mlKitUprightBox.toString());
-                            Log.d(TAG, "DEBUG_CROP_FINAL: Kích thước ảnh Proxy thô cuối cùng (cảm biến): " + rawImageWidth + "x" + rawImageHeight);
-                            Log.d(TAG, "DEBUG_CROP_FINAL: Độ xoay cuối cùng (xoay cảm biến để thẳng đứng): " + lastRotationDegrees);
-                            Log.d(TAG, "DEBUG_CROP_FINAL: Kích thước Bitmap đầy đủ (đầu ra thẳng đứng của CameraX): " + fullBitmapWidth + "x" + fullBitmapHeight);
-
-                            // Tính toán kích thước ảnh "ý niệm" của ML Kit sau khi nó tự làm thẳng đứng.
-                            // Kích thước này có thể hoán đổi chiều rộng/chiều cao so với ảnh thô ban đầu
-                            // tùy thuộc vào lastRotationDegrees.
                             float conceptualMlKitImageWidth = (lastRotationDegrees == 90 || lastRotationDegrees == 270) ? rawImageHeight : rawImageWidth;
                             float conceptualMlKitImageHeight = (lastRotationDegrees == 90 || lastRotationDegrees == 270) ? rawImageWidth : rawImageHeight;
 
-                            Log.d(TAG, "DEBUG_CROP_FINAL: Kích thước ảnh ML Kit (ý niệm, thẳng đứng sau xử lý nội bộ ML Kit): " + conceptualMlKitImageWidth + "x" + conceptualMlKitImageHeight);
-
-                            // Tính toán các hệ số tỷ lệ từ kích thước ảnh "ý niệm" của ML Kit
-                            // sang kích thước thực tế của originalFullBitmap (cũng đã thẳng đứng).
                             float scaleFactorX = fullBitmapWidth / conceptualMlKitImageWidth;
                             float scaleFactorY = fullBitmapHeight / conceptualMlKitImageHeight;
 
-                            Log.d(TAG, "DEBUG_CROP_FINAL: Hệ số tỷ lệ đến Bitmap đầy đủ: scaleX=" + scaleFactorX + ", scaleY=" + scaleFactorY);
-
-                            // Áp dụng tỷ lệ này trực tiếp vào bounding box đã thẳng đứng của ML Kit.
                             RectF finalCroppedRectFloat = new RectF(
                                     mlKitUprightBox.left * scaleFactorX,
                                     mlKitUprightBox.top * scaleFactorY,
@@ -422,38 +362,16 @@ public class CameraActivity extends AppCompatActivity {
                                     mlKitUprightBox.bottom * scaleFactorY
                             );
 
-                            finalCroppedRectFloat.sort(); // Đảm bảo tọa độ được sắp xếp đúng (left <= right, top <= bottom) sau khi scaling
+                            finalCroppedRectFloat.sort();
 
-                            Log.d(TAG, "DEBUG_CROP_FINAL: RectF cuối cùng trên Bitmap (float, trước khi giới hạn): " + finalCroppedRectFloat.toString());
+                            int cropX = Math.max(0, (int) Math.floor(finalCroppedRectFloat.left));
+                            int cropY = Math.max(0, (int) Math.floor(finalCroppedRectFloat.top));
+                            int cropRight = Math.min(originalFullBitmap.getWidth(), (int) Math.ceil(finalCroppedRectFloat.right));
+                            int cropBottom = Math.min(originalFullBitmap.getHeight(), (int) Math.ceil(finalCroppedRectFloat.bottom));
 
-                            // --- LOGIC GIỚI HẠN VÀ LOGGING CHI TIẾT ---
-                            // Chuyển đổi sang tọa độ nguyên ban đầu (có thể hơi lệch)
-                            int cropX_calculated = (int) Math.floor(finalCroppedRectFloat.left);
-                            int cropY_calculated = (int) Math.floor(finalCroppedRectFloat.top);
-                            int cropRight_calculated = (int) Math.ceil(finalCroppedRectFloat.right);
-                            int cropBottom_calculated = (int) Math.ceil(finalCroppedRectFloat.bottom);
-
-                            Log.d(TAG, "DEBUG_CROP_FINAL: Biên giới nguyên ban đầu (trước khi giới hạn): L=" + cropX_calculated + ", T=" + cropY_calculated + ", R=" + cropRight_calculated + ", B=" + cropBottom_calculated);
-
-                            // Giới hạn các tọa độ x và y để không vượt quá ranh giới của bitmap
-                            int cropX = Math.max(0, cropX_calculated);
-                            int cropY = Math.max(0, cropY_calculated);
-
-                            // Giới hạn các tọa độ right và bottom để không vượt quá kích thước của bitmap
-                            // Điều này sẽ đảm bảo cropRight <= originalFullBitmap.getWidth() và cropBottom <= originalFullBitmap.getHeight()
-                            int cropRight = Math.min(originalFullBitmap.getWidth(), cropRight_calculated);
-                            int cropBottom = Math.min(originalFullBitmap.getHeight(), cropBottom_calculated);
-
-                            // Tính toán lại chiều rộng và chiều cao sau khi đã giới hạn các cạnh
-                            // Sử dụng Math.max(0, ...) để tránh chiều rộng/chiều cao âm nếu có lỗi tính toán nhỏ
                             int cropWidth = Math.max(0, cropRight - cropX);
                             int cropHeight = Math.max(0, cropBottom - cropY);
-                            // --- KẾT THÚC LOGIC GIỚI HẠN ---
 
-                            Log.d(TAG, "DEBUG_CROP_FINAL: Vùng cắt cuối cùng (đã giới hạn): X=" + cropX + ", Y=" + cropY + ", W=" + cropWidth + ", H=" + cropHeight);
-
-                            // Kiểm tra xem kích thước vùng cắt có hợp lệ không trước khi tạo bitmap
-                            // Đảm bảo cả chiều rộng và chiều cao đều lớn hơn 0 để tránh lỗi createBitmap với kích thước 0
                             if (cropWidth > 0 && cropHeight > 0) {
                                 Bitmap croppedBitmap = Bitmap.createBitmap(
                                         originalFullBitmap,
@@ -464,34 +382,41 @@ public class CameraActivity extends AppCompatActivity {
                                 );
 
                                 selectedImageUri = saveBitmapToCache(croppedBitmap);
-                                imageView.setImageURI(selectedImageUri);
+                                Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
                                 showImageView();
-                                Log.d(TAG, "DEBUG_CROP_FINAL: Ảnh đã cắt được hiển thị thành công.");
-
                                 if (croppedBitmap != originalFullBitmap) croppedBitmap.recycle();
-                                originalFullBitmap.recycle(); // Giải phóng originalFullBitmap
+                                originalFullBitmap.recycle();
+
+                                // Gửi ảnh đã cắt sang ImagePreviewActivity
+                                startImagePreviewActivity(selectedImageUri);
 
                             } else {
-                                Log.e(TAG, "DEBUG_CROP_FINAL: Kích thước hoặc tọa độ cắt không hợp lệ sau khi giới hạn. Chiều rộng=" + cropWidth + ", Chiều cao=" + cropHeight + ". Hiển thị ảnh gốc đầy đủ.");
+                                Log.e(TAG, "Kích thước hoặc tọa độ cắt không hợp lệ sau khi giới hạn. Hiển thị ảnh gốc đầy đủ.");
                                 selectedImageUri = savedUri;
-                                imageView.setImageURI(selectedImageUri);
+                                Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
                                 showImageView();
                                 originalFullBitmap.recycle();
+                                // Gửi ảnh gốc đã lưu sang ImagePreviewActivity
+                                startImagePreviewActivity(selectedImageUri);
                             }
 
                         } else {
-                            Log.w(TAG, "DEBUG_CROP_FINAL: Không phát hiện khung giới hạn hoặc kích thước proxy ảnh không hợp lệ. Hiển thị ảnh gốc đầy đủ.");
+                            Log.w(TAG, "Không phát hiện khung giới hạn hoặc kích thước proxy ảnh không hợp lệ. Hiển thị ảnh gốc đầy đủ.");
                             selectedImageUri = savedUri;
-                            imageView.setImageURI(selectedImageUri);
+                            Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
                             showImageView();
                             originalFullBitmap.recycle();
+                            // Gửi ảnh gốc đã lưu sang ImagePreviewActivity
+                            startImagePreviewActivity(selectedImageUri);
                         }
 
                     } else {
-                        Log.e(TAG, "DEBUG_CROP_FINAL: originalFullBitmap rỗng sau khi chụp.");
+                        Log.e(TAG, "originalFullBitmap rỗng sau khi chụp.");
                         selectedImageUri = savedUri;
-                        imageView.setImageURI(selectedImageUri);
+                        Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
                         showImageView();
+                        // Gửi ảnh gốc đã lưu sang ImagePreviewActivity
+                        startImagePreviewActivity(selectedImageUri);
                     }
                 } else {
                     Toast.makeText(CameraActivity.this, getString(R.string.failed_to_save_image), Toast.LENGTH_SHORT).show();
@@ -512,8 +437,9 @@ public class CameraActivity extends AppCompatActivity {
         previewView.setVisibility(View.VISIBLE);
         customOverlayView.setVisibility(View.VISIBLE);
         imageView.setVisibility(View.GONE);
-        btnXoay.setVisibility(View.GONE);
-        btnConfirm.setVisibility(View.GONE);
+        btnTakePhoto.setVisibility(View.VISIBLE);
+        btnSelectImage.setVisibility(View.VISIBLE);
+
         // Đảm bảo camera được khởi động nếu chúng ta đang hiển thị xem trước
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             startCamera();
@@ -524,8 +450,9 @@ public class CameraActivity extends AppCompatActivity {
         previewView.setVisibility(View.GONE);
         customOverlayView.setVisibility(View.GONE);
         imageView.setVisibility(View.VISIBLE);
-        btnXoay.setVisibility(View.VISIBLE);
-        btnConfirm.setVisibility(View.VISIBLE);
+        btnTakePhoto.setVisibility(View.GONE);
+        btnSelectImage.setVisibility(View.GONE);
+
         // Dừng các trường hợp sử dụng camera khi hiển thị chế độ xem hình ảnh
         if (cameraProviderFuture != null && cameraProviderFuture.isDone()) {
             try {
@@ -568,7 +495,6 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     private void openGallery() {
-        // Sử dụng launcher đã tạo trong initLaunchers()
         galleryLauncher.launch("image/*");
     }
 
@@ -577,37 +503,34 @@ public class CameraActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
-                startCamera(); // Bắt đầu camera trong ứng dụng
+                startCamera();
             } else if (requestCode == STORAGE_PERMISSION_REQUEST_CODE) {
-                // Nếu quyền lưu trữ dành cho thư viện, khởi chạy lại thư viện
                 openGallery();
             }
         } else {
             String permissionName = (permissions.length > 0) ? permissions[0] : "Quyền không xác định";
             Toast.makeText(this, permissionName + getString(R.string.permission_denied_function_unavailable), Toast.LENGTH_LONG).show();
             Log.w(TAG, "Quyền bị từ chối cho: " + permissionName + " (Mã yêu cầu: " + requestCode + ")");
-            // Nếu quyền camera bị từ chối, bạn có thể muốn chuyển sang giao diện người dùng dự phòng hoặc thoát
-            // Hiện tại, nó sẽ chỉ hiển thị một thông báo và xem trước camera sẽ không bắt đầu.
         }
     }
 
     // --- Xử lý nút Back ---
     @Override
     public void onBackPressed() {
-        // Nếu ImageView đang hiển thị (có ảnh đang được xem)
+        // Nếu ImageView đang hiển thị ảnh, quay lại chế độ xem trước camera
         if (imageView.getVisibility() == View.VISIBLE) {
-            // Chuyển về chế độ xem trước camera
-            showCameraPreview();
             selectedImageUri = null; // Xóa URI ảnh đã chọn
-            lastDetectedBoundingBox = null; // Xóa khung nhận diện đã lưu
-            Toast.makeText(this, getString(R.string.back_to_camera_mode), Toast.LENGTH_SHORT).show();
+            imageView.setImageDrawable(null); // Xóa ảnh khỏi ImageView
+            showCameraPreview();
         } else {
-            // Nếu camera preview đã hoạt động, thực hiện hành động back mặc định (thoát ứng dụng)
+            // Ngược lại, thực hiện hành động back mặc định (thoát activity)
             super.onBackPressed();
         }
     }
 
     // --- Các phương thức tiện ích ---
+    // Phương thức rotateBitmap không còn được sử dụng trực tiếp ở đây,
+    // nhưng giữ lại để tiện nếu có logic tương lai.
     private Bitmap rotateBitmap(Bitmap bitmap, float degrees) {
         Matrix matrix = new Matrix();
         matrix.postRotate(degrees);
@@ -647,11 +570,9 @@ public class CameraActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Tắt executor của camera để ngăn chặn rò rỉ bộ nhớ
         if (cameraExecutor != null) {
             cameraExecutor.shutdown();
         }
-        // Giải phóng tài nguyên của bộ phát hiện ML Kit
         if (objectDetector != null) {
             objectDetector.close();
         }

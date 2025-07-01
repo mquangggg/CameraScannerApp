@@ -41,7 +41,6 @@ public class CropActivity extends AppCompatActivity {
     private TextRecognizer textRecognizer;
     private Bitmap originalBitmapLoaded;
     private MagnifierView magnifierView;
-    // private List<android.graphics.Rect> recognizedTextRects; // Đã bỏ biến này
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -59,36 +58,44 @@ public class CropActivity extends AppCompatActivity {
         customCropView.setMagnifierView(magnifierView);
 
         if (getIntent().getExtras() != null && getIntent().getExtras().containsKey("imageUri")) {
-            imageUriToCrop = getIntent().getParcelableExtra("imageUri");
-            if (imageUriToCrop != null) {
-                cropImageView.setImageUriAsync(imageUriToCrop);
-                cropImageView.setGuidelines(CropImageView.Guidelines.OFF);
-                try {
-                    originalBitmapLoaded = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUriToCrop);
-                    if (originalBitmapLoaded != null) {
-                        cropImageView.post(() -> {
-                            Matrix imageToViewMatrix = getImageToViewMatrix(
-                                    originalBitmapLoaded.getWidth(),
-                                    originalBitmapLoaded.getHeight(),
-                                    customCropView.getWidth(),
-                                    customCropView.getHeight()
-                            );
-                            Matrix viewToImageMatrix = new Matrix();
-                            imageToViewMatrix.invert(viewToImageMatrix);
+            // Lấy URI dưới dạng String và chuyển đổi nó thành đối tượng Uri
+            String imageUriString = getIntent().getStringExtra("imageUri");
+            if (imageUriString != null) {
+                imageUriToCrop = Uri.parse(imageUriString);
 
-                            float[] imageToViewValues = new float[9];
-                            imageToViewMatrix.getValues(imageToViewValues);
-                            float[] viewToImageValues = new float[9];
-                            viewToImageMatrix.getValues(viewToImageValues);
+                if (imageUriToCrop != null) {
+                    cropImageView.setImageUriAsync(imageUriToCrop);
+                    cropImageView.setGuidelines(CropImageView.Guidelines.OFF);
+                    try {
+                        originalBitmapLoaded = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUriToCrop);
+                        if (originalBitmapLoaded != null) {
+                            cropImageView.post(() -> {
+                                Matrix imageToViewMatrix = getImageToViewMatrix(
+                                        originalBitmapLoaded.getWidth(),
+                                        originalBitmapLoaded.getHeight(),
+                                        customCropView.getWidth(),
+                                        customCropView.getHeight()
+                                );
+                                Matrix viewToImageMatrix = new Matrix();
+                                imageToViewMatrix.invert(viewToImageMatrix);
 
-                            customCropView.setImageData(originalBitmapLoaded, imageToViewValues, viewToImageValues);
+                                float[] imageToViewValues = new float[9];
+                                imageToViewMatrix.getValues(imageToViewValues);
+                                float[] viewToImageValues = new float[9];
+                                viewToImageMatrix.getValues(viewToImageValues);
 
-                            processImageForTextDetection(imageUriToCrop);
-                        });
+                                customCropView.setImageData(originalBitmapLoaded, imageToViewValues, viewToImageValues);
+
+                                processImageForTextDetection(imageUriToCrop);
+                            });
+                        }
+                    } catch (IOException e) {
+                        Log.e(TAG, getString(R.string.error_loading_original_bitmap) + e.getMessage(), e);
+                        Toast.makeText(this, "Lỗi khi tải ảnh gốc để nhận diện văn bản.", Toast.LENGTH_SHORT).show();
                     }
-                } catch (IOException e) {
-                    Log.e(TAG, getString(R.string.error_loading_original_bitmap) + e.getMessage(), e);
-                    Toast.makeText(this, "Lỗi khi tải ảnh gốc để nhận diện văn bản.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, getString(R.string.no_image_uri_received_for_cropping), Toast.LENGTH_SHORT).show();
+                    finish();
                 }
             } else {
                 Toast.makeText(this, getString(R.string.no_image_uri_received_for_cropping), Toast.LENGTH_SHORT).show();
@@ -192,15 +199,6 @@ public class CropActivity extends AppCompatActivity {
             textRecognizer.process(inputImage)
                     .addOnSuccessListener(text -> {
                         if (originalBitmapLoaded != null) {
-                            // Không cần lưu recognizedTextRects nữa
-                            // recognizedTextRects = new ArrayList<>();
-                            // for (Text.TextBlock block : text.getTextBlocks()) {
-                            //     if (block.getBoundingBox() != null) {
-                            //         recognizedTextRects.add(block.getBoundingBox());
-                            //     }
-                            // }
-                            // customCropView.setTextBoundingBoxes(viewTextRects); // Loại bỏ dòng này
-
                             setInitialCropPointsFromText(text, originalBitmapLoaded.getWidth(), originalBitmapLoaded.getHeight());
                         }
                     })

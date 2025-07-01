@@ -60,76 +60,61 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.8" />
+        app:layout_constraintGuide_percent="0.9" />
 
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:orientation="vertical"
-        android:gravity="top"
-        android:padding="8dp"
-        android:background="#d3d3d3"
-        android:layout_marginTop="20dp"
         app:layout_constraintTop_toBottomOf="@id/bottom_controls_guideline"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        android:background="@color/black"
+        android:padding="8dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <!-- Nút X để thoát -->
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnClose"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center">
+            android:background="@drawable/rounded_background"
+            android:src="@drawable/ic_cancel_white"
+            android:scaleType="centerInside"
+            android:clipToOutline="true"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginStart="60dp"/>
 
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btnTakePhoto"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:background="@drawable/rounded_background"
-                android:text="@string/take_photo"
-                android:textColor="@color/black"
-                android:layout_marginEnd="8dp" />
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btnSelectImage"
-                android:text="@string/gallery"
-                android:textColor="@color/black"
-                android:layout_width="0dp"
-                android:background="@drawable/rounded_background"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
+        <!-- Nút chụp hình ở giữa -->
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnTakePhoto"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginTop="8dp">
+            android:src="@drawable/ic_camera_white"
+            android:backgroundTint="@color/white"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@id/btnClose"
+            app:layout_constraintEnd_toStartOf="@id/btnSelectImage"
+            app:layout_constraintHorizontal_bias="0.5"/>
 
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btnXoay"
-                android:text="@string/rotate"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:textColor="@color/black"
-                android:background="@drawable/rounded_background"
-                android:visibility="gone" />
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btnConfirm"
-                android:text="@string/confirm"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textColor="@color/black"
-                android:background="@drawable/rounded_background"
-                android:layout_marginStart="8dp"
-                android:visibility="gone" />
-        </LinearLayout>
-    </LinearLayout>
+        <!-- Nút chọn ảnh (gallery) ở bên phải -->
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnSelectImage"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@drawable/gallery"
+            android:background="@drawable/gallery"
+            android:scaleType="centerInside"
+            android:clipToOutline="true"
+            android:layout_marginEnd="50dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
