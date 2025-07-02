@@ -286,7 +286,7 @@ public class OCRActivity extends AppCompatActivity {
                     }
                     outputStream = resolver.openOutputStream(fileUri);
                 } else {
-                    File documentsFolder = new File(Environment.getExternalStorageDirectory(), "MyOCRTexts");
+                    File documentsFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "MyOCRTexts");
                     if (!documentsFolder.exists()) {
                         documentsFolder.mkdirs();
                     }
@@ -344,37 +344,64 @@ public class OCRActivity extends AppCompatActivity {
     private void performSaveImageFile(Bitmap imageBitmap) {
         executorService.execute(() -> {
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-            String fileName = "OCR_Image_" + timeStamp + ".jpeg";
-            String mimeType = "image/jpeg";
+            String fileName = "OCR_Image_" + timeStamp + ".jpeg"; // Đổi đuôi file thành .jpeg
+            String mimeType = "image/jpeg"; // Đổi MIME type thành image/jpeg
 
-            Uri imageCollection;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                imageCollection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
-            } else {
-                imageCollection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-            }
-
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
-            contentValues.put(MediaStore.MediaColumns.MIME_TYPE, mimeType);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + File.separator + "MyPDFs");
-            }
-
-            Uri imageUri = null;
+            Uri collectionUri = null;
             OutputStream outputStream = null;
+            boolean saved = false;
+
             try {
-                imageUri = getContentResolver().insert(imageCollection, contentValues);
-                if (imageUri == null) {
-                    throw new IOException("Không thể tạo URI cho ảnh.");
-                }
-                outputStream = getContentResolver().openOutputStream(imageUri);
-                if (outputStream == null) {
-                    throw new IOException("Không thể mở OutputStream cho ảnh.");
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    ContentValues contentValues = new ContentValues();
+                    contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+                    contentValues.put(MediaStore.MediaColumns.MIME_TYPE, mimeType);
+                    // Đặt đường dẫn lưu ảnh khớp với đường dẫn lưu PDF: Documents/MyPDFs
+                    contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + File.separator + "MyPDFs");
+
+                    // Sử dụng MediaStore.Files cho các tệp chung trong thư mục Documents
+                    collectionUri = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+                    Uri itemUri = getContentResolver().insert(collectionUri, contentValues);
+
+                    if (itemUri == null) {
+                        throw new IOException("Không thể tạo URI cho ảnh.");
+                    }
+                    outputStream = getContentResolver().openOutputStream(itemUri);
+                    if (outputStream == null) {
+                        throw new IOException("Không thể mở OutputStream cho ảnh.");
+                    }
+
+                    // Nén và lưu Bitmap dưới dạng JPEG
+                    saved = imageBitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream);
+
+                } else {
+                    // Đối với Android thấp hơn Q
+                    // Đặt đường dẫn lưu ảnh khớp với đường dẫn lưu PDF: Documents/MyPDFs
+                    File parentDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "MyPDFs");
+                    if (!parentDir.exists()) {
+                        parentDir.mkdirs(); // Tạo thư mục nếu nó chưa tồn tại
+                    }
+                    File imageFile = new File(parentDir, fileName);
+
+                    outputStream = new FileOutputStream(imageFile);
+                    saved = imageBitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream);
+
+                    if (saved) {
+                        // Thông báo cho MediaStore về tệp mới để nó hiển thị trong thư viện
+                        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                        mediaScanIntent.setData(Uri.fromFile(imageFile));
+                        sendBroadcast(mediaScanIntent);
+                    }
                 }
 
-                imageBitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream);
-                mainHandler.post(() -> Toast.makeText(OCRActivity.this, "Đã lưu ảnh: " + fileName, Toast.LENGTH_LONG).show());
+                final boolean finalSaved = saved;
+                mainHandler.post(() -> {
+                    if (finalSaved) {
+                        Toast.makeText(OCRActivity.this, "Đã lưu ảnh OCR: " + fileName, Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(OCRActivity.this, "Không thể lưu ảnh OCR.", Toast.LENGTH_LONG).show();
+                    }
+                });
 
             } catch (IOException e) {
                 Log.e(TAG, "Lỗi khi lưu ảnh OCR: " + e.getMessage(), e);

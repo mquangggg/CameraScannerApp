@@ -118,12 +118,12 @@
             android:focusable="true"
             android:background="?attr/selectableItemBackground">
             <ImageView
-                android:layout_width="24dp"
+                android:id="@+id/imageViewHomeIcon" android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_home_white"
                 app:tint="@android:color/white" />
             <TextView
-                android:layout_width="wrap_content"
+                android:id="@+id/textViewHomeText" android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Home"
                 android:textSize="12sp"
@@ -141,12 +141,12 @@
             android:focusable="true"
             android:background="?attr/selectableItemBackground">
             <ImageView
-                android:layout_width="24dp"
+                android:id="@+id/imageViewToolsIcon" android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_tools_white"
                 app:tint="@android:color/white" />
             <TextView
-                android:layout_width="wrap_content"
+                android:id="@+id/textViewToolsText" android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Tools"
                 android:textSize="12sp"
@@ -164,12 +164,12 @@
             android:focusable="true"
             android:background="?attr/selectableItemBackground">
             <ImageView
-                android:layout_width="24dp"
+                android:id="@+id/imageViewMeIcon" android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_me_white"
                 app:tint="@android:color/white" />
             <TextView
-                android:layout_width="wrap_content"
+                android:id="@+id/textViewMeText" android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Me"
                 android:textSize="12sp"

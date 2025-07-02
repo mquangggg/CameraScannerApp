@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="green_accent">#00FF00</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-</resources>
+    <color name="green_accent">#4CAF50</color>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="blue_word_icon">#2196F3</color>
+    <color name="grey_text_icon">#9E9E9E</color>
+
+    </resources>

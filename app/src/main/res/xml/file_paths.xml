@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <external-path name="external_files" path="."/>
-    <external-files-path name="my_pdfs" path="Download/MyPDFs/"/>
-    <external-cache-path name="cache_files" path="."/>
-    <files-path name="internal_files" path="."/>
+    <external-path name="my_ocr_texts" path="Download/MyOCRTexts/"/>
+
+    <external-path name="my_pdfs" path="Download/MyPDFs/"/>
+
 </paths>
