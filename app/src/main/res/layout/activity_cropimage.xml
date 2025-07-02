@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".CropActivity">
+    tools:context=".CropActivity"
+    android:background="@color/black">
 
     <TextView
         android:id="@+id/textViewCropTitle"
@@ -16,8 +17,8 @@
         android:textSize="24sp"
         android:textStyle="bold"
         android:padding="16dp"
-        android:background="#ADD8E6"
-        android:textColor="@color/black" />
+        android:background="#333"
+        android:textColor="@color/white" />
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -42,8 +43,9 @@
             android:layout_height="wrap_content"
             android:visibility="gone"
             tools:visibility="visible"
-            android:background="#000000"
-            android:layout_gravity="center" /> </FrameLayout>
+            android:background="#3d3d3d"
+            android:layout_gravity="center" />
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -51,7 +53,7 @@
         android:orientation="horizontal"
         android:padding="16dp"
         android:gravity="center"
-        android:background="#ffffff">
+        android:background="@color/black">
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnHuyCrop"
@@ -59,9 +61,18 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/cancel"
-            android:background="#3d3d"
+            android:background="#3d3d3d"
             android:layout_marginEnd="8dp"
-            android:textColor="@color/black"/>
+            android:textColor="@color/white"/>
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnMakeOCR"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Tạo OCR"
+            android:background="#3d3d3d"
+            android:layout_marginEnd="8dp"
+            android:textColor="@color/white"/>
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnYesCrop"
@@ -69,9 +80,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/crop"
-            android:background="#3d3d"
+            android:background="#3d3d3d"
             android:layout_marginStart="8dp"
-            android:textColor="@color/black"/>
+            android:textColor="@color/white"/>
     </LinearLayout>
 
 </LinearLayout>

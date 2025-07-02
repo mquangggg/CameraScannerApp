@@ -1,105 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="8dp"
-    android:background="#2E2E2E">
-    <ImageView
-    android:id="@+id/ivFileThumbnail"
-    android:layout_width="60dp"
-    android:layout_height="80dp"
-    android:scaleType="centerCrop"
-    android:background="#444444"
-    android:src="@drawable/ic_launcher_foreground" app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintBottom_toBottomOf="parent" />
+    android:layout_margin="8dp"
+    app:cardBackgroundColor="#3A3A3A"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp">
 
-    <TextView
-        android:id="@+id/tvFileName"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:textColor="@android:color/white"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        tools:text="CamScanner 23-06-2025 09.14"
-        app:layout_constraintStart_toEndOf="@id/ivFileThumbnail"
-        app:layout_constraintEnd_toStartOf="@id/checkboxFile"
-        app:layout_constraintTop_toTopOf="@id/ivFileThumbnail" />
-
-    <TextView
-        android:id="@+id/tvFileDate"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:textColor="#AAAAAA"
-        android:textSize="14sp"
-        tools:text="06/30/2025 14:45"
-        app:layout_constraintStart_toEndOf="@id/ivFileThumbnail"
-        app:layout_constraintEnd_toStartOf="@id/checkboxFile"
-        app:layout_constraintTop_toBottomOf="@id/tvFileName" />
-
-    <TextView
-        android:id="@+id/tvPageCount"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:textColor="#AAAAAA"
-        android:textSize="14sp"
-        tools:text="1 Trang"
-        app:layout_constraintStart_toEndOf="@id/ivFileThumbnail"
-        app:layout_constraintEnd_toStartOf="@id/checkboxFile"
-        app:layout_constraintTop_toBottomOf="@id/tvFileDate" />
-
-    <CheckBox
-        android:id="@+id/checkboxFile"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:buttonTint="@color/green_accent" /> <LinearLayout
-        android:id="@+id/llActions"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="8dp"
-        android:gravity="end"
-        app:layout_constraintTop_toBottomOf="@id/tvPageCount"
-        app:layout_constraintStart_toEndOf="@id/ivFileThumbnail"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:visibility="gone"> <Button
-        android:id="@+id/btnShare"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Share"
-        android:textColor="@android:color/white"
-        android:backgroundTint="#555555"
-        android:layout_marginEnd="8dp"
-        style="@style/Widget.AppCompat.Button.Borderless" />
+        android:padding="16dp"
+        android:gravity="center_vertical">
 
-        <Button
-            android:id="@+id/btnToWord"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="To Word"
-            android:textColor="@android:color/white"
-            android:backgroundTint="#555555"
-            android:layout_marginEnd="8dp"
-            style="@style/Widget.AppCompat.Button.Borderless" />
+        <ImageView
+            android:id="@+id/ivPdfIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_home_white"
+            app:tint="@color/green_accent"
+            android:contentDescription="PDF Icon" />
 
-        <Button
-            android:id="@+id/btnView"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="View"
-            android:textColor="@android:color/white"
-            android:backgroundTint="#555555"
-            style="@style/Widget.AppCompat.Button.Borderless" />
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="16dp">
+
+            <TextView
+                android:id="@+id/tvFileName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ten_Tai_Lieu.pdf"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"/>
+
+            <TextView
+                android:id="@+id/tvFileDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ngày: 01/07/2025"
+                android:textColor="#AAAAAA"
+                android:textSize="12sp"/>
+
+            <TextView
+                android:id="@+id/tvFileSize"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Kích thước: 1.2 MB"
+                android:textColor="#AAAAAA"
+                android:textSize="12sp"/>
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/btnOpenFile"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/ic_camera_white"
+            app:tint="@android:color/white"
+            android:layout_marginStart="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Open File" />
+
     </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.cardview.widget.CardView>

@@ -30,51 +30,79 @@
         android:layout_height="48dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/search_background"
-        android:hint="Search"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:textColor="@android:color/white"
-        android:textColorHint="#AAAAAA"
-        android:drawableStart="@drawable/ic_search_white"
+        android:background="@drawable/rounded_background"
+        android:drawableStart="@drawable/ic_tools_white"
         android:drawablePadding="8dp"
-        app:layout_constraintTop_toBottomOf="@id/tvHeaderTitle"
+        android:hint="Tìm kiếm tệp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:textColor="@color/white"
+        android:textColorHint="@android:color/darker_gray"
+        android:textSize="16sp"
+        app:layout_constraintTop_toBottomOf="@+id/tvHeaderTitle"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp"/>
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayoutFileTypes"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@android:color/transparent"
+        app:tabIndicatorColor="@color/green_accent"
+        app:tabSelectedTextColor="@color/green_accent"
+        app:tabTextColor="@android:color/darker_gray"
+        app:layout_constraintTop_toBottomOf="@+id/etSearch"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:tabMode="fixed"
+        app:tabGravity="fill">
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PDF gần đây" />
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Văn bản gần đây" />
+    </com.google.android.material.tabs.TabLayout>
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewFiles"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="8dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        app:layout_constraintTop_toBottomOf="@id/etSearch"
+        app:layout_constraintTop_toBottomOf="@+id/tabLayoutFileTypes"
         app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:background="#2E2E2E"
-        tools:listitem="@layout/item_file_entry" />
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnStartCamera"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="16dp"
+        android:clickable="true"
+        android:focusable="true"
         android:src="@drawable/ic_camera_white"
-        app:backgroundTint="#00FF00"
+        app:backgroundTint="@color/green_accent"
         app:tint="@android:color/white"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
-        app:fabSize="normal"
-        app:borderWidth="0dp" />
+        app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView" />
+
 
     <LinearLayout
         android:id="@+id/bottomNavigationView"
         android:layout_width="0dp"
-        android:layout_height="56dp" android:orientation="horizontal"
-        android:background="#3A3A3A" android:gravity="center_vertical"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:background="#3d3d3d"
+        android:gravity="center_vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -93,34 +121,11 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_home_white"
-                app:tint="@color/green_accent" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Home"
-                android:textSize="12sp"
-                android:textColor="@color/green_accent" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/btnFiles"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackground">
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_files_white"
                 app:tint="@android:color/white" />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Files"
+                android:text="Home"
                 android:textSize="12sp"
                 android:textColor="@android:color/white" />
         </LinearLayout>

@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F0F0F0">
+    android:background="#333">
 
     <TextView
         android:layout_width="match_parent"
@@ -14,7 +14,7 @@
         android:textStyle="bold"
         android:gravity="center"
         android:padding="16dp"
-        android:textColor="@android:color/black"
+        android:textColor="@android:color/white"
         android:background="#3f3f3ff3"/>
 
     <TextView
@@ -34,6 +34,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
+        android:background="#3d3d3d"
         android:layout_marginTop="8dp"
         android:padding="8dp">
 
@@ -43,13 +44,15 @@
             android:layout_height="wrap_content"
             android:text="Gốc"
             android:checked="true"
-            android:layout_marginEnd="16dp"/>
+            android:layout_marginEnd="16dp"
+            android:textColor="@color/white"/>
 
         <RadioButton
             android:id="@+id/rbBlackWhite"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Trắng đen"/>
+            android:text="Trắng đen"
+            android:textColor="@color/white"/>
     </RadioGroup>
 
     <ImageView
@@ -61,7 +64,7 @@
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
         android:layout_weight="1"
-        android:background="#FFFFFF"
+        android:background="#3D3D3D"
         android:padding="4dp"
         android:scaleType="fitCenter" />
 
@@ -77,8 +80,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/delete_and_cancel"
-            android:background="#3d3d"
-            android:textColor="@color/black"
+            android:background="#3d3d3d"
+            android:textColor="@color/white"
             android:layout_marginEnd="8dp"/>
 
         <androidx.appcompat.widget.AppCompatButton
@@ -87,8 +90,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Tạo lại PDF"
-            android:background="#3d3d"
-            android:textColor="@color/black"
+            android:background="#3d3d3d"
+            android:textColor="@color/white"
             android:layout_marginEnd="8dp"/>
 
         <androidx.appcompat.widget.AppCompatButton
@@ -97,8 +100,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/save_PDF"
-            android:background="#3d3d"
-            android:textColor="@color/black"
+            android:background="#3d3d3d"
+            android:textColor="@color/white"
             android:layout_marginStart="8dp"/>
     </LinearLayout>
 

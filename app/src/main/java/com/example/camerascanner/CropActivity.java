@@ -36,7 +36,7 @@ public class CropActivity extends AppCompatActivity {
     private static final String TAG = "CropActivity";
     private CropImageView cropImageView;
     private CustomCropView customCropView;
-    private Button btnHuyCrop, btnYesCrop;
+    private Button btnHuyCrop, btnYesCrop , btnMakeOCR;
     private Uri imageUriToCrop;
     private TextRecognizer textRecognizer;
     private Bitmap originalBitmapLoaded;
@@ -52,6 +52,7 @@ public class CropActivity extends AppCompatActivity {
         btnHuyCrop = findViewById(R.id.btnHuyCrop);
         btnYesCrop = findViewById(R.id.btnYesCrop);
         magnifierView = findViewById(R.id.magnifierView);
+        btnMakeOCR = findViewById(R.id.btnMakeOCR);
 
         textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
 
@@ -135,6 +136,65 @@ public class CropActivity extends AppCompatActivity {
                 Toast.makeText(this, getString(R.string.error_cropping_image), Toast.LENGTH_SHORT).show();
             }
         });
+
+        btnMakeOCR.setOnClickListener(v->{
+            ArrayList<PointF> cropPoints = customCropView.getCropPoints();
+            if (cropPoints.size() != 4) {
+                Toast.makeText(this, getString(R.string.please_select_4_points_to_crop), Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            ArrayList<PointF> transformedPoints = new ArrayList<>();
+            for (PointF point : cropPoints) {
+                float[] bitmapCoords = transformViewPointToBitmapPoint(point.x, point.y);
+                transformedPoints.add(new PointF(bitmapCoords[0], bitmapCoords[1]));
+            }
+
+            Bitmap croppedBitmap = cropBitmapByPoints(originalBitmapLoaded, transformedPoints);
+            if (croppedBitmap != null) {
+                Uri croppedUri = saveBitmapToCache(croppedBitmap);
+                Intent intent = new Intent(CropActivity.this, OCRActivity.class);
+                intent.putExtra(OCRActivity.EXTRA_IMAGE_URI_FOR_OCR, croppedUri);
+                startActivity(intent);
+                finish();
+            } else {
+                Toast.makeText(this, getString(R.string.error_cropping_image), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    /**
+     * Phương thức trợ giúp để lưu Bitmap vào thư mục cache của ứng dụng và trả về Uri của tệp đã lưu.
+     * Tệp này là tạm thời và sẽ được xóa khi ứng dụng cần không gian hoặc khi onDestroy của OCRActivity được gọi.
+     *
+     * @param bitmap Bitmap cần lưu.
+     * @return Uri của tệp đã lưu, hoặc null nếu có lỗi.
+     */
+    private Uri saveBitmapToCacheAndGetUri(Bitmap bitmap) {
+        String fileName = "cropped_temp_" + System.currentTimeMillis() + ".jpeg";
+        // Tạo thư mục con trong thư mục cache của ứng dụng để lưu ảnh đã cắt tạm thời
+        File cachePath = new File(getCacheDir(), "cropped_images");
+        cachePath.mkdirs(); // Tạo thư mục nếu nó chưa tồn tại
+
+        File file = new File(cachePath, fileName);
+
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos); // Nén ảnh với chất lượng 90%
+            fos.flush(); // Đảm bảo tất cả dữ liệu được ghi vào tệp
+            return Uri.fromFile(file); // Trả về URI từ File
+        } catch (IOException e) {
+            Log.e(TAG, "Lỗi khi lưu bitmap vào cache: " + e.getMessage(), e);
+            return null;
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close(); // Đóng FileOutputStream
+                } catch (IOException e) {
+                    Log.e(TAG, "Lỗi khi đóng FileOutputStream: " + e.getMessage(), e);
+                }
+            }
+        }
     }
 
     private Bitmap cropBitmapByPoints(Bitmap sourceBitmap, ArrayList<PointF> points) {

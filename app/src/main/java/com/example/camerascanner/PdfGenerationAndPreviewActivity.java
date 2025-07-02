@@ -3,6 +3,7 @@ package com.example.camerascanner;
 import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -42,6 +43,8 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import androidx.appcompat.app.AlertDialog;
+import android.widget.EditText; // Đảm bảo dòng này đã có hoặc thêm vào
 /**
  * Activity này chịu trách nhiệm hiển thị bản xem trước của ảnh,
  * cho phép người dùng chọn kiểu PDF (ảnh gốc hoặc ảnh trắng đen),
@@ -76,6 +79,8 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
 
     // Biến trạng thái để theo dõi kiểu PDF hiện tại mà người dùng đã chọn.
     private PdfStyle currentPdfStyle = PdfStyle.ORIGINAL;
+
+    private String currentPdfFileName = ""; // Để lưu trữ tên file đã được lưu gần nhất (tùy chọn)
 
     /**
      * Enum định nghĩa các kiểu xử lý ảnh khi tạo PDF.
@@ -147,19 +152,23 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
          * và tự động tạo lại bản xem trước PDF.
          */
         rgPdfStyle.setOnCheckedChangeListener((group, checkedId) -> {
+            if (croppedBitmap == null) {
+                Toast.makeText(this, "Không có ảnh để áp dụng kiểu.", Toast.LENGTH_SHORT).show();
+                return;
+            }
             if (checkedId == R.id.rbOriginal) {
+                processedBitmap = croppedBitmap; // Dùng bitmap gốc
                 currentPdfStyle = PdfStyle.ORIGINAL;
                 Toast.makeText(this, "Chế độ Gốc được chọn", Toast.LENGTH_SHORT).show();
             } else if (checkedId == R.id.rbBlackWhite) {
+                processedBitmap = convertToBlackAndWhite(croppedBitmap); // Chuyển sang đen trắng
                 currentPdfStyle = PdfStyle.BLACK_WHITE;
                 Toast.makeText(this, "Chế độ Trắng đen được chọn", Toast.LENGTH_SHORT).show();
             }
-            // Cập nhật trạng thái trên UI thread ngay lập tức.
-            mainHandler.post(() -> {
-                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Đang tạo lại bản xem trước...");
-            });
-            // Kiểm tra quyền và bắt đầu quá trình tạo lại PDF với kiểu mới.
-            checkPermissionsAndGeneratePdfInternal();
+            if (processedBitmap != null) {
+                ivPdfPreview.setImageBitmap(processedBitmap); // Cập nhật preview
+                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Đã cập nhật bản xem trước.");
+            }
         });
 
         /**
@@ -168,8 +177,11 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
          * Việc lưu PDF thực tế đã diễn ra trong hàm `generatePdf()`.
          */
         btnSavePdf.setOnClickListener(v -> {
-            Toast.makeText(this, getString(R.string.pdf_saved_confirmation), Toast.LENGTH_SHORT).show();
-            finish();
+            if (processedBitmap != null) {
+                showRenameDialogAndSavePdf(); // Gọi hộp thoại đổi tên và sau đó lưu PDF
+            } else {
+                Toast.makeText(this, "Không có ảnh để lưu PDF.", Toast.LENGTH_SHORT).show();
+            }
         });
 
         /**
@@ -188,10 +200,21 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
          * tạo PDF với kiểu ảnh hiện tại đang được chọn (Gốc hoặc Trắng đen).
          */
         btnRegeneratePdf.setOnClickListener(v -> {
-            mainHandler.post(() -> {
-                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.status_generating_pdf));
-            });
-            checkPermissionsAndGeneratePdfInternal();
+            if (croppedBitmap == null) {
+                Toast.makeText(this, "Không có ảnh để tạo lại bản xem trước.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (currentPdfStyle == PdfStyle.ORIGINAL) {
+                processedBitmap = croppedBitmap;
+            } else if (currentPdfStyle == PdfStyle.BLACK_WHITE) {
+                processedBitmap = convertToBlackAndWhite(croppedBitmap);
+            }
+            if (processedBitmap != null) {
+                ivPdfPreview.setImageBitmap(processedBitmap);
+                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Hêlo");
+            } else {
+                Toast.makeText(this, "Không có ảnh để tạo lại bản xem trước.", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
@@ -220,20 +243,23 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                     throw new IOException("Không thể giải mã Bitmap từ InputStream.");
                 }
 
-                // Cập nhật trạng thái trên UI thread.
+                // Mặc định hiển thị ảnh gốc sau khi tải, hoặc chuyển đổi nếu chế độ B&W được chọn
                 mainHandler.post(() -> {
-                    if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.status_converting_to_black_white));
+                    if (croppedBitmap != null) {
+                        // Mặc định là ảnh gốc hoặc chuyển đổi nếu rbBlackWhite đã được chọn
+                        if (rbBlackWhite.isChecked()) { // Nếu người dùng đã chọn B&W trước đó
+                            processedBitmap = convertToBlackAndWhite(croppedBitmap);
+                        } else { // Mặc định là Original
+                            processedBitmap = croppedBitmap;
+                        }
+                        ivPdfPreview.setImageBitmap(processedBitmap); // Hiển thị bản xem trước
+                        if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Ảnh đã sẵn sàng để tạo PDF.");
+                    } else {
+                        Toast.makeText(PdfGenerationAndPreviewActivity.this, "Không thể tải ảnh: Bitmap rỗng.", Toast.LENGTH_SHORT).show();
+                        finish();
+                    }
                 });
-                // Chuyển đổi ảnh gốc sang trắng đen.
-                processedBitmap = convertToBlackAndWhite(croppedBitmap);
 
-                // Cập nhật trạng thái trên UI thread.
-                mainHandler.post(() -> {
-                    if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.status_generating_pdf));
-                });
-
-                // Kiểm tra quyền và tiến hành tạo PDF.
-                checkPermissionsAndGeneratePdfInternal();
 
             } catch (Exception e) {
                 // Ghi log lỗi và hiển thị Toast trên UI thread nếu có lỗi.
@@ -293,16 +319,12 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
 
     /**
      * Kiểm tra quyền truy cập bộ nhớ cần thiết để lưu PDF.
-     * Trên Android Q (API 29) trở lên, sử dụng MediaStore API không yêu cầu quyền
-     * WRITE_EXTERNAL_STORAGE. Dưới Android Q, quyền này là bắt buộc.
-     * Nếu quyền chưa được cấp, phương thức sẽ yêu cầu quyền.
-     * Sau khi quyền được cấp (hoặc nếu không cần quyền), sẽ gọi `generatePdf()`.
+     * Sau khi quyền được cấp (hoặc nếu không cần quyền), sẽ gọi `performSavePdf()`.
      */
-    private void checkPermissionsAndGeneratePdfInternal() {
-        // Kiểm tra phiên bản Android.
+    private void checkPermissionsAndSavePdf(Bitmap bitmapToSave, String fileName) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             // Trên Android Q (API 29) trở lên, không cần quyền WRITE_EXTERNAL_STORAGE khi dùng MediaStore.
-            generatePdf();
+            performSavePdf(bitmapToSave, fileName);
         } else {
             // Đối với Android 9 (Pie) trở xuống, kiểm tra quyền WRITE_EXTERNAL_STORAGE.
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -314,8 +336,8 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                             PERMISSION_REQUEST_CODE);
                 });
             } else {
-                // Nếu quyền đã được cấp, tiến hành tạo PDF.
-                generatePdf();
+                // Nếu quyền đã được cấp, tiến hành lưu PDF.
+                performSavePdf(bitmapToSave, fileName);
             }
         }
     }
@@ -333,12 +355,12 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_CODE) {
-            // Kiểm tra xem quyền WRITE_EXTERNAL_STORAGE có được cấp hay không.
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Nếu quyền được cấp, bắt đầu tạo PDF trên luồng nền.
-                executorService.execute(this::generatePdf);
+                mainHandler.post(() -> {
+                    Toast.makeText(this, getString(R.string.permission_required_to_save_pdf), Toast.LENGTH_SHORT).show();
+                    // checkPermissionsAndGeneratePdfInternal(); // XÓA DÒNG NÀY
+                });
             } else {
-                // Nếu quyền bị từ chối, hiển thị thông báo cho người dùng.
                 mainHandler.post(() -> {
                     Toast.makeText(this, getString(R.string.permission_required_to_save_pdf), Toast.LENGTH_LONG).show();
                     if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.error_no_permission_to_save_pdf));
@@ -346,7 +368,6 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
             }
         }
     }
-
     /**
      * Tạo một tài liệu PDF từ Bitmap đã chọn (gốc hoặc trắng đen) và lưu nó vào bộ nhớ.
      * Phương thức này:
@@ -356,21 +377,12 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
      * 4. Lưu tài liệu PDF vào bộ nhớ, sử dụng MediaStore API trên Android Q+ hoặc FileOutputStream trên các phiên bản cũ hơn.
      * 5. Sau khi lưu thành công, hiển thị bản xem trước PDF.
      */
-    private void generatePdf() {
-        Bitmap bitmapToUse = null;
-        String styleName = "";
-
-        // Xác định Bitmap và tên kiểu ảnh dựa trên lựa chọn của người dùng.
-        if (currentPdfStyle == PdfStyle.ORIGINAL) {
-            bitmapToUse = croppedBitmap; // Sử dụng ảnh gốc đã cắt.
-            styleName = "Gốc";
-        } else if (currentPdfStyle == PdfStyle.BLACK_WHITE) {
-            bitmapToUse = processedBitmap; // Sử dụng ảnh đã xử lý trắng đen.
-            styleName = "Trắng đen";
-        }
-
-        // Kiểm tra xem có Bitmap để tạo PDF không.
-        if (bitmapToUse == null) {
+    /**
+     * Thực hiện việc tạo và lưu tài liệu PDF từ Bitmap đã chọn.
+     * Phương thức này sẽ sử dụng `fileName` được truyền vào.
+     */
+    private void performSavePdf(Bitmap bitmapToSave, String fileName) {
+        if (bitmapToSave == null) {
             mainHandler.post(() -> {
                 Toast.makeText(this, getString(R.string.error_no_processed_image_for_pdf), Toast.LENGTH_SHORT).show();
                 if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.error_no_image_to_create_pdf));
@@ -378,101 +390,82 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
             return;
         }
 
-        // Cập nhật trạng thái trên UI thread. Sử dụng biến `final` để truy cập trong lambda.
-        final Bitmap finalBitmapToUse = bitmapToUse;
-        final String finalStyleName = styleName;
         mainHandler.post(() -> {
-            if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.status_generating_pdf) + " (" + finalStyleName + ")");
+            if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.status_generating_pdf));
         });
 
-        // Khởi tạo một tài liệu PDF mới.
         PdfDocument document = new PdfDocument();
         int pageHeight = 1120; // Chiều cao của trang PDF (tương đương khổ A4).
         int pageWidth = 792;  // Chiều rộng của trang PDF (tương đương khổ A4).
-        // Tạo thông tin cho trang đầu tiên của PDF.
         PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, 1).create();
 
-        // Bắt đầu một trang mới trong tài liệu PDF.
         PdfDocument.Page page = document.startPage(pageInfo);
-        Canvas canvas = page.getCanvas(); // Lấy Canvas để vẽ nội dung lên trang PDF.
+        Canvas canvas = page.getCanvas();
 
-        // Tính toán tỷ lệ co giãn để ảnh vừa vặn với trang PDF mà vẫn giữ nguyên tỷ lệ khung hình.
-        float scaleX = (float) pageWidth / finalBitmapToUse.getWidth();
-        float scaleY = (float) pageHeight / finalBitmapToUse.getHeight();
-        float scale = Math.min(scaleX, scaleY); // Chọn tỷ lệ nhỏ hơn để đảm bảo ảnh không bị cắt.
+        float scaleX = (float) pageWidth / bitmapToSave.getWidth();
+        float scaleY = (float) pageHeight / bitmapToSave.getHeight();
+        float scale = Math.min(scaleX, scaleY);
 
-        // Tính toán vị trí để căn giữa ảnh trên trang PDF.
-        float left = (pageWidth - finalBitmapToUse.getWidth() * scale) / 2;
-        float top = (pageHeight - finalBitmapToUse.getHeight() * scale) / 2;
+        float left = (pageWidth - bitmapToSave.getWidth() * scale) / 2;
+        float top = (pageHeight - bitmapToSave.getHeight() * scale) / 2;
 
-        // Vẽ Bitmap đã chọn lên Canvas của trang PDF.
-        canvas.drawBitmap(finalBitmapToUse, null, new android.graphics.RectF(left, top, left + finalBitmapToUse.getWidth() * scale, top + finalBitmapToUse.getHeight() * scale), null);
-        document.finishPage(page); // Hoàn thành việc vẽ trang.
-
-        // Tạo tên file PDF động với timestamp và kiểu ảnh (Original/BW).
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-        String pdfFileName = "ScannedPdf_" + timeStamp + "_" + (finalStyleName.equals("Gốc") ? "Original" : "BW") + ".pdf";
+        canvas.drawBitmap(bitmapToSave, null, new android.graphics.RectF(left, top, left + bitmapToSave.getWidth() * scale, top + bitmapToSave.getHeight() * scale), null);
+        document.finishPage(page);
 
         OutputStream outputStream = null;
         try {
-            // Kiểm tra phiên bản Android để quyết định cách lưu file.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // Trên Android Q (API 29) trở lên, sử dụng MediaStore API.
                 ContentResolver resolver = getContentResolver();
                 ContentValues contentValues = new ContentValues();
-                contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, pdfFileName); // Tên hiển thị của file.
-                contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf"); // Kiểu MIME của file (PDF).
-                // Đặt đường dẫn tương đối trong thư mục Tải xuống của ứng dụng.
+                contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName); // Sử dụng tên file người dùng nhập
+                contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
                 contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + File.separator + "MyPDFs");
-                // Chèn file mới vào MediaStore và nhận URI của nó.
+
                 finalPdfUri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues);
                 if (finalPdfUri != null) {
-                    // Mở OutputStream để ghi dữ liệu vào URI vừa tạo.
                     outputStream = resolver.openOutputStream(finalPdfUri);
                 }
             } else {
-                // Đối với Android 9 (Pie) trở xuống, lưu trực tiếp vào thư mục công khai.
                 File pdfDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "MyPDFs");
                 if (!pdfDir.exists()) {
-                    pdfDir.mkdirs(); // Tạo thư mục nếu nó chưa tồn tại.
+                    pdfDir.mkdirs();
                 }
-                File pdfFile = new File(pdfDir, pdfFileName);
-                outputStream = new FileOutputStream(pdfFile); // Mở FileOutputStream để ghi dữ liệu.
-                finalPdfUri = Uri.fromFile(pdfFile); // Lấy URI từ file đã tạo.
+                File pdfFile = new File(pdfDir, fileName); // Sử dụng tên file người dùng nhập
+                outputStream = new FileOutputStream(pdfFile);
+                finalPdfUri = Uri.fromFile(pdfFile);
             }
 
-            // Kiểm tra xem OutputStream có được mở thành công không.
             if (outputStream != null) {
-                document.writeTo(outputStream); // Ghi nội dung của tài liệu PDF vào OutputStream.
-                // Cập nhật UI thread với thông báo thành công.
+                document.writeTo(outputStream);
+                outputStream.flush();
+                outputStream.close();
+
+                final Uri uriAfterSave = finalPdfUri;
                 mainHandler.post(() -> {
-                    Toast.makeText(this, String.format(getString(R.string.pdf_creation_successful), pdfFileName), Toast.LENGTH_LONG).show();
-                    if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(String.format(getString(R.string.pdf_saved_at), (finalPdfUri != null ? finalPdfUri.getPath() : "Không xác định")));
-                    Log.d(TAG, "PDF saved at: " + (finalPdfUri != null ? finalPdfUri.toString() : "null"));
+                    Toast.makeText(this, String.format(getString(R.string.pdf_creation_successful), fileName), Toast.LENGTH_LONG).show();
+                    if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(String.format(getString(R.string.pdf_saved_at), (uriAfterSave != null ? uriAfterSave.getPath() : "Không xác định")));
+                    Log.d(TAG, "PDF saved at: " + (uriAfterSave != null ? uriAfterSave.toString() : "null"));
+                    currentPdfFileName = fileName; // Cập nhật tên file hiện tại đã lưu
+                    Intent intent = new Intent(PdfGenerationAndPreviewActivity.this, MainActivity.class);
+                    // Các cờ này giúp xóa tất cả các activity trên back stack hiện tại
+                    // và khởi tạo MainActivity như một tác vụ mới, đảm bảo rằng
+                    // người dùng không thể quay lại PdfGenerationAndPreviewActivity bằng nút Back.
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                    finish();  // Quay lại màn hình chính sau khi lưu
                 });
-
-                // Nếu URI PDF hợp lệ, hiển thị bản xem trước.
-                if (finalPdfUri != null) {
-                    final Uri uriToPreview = finalPdfUri;
-                    executorService.execute(() -> displayPdfPreview(uriToPreview));
-                } else {
-                    mainHandler.post(() -> Toast.makeText(this, getString(R.string.error_no_pdf_uri_for_preview), Toast.LENGTH_SHORT).show());
-                }
-
             } else {
                 throw new IOException("Không thể mở OutputStream để lưu PDF.");
             }
 
         } catch (IOException e) {
-            // Xử lý lỗi khi tạo hoặc lưu PDF, hiển thị thông báo trên UI thread.
             Log.e(TAG, "Lỗi khi tạo hoặc lưu PDF: " + e.getMessage(), e);
             mainHandler.post(() -> {
                 Toast.makeText(this, String.format(getString(R.string.error_creating_pdf), e.getMessage()), Toast.LENGTH_LONG).show();
                 if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(String.format(getString(R.string.error_creating_pdf), e.getMessage()));
             });
-            finalPdfUri = null; // Đặt lại URI nếu có lỗi.
+            finalPdfUri = null;
         } finally {
-            // Đảm bảo đóng tài liệu PDF và OutputStream để giải phóng tài nguyên.
             document.close();
             if (outputStream != null) {
                 try {
@@ -596,6 +589,39 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                 }
             });
         }
+    }
+
+    /**
+     * Phương thức mới để hiển thị hộp thoại đổi tên và sau đó lưu PDF.
+     */
+    private void showRenameDialogAndSavePdf() {
+        // Tạo tên file mặc định dựa trên thời gian
+        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+        String defaultFileName = "ScannedPdf_" + timestamp + ".pdf";
+
+        // Khởi tạo EditText cho hộp thoại
+        final EditText input = new EditText(this); // Sử dụng EditText từ android.widget
+        input.setText(defaultFileName); // Đặt tên mặc định vào EditText
+        input.setSelectAllOnFocus(true); // Chọn tất cả văn bản khi focus
+
+        new AlertDialog.Builder(this)
+                .setTitle("Lưu PDF")
+                .setMessage("Nhập tên cho tệp PDF:")
+                .setView(input)
+                .setPositiveButton("Lưu", (dialog, which) -> {
+                    String fileName = input.getText().toString().trim();
+                    if (fileName.isEmpty()) {
+                        fileName = defaultFileName; // Dùng tên mặc định nếu người dùng để trống
+                        Toast.makeText(this, "Tên tệp không được trống, sử dụng tên mặc định.", Toast.LENGTH_SHORT).show();
+                    }
+                    if (!fileName.endsWith(".pdf")) {
+                        fileName += ".pdf"; // Đảm bảo có đuôi .pdf
+                    }
+                    // Gọi phương thức kiểm tra quyền và lưu PDF với tên mới
+                    checkPermissionsAndSavePdf(processedBitmap, fileName);
+                })
+                .setNegativeButton("Hủy", (dialog, which) -> dialog.cancel())
+                .show();
     }
 
     /**
