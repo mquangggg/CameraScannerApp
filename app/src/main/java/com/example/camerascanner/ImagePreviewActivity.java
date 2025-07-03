@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.Rotate; // Import để xoay ảnh với Glide
 import com.bumptech.glide.request.RequestOptions; // Import RequestOptions
+import com.example.camerascanner.activitycrop.CropActivity;
 
 public class ImagePreviewActivity extends AppCompatActivity {
 

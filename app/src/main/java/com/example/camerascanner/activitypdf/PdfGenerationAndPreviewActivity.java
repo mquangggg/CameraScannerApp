@@ -1,4 +1,4 @@
-package com.example.camerascanner;
+package com.example.camerascanner.activitypdf;
 
 import android.Manifest;
 import android.content.ContentResolver;
@@ -45,6 +45,10 @@ import java.util.concurrent.Executors;
 
 import androidx.appcompat.app.AlertDialog;
 import android.widget.EditText; // Đảm bảo dòng này đã có hoặc thêm vào
+
+import com.example.camerascanner.R;
+import com.example.camerascanner.activitymain.MainActivity;
+
 /**
  * Activity này chịu trách nhiệm hiển thị bản xem trước của ảnh,
  * cho phép người dùng chọn kiểu PDF (ảnh gốc hoặc ảnh trắng đen),

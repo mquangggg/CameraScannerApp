@@ -21,18 +21,19 @@
         android:theme="@style/Theme.CameraScanner">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".activitymain.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".CameraActivity" android:exported="false" />
+        <activity android:name=".activitycamera.CameraActivity" android:exported="false" />
         <activity android:name=".ImagePreviewActivity" android:exported="false" />
-        <activity android:name=".CropActivity" android:exported="false"/>
-        <activity android:name=".PdfGenerationAndPreviewActivity" android:exported="false"/>
-        <activity android:name=".OCRActivity" android:exported="false"/>
+        <activity android:name=".activitycrop.CropActivity" android:exported="false"/>
+        <activity android:name=".activitypdf.PdfGenerationAndPreviewActivity" android:exported="false"/>
+        <activity android:name=".activityocr.OCRActivity" android:exported="false"/>
+        <activity android:name=".activitymain.OCRDetailActivity" android:exported="false"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"

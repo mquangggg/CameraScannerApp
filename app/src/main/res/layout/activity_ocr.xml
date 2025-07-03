@@ -37,7 +37,8 @@
         <View
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="wrap_content"/> </LinearLayout>
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
 
     <ImageView
         android:id="@+id/ivImageForOcr"
@@ -79,16 +80,7 @@
         android:background="@color/black"
         android:paddingTop="5dp"
         android:paddingBottom="5dp">
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btnSaveWord"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:background="#3d3d3d"
-            android:text="Word"
-            android:textColor="@color/white"
-            android:layout_marginStart="5dp"
-            android:layout_marginEnd="2dp"/>
+
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnCopyOCRText"
             android:layout_width="0dp"
@@ -99,12 +91,13 @@
             android:textColor="@color/white"
             android:layout_marginStart="5dp"
             android:layout_marginEnd="2dp"/>
-        <ImageButton
-            android:id="@+id/btnSaveOCRImage"
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnSaveOCRImageAndWord"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_confirm"
+            android:text="Lưu ảnh và tạo text! "
+            android:textColor="@color/white"
             android:background="@color/green_accent"
             android:scaleType="fitCenter"
             android:padding="8dp"

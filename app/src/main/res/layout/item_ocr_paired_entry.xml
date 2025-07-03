@@ -17,11 +17,12 @@
         android:gravity="center_vertical">
 
         <ImageView
-            android:id="@+id/ivPdfIcon"
+            android:id="@+id/ivOcrThumbnail"
             android:layout_width="64dp"
             android:layout_height="64dp"
+            android:scaleType="centerCrop"
             android:src="@drawable/ic_home_white"
-            android:contentDescription="PDF Icon" />
+            android:contentDescription="OCR Image Thumbnail" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -31,10 +32,10 @@
             android:layout_marginStart="16dp">
 
             <TextView
-                android:id="@+id/tvFileName"
+                android:id="@+id/tvOcrImageFileName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Ten_Tai_Lieu.pdf"
+                android:text="OCR_Image_yyyyMMdd_HHmmss.jpeg"
                 android:textColor="@android:color/white"
                 android:textSize="16sp"
                 android:textStyle="bold"
@@ -42,7 +43,17 @@
                 android:ellipsize="end"/>
 
             <TextView
-                android:id="@+id/tvFileDate"
+                android:id="@+id/tvOcrTextFileName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="OCR_Text_yyyyMMdd_HHmmss.txt"
+                android:textColor="#CCCCCC"
+                android:textSize="14sp"
+                android:maxLines="1"
+                android:ellipsize="end"/>
+
+            <TextView
+                android:id="@+id/tvOcrDate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Ngày: 01/07/2025"
@@ -50,7 +61,7 @@
                 android:textSize="12sp"/>
 
             <TextView
-                android:id="@+id/tvFileSize"
+                android:id="@+id/tvOcrTotalSize"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Kích thước: 1.2 MB"
@@ -59,16 +70,16 @@
         </LinearLayout>
 
         <ImageView
-            android:id="@+id/btnOpenFile"
+            android:id="@+id/btnOpenOcrItem"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:src="@drawable/ic_camera_white"
-            app:tint="@android:color/white"
+            android:src="@drawable/ic_home_white" app:tint="@android:color/white"
             android:layout_marginStart="16dp"
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Open File" />
+            android:contentDescription="Open OCR Item" />
 
     </LinearLayout>
+
 </androidx.cardview.widget.CardView>

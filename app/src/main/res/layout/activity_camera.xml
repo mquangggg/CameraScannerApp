@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#ADD8E6"
-    tools:context=".CameraActivity">
+    tools:context=".activitycamera.CameraActivity">
 
     <TextView
         android:id="@+id/textViewCameraTitle"
@@ -33,7 +33,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:background="@drawable/rounded_corner_background"
         android:clipToOutline="true" />
-    <com.example.camerascanner.CustomOverlayView
+    <com.example.camerascanner.activitycamera.CustomOverlayView
         android:id="@+id/customOverlayView"
         android:layout_width="0dp"
         android:layout_height="0dp"

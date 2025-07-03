@@ -1,5 +1,5 @@
 // CameraActivity.java
-package com.example.camerascanner;
+package com.example.camerascanner.activitycamera;
 
 import android.Manifest;
 import android.content.Intent;
@@ -12,7 +12,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -43,6 +42,9 @@ import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 
+import com.example.camerascanner.ImagePreviewActivity;
+import com.example.camerascanner.R;
+import com.example.camerascanner.activitycrop.CropActivity;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.common.util.concurrent.ListenableFuture;
 

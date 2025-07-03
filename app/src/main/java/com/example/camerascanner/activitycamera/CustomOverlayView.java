@@ -1,5 +1,5 @@
 // CustomOverlayView.java
-package com.example.camerascanner;
+package com.example.camerascanner.activitycamera;
 
 import android.content.Context;
 import android.graphics.Canvas;

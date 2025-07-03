@@ -1,4 +1,4 @@
-package com.example.camerascanner;
+package com.example.camerascanner.activitycrop;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -20,6 +20,9 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.canhub.cropper.CropImageView;
+import com.example.camerascanner.activityocr.OCRActivity;
+import com.example.camerascanner.activitypdf.PdfGenerationAndPreviewActivity;
+import com.example.camerascanner.R;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.TextRecognition;
