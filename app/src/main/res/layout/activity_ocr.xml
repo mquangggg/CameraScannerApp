@@ -44,33 +44,23 @@
         android:id="@+id/ivImageForOcr"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="14"
+        android:layout_weight="12"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
         android:layout_marginTop="5dp"
-        android:layout_marginBottom="5dp"
+        android:layout_marginBottom="2.5dp"
         android:scaleType="fitCenter"
         android:background="#3d3d3d"
-        android:contentDescription="Ảnh để trích xuất văn bản"/>
+        android:contentDescription="Ảnh gốc để trích xuất văn bản"/>
 
-    <EditText
-        android:id="@+id/editTextOCR"
+    <com.example.camerascanner.activityocr.OcrOverlayView
+        android:id="@+id/ocrOverlayView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="10"
-        android:background="@drawable/rounded_corner_background"
-        android:backgroundTint="#3d3d3d"
-        android:textColor="@color/white"
-        android:hint="Văn bản đã trích xuất sẽ hiện ở đây..."
-        android:textColorHint="#AAAAAA"
-        android:padding="10dp"
-        android:gravity="top|start"
-        android:inputType="textMultiLine"
-        android:scrollbars="vertical"
-        android:layout_marginStart="10dp"
+        android:layout_weight="12" android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
-        android:layout_marginBottom="5dp"/>
-
+        android:layout_marginTop="2.5dp" android:layout_marginBottom="5dp"
+        android:background="@android:color/white" />
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"

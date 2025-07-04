@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#ADD8E6"
+    android:background="#3d3d3d"
     tools:context=".activitycamera.CameraActivity">
 
     <TextView
@@ -17,8 +17,7 @@
         android:textSize="24sp"
         android:textStyle="bold"
         android:padding="16dp"
-        android:background="#ADD8E6"
-        android:textColor="@color/black"
+        android:textColor="@color/white"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -85,31 +84,34 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            android:layout_marginStart="60dp"/>
+            android:layout_marginStart="30dp"/>
 
         <!-- Nút chụp hình ở giữa -->
+
+        <!-- Nút chọn ảnh (gallery) ở bên phải -->
+
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/btnTakePhoto"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:backgroundTint="@color/green_accent"
             android:src="@drawable/ic_camera_white"
-            android:backgroundTint="@color/white"
-            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@id/btnClose"
             app:layout_constraintEnd_toStartOf="@id/btnSelectImage"
-            app:layout_constraintHorizontal_bias="0.5"/>
+            app:layout_constraintHorizontal_bias="0.553"
+            app:layout_constraintStart_toEndOf="@id/btnClose"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.578" />
 
-        <!-- Nút chọn ảnh (gallery) ở bên phải -->
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/btnSelectImage"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:src="@drawable/gallery"
             android:background="@drawable/gallery"
             android:scaleType="centerInside"
             android:clipToOutline="true"
-            android:layout_marginEnd="50dp"
+            android:layout_marginEnd="30dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>

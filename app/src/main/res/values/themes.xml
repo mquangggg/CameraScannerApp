@@ -10,4 +10,11 @@
     </style>
 
     <style name="Theme.CameraScanner" parent="Base.Theme.CameraScanner" />
+    <style name="Divider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item> // Chiều cao 1dp tạo ra một đường kẻ mỏng
+        <item name="android:background">@android:color/darker_gray</item> // Màu xám đậm
+        <item name="android:layout_marginStart">16dp</item>
+        <item name="android:layout_marginEnd">16dp</item>
+    </style>
 </resources>

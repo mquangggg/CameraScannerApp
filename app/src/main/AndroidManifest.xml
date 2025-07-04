@@ -4,6 +4,7 @@
     package="com.example.camerascanner">
 
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.any" />
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" /> <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
@@ -34,6 +35,7 @@
         <activity android:name=".activitypdf.PdfGenerationAndPreviewActivity" android:exported="false"/>
         <activity android:name=".activityocr.OCRActivity" android:exported="false"/>
         <activity android:name=".activitymain.OCRDetailActivity" android:exported="false"/>
+        <activity android:name=".activitymain.MeActivity" android:exported="false"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"

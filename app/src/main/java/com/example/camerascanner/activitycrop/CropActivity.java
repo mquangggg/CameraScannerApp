@@ -34,22 +34,44 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 
+/**
+ * CropActivity cho phép người dùng cắt (crop) ảnh bằng cách chọn 4 điểm.
+ * Nó cũng tích hợp chức năng nhận diện văn bản (OCR) để tự động đề xuất vùng cắt
+ * và cho phép chuyển ảnh đã cắt sang Activity tạo PDF hoặc OCR.
+ */
 public class CropActivity extends AppCompatActivity {
 
-    private static final String TAG = "CropActivity";
-    private CropImageView cropImageView;
-    private CustomCropView customCropView;
-    private Button btnHuyCrop, btnYesCrop , btnMakeOCR;
-    private Uri imageUriToCrop;
-    private TextRecognizer textRecognizer;
-    private Bitmap originalBitmapLoaded;
-    private MagnifierView magnifierView;
+    private static final String TAG = "CropActivity"; // Thẻ (tag) dùng để ghi log
 
+    // Khai báo các thành phần UI
+    private CropImageView cropImageView; // CropImageView từ thư viện để hiển thị ảnh
+    private CustomCropView customCropView; // Custom View để người dùng vẽ các điểm cắt
+    private Button btnHuyCrop, btnYesCrop, btnMakeOCR; // Các nút chức năng
+    private MagnifierView magnifierView; // Kính lúp để hỗ trợ chọn điểm chính xác hơn
+
+    // URI của ảnh đầu vào cần cắt
+    private Uri imageUriToCrop;
+    // Đối tượng TextRecognizer từ ML Kit để nhận dạng văn bản
+    private TextRecognizer textRecognizer;
+    // Bitmap của ảnh gốc sau khi được tải từ URI
+    private Bitmap originalBitmapLoaded;
+
+
+    /**
+     * Phương thức được gọi khi Activity lần đầu tiên được tạo.
+     * Thiết lập layout, ánh xạ các View, khởi tạo TextRecognizer,
+     * lấy URI ảnh từ Intent, tải ảnh, xử lý nhận diện văn bản tự động đề xuất vùng cắt,
+     * và thiết lập các sự kiện click cho các nút.
+     *
+     * @param savedInstanceState Đối tượng Bundle chứa trạng thái Activity trước đó nếu có.
+     */
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Đặt layout cho Activity này. Chú ý tên layout đã thay đổi so với phiên bản trước
         setContentView(R.layout.activity_cropimage);
 
+        // Ánh xạ các View từ layout XML
         cropImageView = findViewById(R.id.cropImageView);
         customCropView = findViewById(R.id.customCropView);
         btnHuyCrop = findViewById(R.id.btnHuyCrop);
@@ -57,10 +79,13 @@ public class CropActivity extends AppCompatActivity {
         magnifierView = findViewById(R.id.magnifierView);
         btnMakeOCR = findViewById(R.id.btnMakeOCR);
 
+        // Khởi tạo TextRecognizer để nhận dạng văn bản Latin
         textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
 
+        // Thiết lập MagnifierView cho CustomCropView để hiển thị kính lúp khi chạm
         customCropView.setMagnifierView(magnifierView);
 
+        // Kiểm tra và lấy URI ảnh từ Intent
         if (getIntent().getExtras() != null && getIntent().getExtras().containsKey("imageUri")) {
             // Lấy URI dưới dạng String và chuyển đổi nó thành đối tượng Uri
             String imageUriString = getIntent().getStringExtra("imageUri");
@@ -68,18 +93,25 @@ public class CropActivity extends AppCompatActivity {
                 imageUriToCrop = Uri.parse(imageUriString);
 
                 if (imageUriToCrop != null) {
+                    // Thiết lập ảnh cho CropImageView (từ thư viện)
                     cropImageView.setImageUriAsync(imageUriToCrop);
+                    // Tắt hiển thị đường kẻ hướng dẫn mặc định của CropImageView (không dùng để cắt)
                     cropImageView.setGuidelines(CropImageView.Guidelines.OFF);
+
                     try {
+                        // Tải Bitmap gốc từ URI để xử lý nội bộ (ví dụ: chuyển đổi tọa độ, nhận diện văn bản)
                         originalBitmapLoaded = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUriToCrop);
                         if (originalBitmapLoaded != null) {
-                            cropImageView.post(() -> {
+                            // Sử dụng post để đảm bảo các View đã được đo lường và có kích thước
+                            customCropView.post(() -> {
+                                // Tính toán ma trận chuyển đổi từ tọa độ ảnh sang tọa độ View
                                 Matrix imageToViewMatrix = getImageToViewMatrix(
                                         originalBitmapLoaded.getWidth(),
-                                        originalBitmapLoaded.getHeight(),
+                                        originalBitmapLoaded.getHeight(), // Đã sửa lỗi chính tả: nên là originalBitmapLoaded.getHeight()
                                         customCropView.getWidth(),
                                         customCropView.getHeight()
                                 );
+                                // Tính toán ma trận chuyển đổi ngược lại (từ View sang ảnh)
                                 Matrix viewToImageMatrix = new Matrix();
                                 imageToViewMatrix.invert(viewToImageMatrix);
 
@@ -88,89 +120,115 @@ public class CropActivity extends AppCompatActivity {
                                 float[] viewToImageValues = new float[9];
                                 viewToImageMatrix.getValues(viewToImageValues);
 
+                                // Thiết lập dữ liệu ảnh và ma trận cho CustomCropView
                                 customCropView.setImageData(originalBitmapLoaded, imageToViewValues, viewToImageValues);
 
+                                // Bắt đầu quá trình nhận diện văn bản để tự động thiết lập vùng cắt ban đầu
                                 processImageForTextDetection(imageUriToCrop);
                             });
                         }
                     } catch (IOException e) {
+                        // Ghi log lỗi và hiển thị thông báo cho người dùng
                         Log.e(TAG, getString(R.string.error_loading_original_bitmap) + e.getMessage(), e);
                         Toast.makeText(this, "Lỗi khi tải ảnh gốc để nhận diện văn bản.", Toast.LENGTH_SHORT).show();
                     }
                 } else {
+                    // Thông báo và đóng Activity nếu URI không hợp lệ
                     Toast.makeText(this, getString(R.string.no_image_uri_received_for_cropping), Toast.LENGTH_SHORT).show();
                     finish();
                 }
             } else {
+                // Thông báo và đóng Activity nếu không có URI ảnh
                 Toast.makeText(this, getString(R.string.no_image_uri_received_for_cropping), Toast.LENGTH_SHORT).show();
                 finish();
             }
         } else {
+            // Thông báo và đóng Activity nếu không có URI ảnh được truyền
             Toast.makeText(this, getString(R.string.no_image_to_crop), Toast.LENGTH_SHORT).show();
             finish();
         }
 
+        // Thiết lập sự kiện click cho nút "Hủy Crop"
         btnHuyCrop.setOnClickListener(v -> {
-            setResult(RESULT_CANCELED);
-            finish();
+            setResult(RESULT_CANCELED); // Đặt kết quả là hủy
+            finish(); // Đóng Activity
         });
 
+        // Thiết lập sự kiện click cho nút "Đồng ý Crop" (Lưu PDF)
         btnYesCrop.setOnClickListener(v -> {
+            // Lấy các điểm cắt đã chọn từ CustomCropView
             ArrayList<PointF> cropPoints = customCropView.getCropPoints();
             if (cropPoints.size() != 4) {
+                // Yêu cầu người dùng chọn đủ 4 điểm
                 Toast.makeText(this, getString(R.string.please_select_4_points_to_crop), Toast.LENGTH_SHORT).show();
                 return;
             }
 
+            // Chuyển đổi tọa độ các điểm từ View sang Bitmap
             ArrayList<PointF> transformedPoints = new ArrayList<>();
             for (PointF point : cropPoints) {
                 float[] bitmapCoords = transformViewPointToBitmapPoint(point.x, point.y);
                 transformedPoints.add(new PointF(bitmapCoords[0], bitmapCoords[1]));
             }
 
+            // Cắt Bitmap dựa trên 4 điểm đã chọn
             Bitmap croppedBitmap = cropBitmapByPoints(originalBitmapLoaded, transformedPoints);
             if (croppedBitmap != null) {
-                Uri croppedUri = saveBitmapToCache(croppedBitmap);
+                // Lưu ảnh đã cắt vào cache và lấy URI
+                Uri croppedUri = saveBitmapToCache(croppedBitmap); // Sử dụng saveBitmapToCache (không phải saveBitmapToCacheAndGetUri)
+                // Chuyển sang PdfGenerationAndPreviewActivity để tạo và xem trước PDF
                 Intent intent = new Intent(CropActivity.this, PdfGenerationAndPreviewActivity.class);
-                intent.putExtra("croppedUri", croppedUri);
+                intent.putExtra("croppedUri", croppedUri); // Truyền URI của ảnh đã cắt
                 startActivity(intent);
-                finish();
+                finish(); // Đóng Activity hiện tại
             } else {
+                // Thông báo lỗi nếu không thể cắt ảnh
                 Toast.makeText(this, getString(R.string.error_cropping_image), Toast.LENGTH_SHORT).show();
             }
         });
 
-        btnMakeOCR.setOnClickListener(v->{
+        // Thiết lập sự kiện click cho nút "Thực hiện OCR"
+        btnMakeOCR.setOnClickListener(v -> {
+            // Lấy các điểm cắt đã chọn từ CustomCropView
             ArrayList<PointF> cropPoints = customCropView.getCropPoints();
             if (cropPoints.size() != 4) {
+                // Yêu cầu người dùng chọn đủ 4 điểm
                 Toast.makeText(this, getString(R.string.please_select_4_points_to_crop), Toast.LENGTH_SHORT).show();
                 return;
             }
 
+            // Chuyển đổi tọa độ các điểm từ View sang Bitmap
             ArrayList<PointF> transformedPoints = new ArrayList<>();
             for (PointF point : cropPoints) {
                 float[] bitmapCoords = transformViewPointToBitmapPoint(point.x, point.y);
                 transformedPoints.add(new PointF(bitmapCoords[0], bitmapCoords[1]));
             }
 
+            // Cắt Bitmap dựa trên 4 điểm đã chọn
             Bitmap croppedBitmap = cropBitmapByPoints(originalBitmapLoaded, transformedPoints);
             if (croppedBitmap != null) {
-                Uri croppedUri = saveBitmapToCache(croppedBitmap);
+                // Lưu ảnh đã cắt vào cache và lấy URI
+                Uri croppedUri = saveBitmapToCache(croppedBitmap); // Sử dụng saveBitmapToCache (không phải saveBitmapToCacheAndGetUri)
+                // Chuyển sang OCRActivity để nhận dạng văn bản
                 Intent intent = new Intent(CropActivity.this, OCRActivity.class);
-                intent.putExtra(OCRActivity.EXTRA_IMAGE_URI_FOR_OCR, croppedUri);
+                intent.putExtra(OCRActivity.EXTRA_IMAGE_URI_FOR_OCR, croppedUri); // Truyền URI của ảnh đã cắt
                 startActivity(intent);
-                finish();
+                finish(); // Đóng Activity hiện tại
             } else {
+                // Thông báo lỗi nếu không thể cắt ảnh
                 Toast.makeText(this, getString(R.string.error_cropping_image), Toast.LENGTH_SHORT).show();
             }
         });
     }
+
     /**
      * Phương thức trợ giúp để lưu Bitmap vào thư mục cache của ứng dụng và trả về Uri của tệp đã lưu.
      * Tệp này là tạm thời và sẽ được xóa khi ứng dụng cần không gian hoặc khi onDestroy của OCRActivity được gọi.
      *
      * @param bitmap Bitmap cần lưu.
      * @return Uri của tệp đã lưu, hoặc null nếu có lỗi.
+     * @deprecated Phương thức này có vẻ không được sử dụng và có một phương thức tương tự `saveBitmapToCache` bên dưới.
+     * Cân nhắc hợp nhất hoặc xóa nếu không cần thiết.
      */
     private Uri saveBitmapToCacheAndGetUri(Bitmap bitmap) {
         String fileName = "cropped_temp_" + System.currentTimeMillis() + ".jpeg";
@@ -200,9 +258,20 @@ public class CropActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Cắt một Bitmap dựa trên một tập hợp 4 điểm được cung cấp.
+     * Các điểm này định nghĩa một vùng hình chữ nhật để cắt từ ảnh nguồn.
+     *
+     * @param sourceBitmap Bitmap nguồn cần cắt.
+     * @param points       Một ArrayList chứa 4 đối tượng PointF, đại diện cho các góc của vùng cắt
+     * (thứ tự không quan trọng cho việc xác định min/max X/Y).
+     * @return Bitmap đã cắt, hoặc null nếu sourceBitmap rỗng, số điểm không phải là 4,
+     * hoặc vùng cắt không hợp lệ (chiều rộng/chiều cao <= 0).
+     */
     private Bitmap cropBitmapByPoints(Bitmap sourceBitmap, ArrayList<PointF> points) {
         if (sourceBitmap == null || points.size() != 4) return null;
 
+        // Tìm tọa độ nhỏ nhất và lớn nhất của vùng cắt (minX, minY, maxX, maxY)
         float minX = Float.MAX_VALUE, minY = Float.MAX_VALUE;
         float maxX = Float.MIN_VALUE, maxY = Float.MIN_VALUE;
         for (PointF point : points) {
@@ -212,75 +281,111 @@ public class CropActivity extends AppCompatActivity {
             maxY = Math.max(maxY, point.y);
         }
 
+        // Đảm bảo tọa độ nằm trong giới hạn của bitmap nguồn
         minX = Math.max(0f, minX);
         minY = Math.max(0f, minY);
         maxX = Math.min((float) sourceBitmap.getWidth(), maxX);
         maxY = Math.min((float) sourceBitmap.getHeight(), maxY);
 
+        // Tính toán chiều rộng và chiều cao của vùng cắt
         int width = (int) (maxX - minX);
         int height = (int) (maxY - minY);
-        if (width <= 0 || height <= 0) return null;
+        if (width <= 0 || height <= 0) return null; // Trả về null nếu vùng cắt không hợp lệ
 
+        // Tạo một Bitmap mới để chứa kết quả đã cắt
         Bitmap resultBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(resultBitmap);
+        Canvas canvas = new Canvas(resultBitmap); // Tạo Canvas để vẽ lên resultBitmap
         Paint paint = new Paint();
-        paint.setAntiAlias(true);
+        paint.setAntiAlias(true); // Bật khử răng cưa cho nét vẽ mượt mà
 
+        // Tạo một Path (đường dẫn) cho vùng cắt, điều chỉnh tọa độ để phù hợp với Canvas của resultBitmap
         Path adjustedPath = new Path();
         adjustedPath.moveTo(points.get(0).x - minX, points.get(0).y - minY);
         for (int i = 1; i < points.size(); i++) {
             adjustedPath.lineTo(points.get(i).x - minX, points.get(i).y - minY);
         }
-        adjustedPath.close();
+        adjustedPath.close(); // Đóng đường dẫn để tạo thành một hình khép kín
 
+        // Vẽ đường dẫn lên Canvas. Bước này chỉ để tạo mask.
         canvas.drawPath(adjustedPath, paint);
+        // Thiết lập Xfermode để chỉ giữ lại phần ảnh nằm trong Path
         paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        // Vẽ bitmap nguồn lên canvas với offset để chỉ phần trong vùng cắt được hiển thị
         canvas.drawBitmap(sourceBitmap, -minX, -minY, paint);
 
         return resultBitmap;
     }
 
+    /**
+     * Lưu một Bitmap vào thư mục cache của ứng dụng và trả về Uri của tệp đã lưu.
+     * Đây là phương thức được sử dụng để lưu ảnh đã cắt trước khi truyền sang Activity khác.
+     *
+     * @param bitmap Bitmap cần lưu.
+     * @return Uri của tệp đã lưu, hoặc null nếu có lỗi.
+     */
     private Uri saveBitmapToCache(Bitmap bitmap) {
         String fileName = "cropped_image_" + System.currentTimeMillis() + ".jpeg";
-        File cachePath = new File(getCacheDir(), "cropped_images");
-        cachePath.mkdirs();
+        File cachePath = new File(getCacheDir(), "cropped_images"); // Thư mục con để lưu ảnh cắt
+        cachePath.mkdirs(); // Tạo thư mục nếu nó chưa tồn tại
         File file = new File(cachePath, fileName);
 
         try (FileOutputStream fos = new FileOutputStream(file)) {
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos);
-            fos.flush();
-            return Uri.fromFile(file);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos); // Nén ảnh với chất lượng 90%
+            fos.flush(); // Đảm bảo tất cả dữ liệu được ghi
+            return Uri.fromFile(file); // Trả về URI từ File
         } catch (IOException e) {
+            // Ghi log lỗi và hiển thị thông báo
             Log.e(TAG, getString(R.string.error_saving_cropped_bitmap) + e.getMessage(), e);
             return null;
         }
     }
 
+    /**
+     * Xử lý ảnh để nhận diện văn bản bằng ML Kit.
+     * Nếu nhận diện thành công, các bounding box của văn bản sẽ được dùng
+     * để tự động thiết lập các điểm cắt ban đầu trên CustomCropView.
+     *
+     * @param imageUri URI của ảnh cần xử lý nhận diện văn bản.
+     */
     private void processImageForTextDetection(Uri imageUri) {
         try {
+            // Tạo đối tượng InputImage từ URI
             InputImage inputImage = InputImage.fromFilePath(this, imageUri);
+            // Bắt đầu quá trình nhận diện văn bản
             textRecognizer.process(inputImage)
                     .addOnSuccessListener(text -> {
+                        // Khi nhận diện thành công, thiết lập các điểm cắt ban đầu
                         if (originalBitmapLoaded != null) {
                             setInitialCropPointsFromText(text, originalBitmapLoaded.getWidth(), originalBitmapLoaded.getHeight());
                         }
                     })
                     .addOnFailureListener(e -> {
+                        // Xử lý lỗi nếu quá trình nhận diện văn bản thất bại
                         Log.e(TAG, "Lỗi khi nhận dạng văn bản: " + e.getMessage(), e);
                         Toast.makeText(this, getString(R.string.error_text_recognition_failed), Toast.LENGTH_SHORT).show();
                     });
         } catch (Exception e) {
+            // Xử lý lỗi nếu không thể tạo InputImage từ URI
             Log.e(TAG, "Lỗi khi tạo InputImage từ URI: " + e.getMessage(), e);
             Toast.makeText(this, getString(R.string.error_creating_input_image_for_text_detection), Toast.LENGTH_SHORT).show();
         }
     }
 
+    /**
+     * Thiết lập các điểm cắt ban đầu trên CustomCropView dựa trên vùng văn bản được nhận dạng.
+     * Nếu không tìm thấy văn bản, vùng cắt sẽ bao gồm toàn bộ ảnh.
+     *
+     * @param recognizedText Đối tượng Text chứa kết quả nhận diện văn bản.
+     * @param bitmapWidth    Chiều rộng của Bitmap gốc.
+     * @param bitmapHeight   Chiều cao của Bitmap gốc.
+     */
     private void setInitialCropPointsFromText(Text recognizedText, int bitmapWidth, int bitmapHeight) {
         int minX = Integer.MAX_VALUE;
         int minY = Integer.MAX_VALUE;
         int maxX = Integer.MIN_VALUE;
         int maxY = Integer.MIN_VALUE;
 
+        // Tìm bounding box tổng hợp của tất cả các khối văn bản
         if (!recognizedText.getTextBlocks().isEmpty()) {
             for (Text.TextBlock block : recognizedText.getTextBlocks()) {
                 android.graphics.Rect boundingBox = block.getBoundingBox();
@@ -295,96 +400,143 @@ public class CropActivity extends AppCompatActivity {
 
         ArrayList<PointF> initialBitmapPoints = new ArrayList<>();
 
+        // Nếu không tìm thấy văn bản, thiết lập vùng cắt là toàn bộ ảnh
         if (minX == Integer.MAX_VALUE) {
             Log.d(TAG, "Không tìm thấy văn bản hoặc bounding box hợp lệ. Sử dụng toàn bộ ảnh.");
-            initialBitmapPoints.add(new PointF(0, 0)); // Top-left
-            initialBitmapPoints.add(new PointF(bitmapWidth, 0)); // Top-right
-            initialBitmapPoints.add(new PointF(bitmapWidth, bitmapHeight)); // Bottom-right
-            initialBitmapPoints.add(new PointF(0, bitmapHeight)); // Bottom-left
+            initialBitmapPoints.add(new PointF(0, 0)); // Góc trên-trái
+            initialBitmapPoints.add(new PointF(bitmapWidth, 0)); // Góc trên-phải
+            initialBitmapPoints.add(new PointF(bitmapWidth, bitmapHeight)); // Góc dưới-phải
+            initialBitmapPoints.add(new PointF(0, bitmapHeight)); // Góc dưới-trái
         } else {
-            int padding = 20;
+            // Thêm một khoảng đệm (padding) xung quanh vùng văn bản được tìm thấy
+            int padding = 20; // Đệm 20 pixel
             minX = Math.max(0, minX - padding);
             minY = Math.max(0, minY - padding);
             maxX = Math.min(bitmapWidth, maxX + padding);
             maxY = Math.min(bitmapHeight, maxY + padding);
 
-            initialBitmapPoints.add(new PointF(minX, minY)); // Top-left
-            initialBitmapPoints.add(new PointF(maxX, minY)); // Top-right
-            initialBitmapPoints.add(new PointF(maxX, maxY)); // Bottom-right
-            initialBitmapPoints.add(new PointF(minX, maxY)); // Bottom-left
+            // Thêm các điểm của vùng văn bản đã có padding vào danh sách
+            initialBitmapPoints.add(new PointF(minX, minY)); // Góc trên-trái
+            initialBitmapPoints.add(new PointF(maxX, minY)); // Góc trên-phải
+            initialBitmapPoints.add(new PointF(maxX, maxY)); // Góc dưới-phải
+            initialBitmapPoints.add(new PointF(minX, maxY)); // Góc dưới-trái
             Log.d(TAG, "Đã thiết lập các điểm cắt tự động theo văn bản.");
             Toast.makeText(this, getString(R.string.text_area_auto_detected), Toast.LENGTH_SHORT).show();
         }
 
+        // Xóa các điểm cũ và thêm các điểm mới đã chuyển đổi sang tọa độ View
         customCropView.clearPoints();
         for (PointF point : initialBitmapPoints) {
             customCropView.addPoint(transformBitmapPointToViewPoint(point.x, point.y));
         }
-        customCropView.invalidate();
+        customCropView.invalidate(); // Vẽ lại CustomCropView để hiển thị các điểm mới
     }
 
+    /**
+     * Chuyển đổi một điểm từ tọa độ của Bitmap sang tọa độ của View.
+     *
+     * @param bitmapX Tọa độ X trên Bitmap.
+     * @param bitmapY Tọa độ Y trên Bitmap.
+     * @return Đối tượng PointF với tọa độ đã được chuyển đổi sang View.
+     */
     private PointF transformBitmapPointToViewPoint(float bitmapX, float bitmapY) {
+        // Kiểm tra điều kiện để tránh lỗi chia cho 0 hoặc truy cập null
         if (originalBitmapLoaded == null || customCropView.getWidth() == 0 || customCropView.getHeight() == 0) {
-            return new PointF(bitmapX, bitmapY);
+            return new PointF(bitmapX, bitmapY); // Trả về nguyên bản nếu không đủ thông tin
         }
 
+        // Lấy ma trận chuyển đổi từ ảnh sang View
         Matrix matrix = getImageToViewMatrix(originalBitmapLoaded.getWidth(), originalBitmapLoaded.getHeight(),
                 customCropView.getWidth(), customCropView.getHeight());
-        float[] pts = {bitmapX, bitmapY};
-        matrix.mapPoints(pts);
-        return new PointF(pts[0], pts[1]);
+        float[] pts = {bitmapX, bitmapY}; // Tạo mảng chứa tọa độ điểm
+        matrix.mapPoints(pts); // Áp dụng ma trận để chuyển đổi tọa độ
+        return new PointF(pts[0], pts[1]); // Trả về điểm đã chuyển đổi
     }
 
+    /**
+     * Chuyển đổi một điểm từ tọa độ của View sang tọa độ của Bitmap.
+     *
+     * @param viewX Tọa độ X trên View.
+     * @param viewY Tọa độ Y trên View.
+     * @return Mảng float chứa tọa độ [X, Y] đã được chuyển đổi sang Bitmap.
+     */
     private float[] transformViewPointToBitmapPoint(float viewX, float viewY) {
+        // Kiểm tra điều kiện để tránh lỗi chia cho 0 hoặc truy cập null
         if (originalBitmapLoaded == null || customCropView.getWidth() == 0 || customCropView.getHeight() == 0) {
-            return new float[]{viewX, viewY};
+            return new float[]{viewX, viewY}; // Trả về nguyên bản nếu không đủ thông tin
         }
 
+        // Lấy ma trận chuyển đổi từ ảnh sang View
         Matrix imageToViewMatrix = getImageToViewMatrix(originalBitmapLoaded.getWidth(), originalBitmapLoaded.getHeight(),
                 customCropView.getWidth(), customCropView.getHeight());
         Matrix viewToImageMatrix = new Matrix();
-        imageToViewMatrix.invert(viewToImageMatrix);
+        imageToViewMatrix.invert(viewToImageMatrix); // Lấy ma trận nghịch đảo (từ View sang ảnh)
 
-        float[] pts = {viewX, viewY};
-        viewToImageMatrix.mapPoints(pts);
-        return new float[]{pts[0], pts[1]};
+        float[] pts = {viewX, viewY}; // Tạo mảng chứa tọa độ điểm
+        viewToImageMatrix.mapPoints(pts); // Áp dụng ma trận nghịch đảo để chuyển đổi tọa độ
+        return new float[]{pts[0], pts[1]}; // Trả về điểm đã chuyển đổi
     }
 
+    /**
+     * Tính toán ma trận chuyển đổi để đưa một Bitmap vừa vặn vào một View,
+     * giữ nguyên tỷ lệ khung hình và căn giữa.
+     *
+     * @param bitmapWidth  Chiều rộng của Bitmap.
+     * @param bitmapHeight Chiều cao của Bitmap.
+     * @param viewWidth    Chiều rộng của View.
+     * @param viewHeight   Chiều cao của View.
+     * @return Đối tượng Matrix chứa các phép biến đổi (tỷ lệ và dịch chuyển).
+     */
     private Matrix getImageToViewMatrix(int bitmapWidth, int bitmapHeight, int viewWidth, int viewHeight) {
         Matrix matrix = new Matrix();
         float scale;
-        float dx = 0, dy = 0;
+        float dx = 0, dy = 0; // Các giá trị dịch chuyển
 
+        // Tính toán tỷ lệ theo chiều rộng và chiều cao
         float scaleX = (float) viewWidth / bitmapWidth;
         float scaleY = (float) viewHeight / bitmapHeight;
 
+        // Chọn tỷ lệ nhỏ hơn để đảm bảo toàn bộ ảnh vừa với View mà không bị cắt
         if (scaleX < scaleY) {
             scale = scaleX;
+            // Tính toán dịch chuyển theo chiều Y để căn giữa ảnh theo chiều dọc
             dy = (viewHeight - bitmapHeight * scale) / 2f;
         } else {
             scale = scaleY;
+            // Tính toán dịch chuyển theo chiều X để căn giữa ảnh theo chiều ngang
             dx = (viewWidth - bitmapWidth * scale) / 2f;
         }
 
-        matrix.postScale(scale, scale);
-        matrix.postTranslate(dx, dy);
+        matrix.postScale(scale, scale); // Áp dụng tỷ lệ
+        matrix.postTranslate(dx, dy); // Áp dụng dịch chuyển để căn giữa
         return matrix;
     }
 
+    /**
+     * Phương thức được gọi khi Activity trở nên hiển thị với người dùng.
+     * (Không có logic cụ thể nào trong phương thức này ở đây, thường dùng để khởi tạo
+     * hoặc tải lại dữ liệu mà cần Activity hiển thị).
+     */
     @Override
     protected void onStart() {
         super.onStart();
     }
 
+    /**
+     * Phương thức được gọi khi Activity bị hủy.
+     * Đảm bảo rằng TextRecognizer được đóng để giải phóng tài nguyên.
+     * Cũng giải phóng Bitmap gốc để tránh rò rỉ bộ nhớ.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
         if (textRecognizer != null) {
-            textRecognizer.close();
+            textRecognizer.close(); // Đóng TextRecognizer
         }
-        if (originalBitmapLoaded != null) {
-            originalBitmapLoaded.recycle();
-            originalBitmapLoaded = null;
+        // Giải phóng bitmap gốc đã tải nếu nó tồn tại và chưa được giải phóng
+        if (originalBitmapLoaded != null && !originalBitmapLoaded.isRecycled()) {
+            originalBitmapLoaded.recycle(); // Giải phóng bộ nhớ của bitmap
+            originalBitmapLoaded = null; // Đặt về null
         }
     }
 }

@@ -1,6 +1,8 @@
 package com.example.camerascanner;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log; // Import Log
@@ -15,6 +17,10 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.Rotate; // Import để xoay ảnh với Glide
 import com.bumptech.glide.request.RequestOptions; // Import RequestOptions
 import com.example.camerascanner.activitycrop.CropActivity;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class ImagePreviewActivity extends AppCompatActivity {
 
@@ -55,14 +61,56 @@ public class ImagePreviewActivity extends AppCompatActivity {
         });
 
         btnConfirmPreview.setOnClickListener(v -> {
-            // Chuyển sang CropActivity
-            Intent cropIntent = new Intent(ImagePreviewActivity.this, CropActivity.class);
-            // TRUYỀN imageUri VÀO ĐÂY BẰNG CÁCH SỬ DỤNG putExtra
-            cropIntent.putExtra("imageUri", imageUri.toString()); // Dòng này đã được thêm vào/sửa
-            Log.d(TAG, "ImagePreviewActivity: Launching CropActivity with URI: " + imageUri.toString()); // Log khi gửi URI
-            startActivityForResult(cropIntent, REQUEST_CODE_CROP_IMAGE); // Sử dụng startActivityForResult để nhận kết quả từ Crop
+            Bitmap rotatedBitmap = null;
+            if (imageViewPreview.getDrawable() instanceof BitmapDrawable) {
+                rotatedBitmap = ((BitmapDrawable) imageViewPreview.getDrawable()).getBitmap();
+            }
+
+            if (rotatedBitmap != null) {
+                // Lưu Bitmap đã xoay vào bộ nhớ cache và lấy URI mới
+                Uri tempUri = saveBitmapToCache(rotatedBitmap);
+                if (tempUri != null) {
+                    Intent cropIntent = new Intent(ImagePreviewActivity.this, CropActivity.class);
+                    cropIntent.putExtra("imageUri", tempUri.toString());
+                    Log.d(TAG, "ImagePreviewActivity: Launching CropActivity with TEMPORARY URI: " + tempUri.toString());
+                    startActivityForResult(cropIntent, REQUEST_CODE_CROP_IMAGE);
+                } else {
+                    Toast.makeText(this, "Lỗi khi lưu ảnh đã xoay.", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "ImagePreviewActivity: Failed to save rotated bitmap to cache.");
+                }
+            } else {
+                Toast.makeText(this, "Không thể lấy ảnh đã xoay để xử lý.", Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "ImagePreviewActivity: Could not get bitmap from ImageView.");
+            }
         });
     }
+    private Uri saveBitmapToCache(Bitmap bitmap) {
+        String fileName = "rotated_temp_" + System.currentTimeMillis() + ".jpeg";
+        File cachePath = new File(getCacheDir(), "rotated_images");
+        cachePath.mkdirs(); // Tạo thư mục nếu nó chưa tồn tại
+
+        File file = new File(cachePath, fileName);
+
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos);
+            fos.flush();
+            return Uri.fromFile(file);
+        } catch (IOException e) {
+            Log.e(TAG, "Error saving bitmap to cache: " + e.getMessage(), e);
+            return null;
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    Log.e(TAG, "Error closing FileOutputStream: " + e.getMessage(), e);
+                }
+            }
+        }
+    }
+
 
     // Phương thức tải ảnh với góc xoay hiện tại
     private void loadImageWithRotation() {
