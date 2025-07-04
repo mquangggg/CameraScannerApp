@@ -40,27 +40,30 @@
             android:layout_height="wrap_content"/>
     </LinearLayout>
 
-    <ImageView
-        android:id="@+id/ivImageForOcr"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="12"
+        android:layout_weight="12" android:orientation="vertical"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
         android:layout_marginTop="5dp"
-        android:layout_marginBottom="2.5dp"
-        android:scaleType="fitCenter"
-        android:background="#3d3d3d"
-        android:contentDescription="Ảnh gốc để trích xuất văn bản"/>
+        android:layout_marginBottom="5dp">
 
-    <com.example.camerascanner.activityocr.OcrOverlayView
-        android:id="@+id/ocrOverlayView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="12" android:layout_marginStart="10dp"
-        android:layout_marginEnd="10dp"
-        android:layout_marginTop="2.5dp" android:layout_marginBottom="5dp"
-        android:background="@android:color/white" />
+        <ImageView
+            android:id="@+id/ivImageForOcr"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" android:scaleType="fitCenter"
+            android:background="@android:color/darker_gray"
+            android:layout_marginBottom="5dp" />
+
+        <com.example.camerascanner.activityocr.OcrOverlayView
+            android:id="@+id/ocrOverlayView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" android:background="@android:color/white" />
+    </LinearLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
