@@ -73,7 +73,7 @@ public class ImagePreviewActivity extends AppCompatActivity {
                     Intent cropIntent = new Intent(ImagePreviewActivity.this, CropActivity.class);
                     cropIntent.putExtra("imageUri", tempUri.toString());
                     Log.d(TAG, "ImagePreviewActivity: Launching CropActivity with TEMPORARY URI: " + tempUri.toString());
-                    startActivityForResult(cropIntent, REQUEST_CODE_CROP_IMAGE);
+                    startActivityForResult(cropIntent, REQUEST_CODE_CROP_IMAGE);finish();
                 } else {
                     Toast.makeText(this, "Lỗi khi lưu ảnh đã xoay.", Toast.LENGTH_SHORT).show();
                     Log.e(TAG, "ImagePreviewActivity: Failed to save rotated bitmap to cache.");

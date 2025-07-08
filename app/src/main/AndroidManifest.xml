@@ -31,11 +31,13 @@
         </activity>
         <activity android:name=".activitycamera.CameraActivity" android:exported="false" />
         <activity android:name=".ImagePreviewActivity" android:exported="false" />
+        <activity android:name=".ImageAfterCropActivity" android:exported="false" />
         <activity android:name=".activitycrop.CropActivity" android:exported="false"/>
         <activity android:name=".activitypdf.PdfGenerationAndPreviewActivity" android:exported="false"/>
         <activity android:name=".activityocr.OCRActivity" android:exported="false"/>
         <activity android:name=".activitymain.OCRDetailActivity" android:exported="false"/>
         <activity android:name=".activitymain.MeActivity" android:exported="false"/>
+
 
         <provider
             android:name="androidx.core.content.FileProvider"

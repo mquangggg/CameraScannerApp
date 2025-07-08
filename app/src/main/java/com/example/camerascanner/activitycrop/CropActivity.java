@@ -16,10 +16,22 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
 
+//import thư viện openCv để duỗi ảnh
+import org.opencv.android.Utils;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
+import org.opencv.imgproc.Imgproc;
+import java.util.Arrays; // Đảm bảo đã import cho Arrays.sort
+
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.canhub.cropper.CropImageView;
+import com.example.camerascanner.ImageAfterCropActivity;
 import com.example.camerascanner.activityocr.OCRActivity;
 import com.example.camerascanner.activitypdf.PdfGenerationAndPreviewActivity;
 import com.example.camerascanner.R;
@@ -77,7 +89,7 @@ public class CropActivity extends AppCompatActivity {
         btnHuyCrop = findViewById(R.id.btnHuyCrop);
         btnYesCrop = findViewById(R.id.btnYesCrop);
         magnifierView = findViewById(R.id.magnifierView);
-        btnMakeOCR = findViewById(R.id.btnMakeOCR);
+        //btnMakeOCR = findViewById(R.id.btnMakeOCR);
 
         // Khởi tạo TextRecognizer để nhận dạng văn bản Latin
         textRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
@@ -172,53 +184,22 @@ public class CropActivity extends AppCompatActivity {
             }
 
             // Cắt Bitmap dựa trên 4 điểm đã chọn
-            Bitmap croppedBitmap = cropBitmapByPoints(originalBitmapLoaded, transformedPoints);
-            if (croppedBitmap != null) {
-                // Lưu ảnh đã cắt vào cache và lấy URI
-                Uri croppedUri = saveBitmapToCache(croppedBitmap); // Sử dụng saveBitmapToCache (không phải saveBitmapToCacheAndGetUri)
-                // Chuyển sang PdfGenerationAndPreviewActivity để tạo và xem trước PDF
-                Intent intent = new Intent(CropActivity.this, PdfGenerationAndPreviewActivity.class);
-                intent.putExtra("croppedUri", croppedUri); // Truyền URI của ảnh đã cắt
+            Bitmap straightenedBitmap = performPerspectiveTransform(originalBitmapLoaded, transformedPoints);
+            if (straightenedBitmap != null) {
+                Uri straightenedUri = saveBitmapToCache(straightenedBitmap);
+                Intent intent = new Intent(CropActivity.this, ImageAfterCropActivity.class);
+                intent.putExtra("croppedUri", straightenedUri);
                 startActivity(intent);
-                finish(); // Đóng Activity hiện tại
+                if (straightenedBitmap != originalBitmapLoaded) { // Giải phóng bitmap nếu là bản sao
+                    straightenedBitmap.recycle();
+                }
             } else {
-                // Thông báo lỗi nếu không thể cắt ảnh
                 Toast.makeText(this, getString(R.string.error_cropping_image), Toast.LENGTH_SHORT).show();
             }
         });
 
         // Thiết lập sự kiện click cho nút "Thực hiện OCR"
-        btnMakeOCR.setOnClickListener(v -> {
-            // Lấy các điểm cắt đã chọn từ CustomCropView
-            ArrayList<PointF> cropPoints = customCropView.getCropPoints();
-            if (cropPoints.size() != 4) {
-                // Yêu cầu người dùng chọn đủ 4 điểm
-                Toast.makeText(this, getString(R.string.please_select_4_points_to_crop), Toast.LENGTH_SHORT).show();
-                return;
-            }
 
-            // Chuyển đổi tọa độ các điểm từ View sang Bitmap
-            ArrayList<PointF> transformedPoints = new ArrayList<>();
-            for (PointF point : cropPoints) {
-                float[] bitmapCoords = transformViewPointToBitmapPoint(point.x, point.y);
-                transformedPoints.add(new PointF(bitmapCoords[0], bitmapCoords[1]));
-            }
-
-            // Cắt Bitmap dựa trên 4 điểm đã chọn
-            Bitmap croppedBitmap = cropBitmapByPoints(originalBitmapLoaded, transformedPoints);
-            if (croppedBitmap != null) {
-                // Lưu ảnh đã cắt vào cache và lấy URI
-                Uri croppedUri = saveBitmapToCache(croppedBitmap); // Sử dụng saveBitmapToCache (không phải saveBitmapToCacheAndGetUri)
-                // Chuyển sang OCRActivity để nhận dạng văn bản
-                Intent intent = new Intent(CropActivity.this, OCRActivity.class);
-                intent.putExtra(OCRActivity.EXTRA_IMAGE_URI_FOR_OCR, croppedUri); // Truyền URI của ảnh đã cắt
-                startActivity(intent);
-                finish(); // Đóng Activity hiện tại
-            } else {
-                // Thông báo lỗi nếu không thể cắt ảnh
-                Toast.makeText(this, getString(R.string.error_cropping_image), Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     /**
@@ -510,6 +491,110 @@ public class CropActivity extends AppCompatActivity {
         matrix.postScale(scale, scale); // Áp dụng tỷ lệ
         matrix.postTranslate(dx, dy); // Áp dụng dịch chuyển để căn giữa
         return matrix;
+    }
+
+    // Đặt phương thức này bên trong lớp CropActivity
+    private MatOfPoint sortPoints(MatOfPoint pointsMat) {
+        Point[] pts = pointsMat.toArray();
+        Point[] rect = new Point[4];
+
+        Arrays.sort(pts, (p1, p2) -> Double.compare(p1.y, p2.y));
+
+        Point[] topPoints = Arrays.copyOfRange(pts, 0, 2);
+        Point[] bottomPoints = Arrays.copyOfRange(pts, 2, 4);
+
+        Arrays.sort(topPoints, (p1, p2) -> Double.compare(p1.x, p2.x));
+        rect[0] = topPoints[0]; // Top-Left
+        rect[1] = topPoints[1]; // Top-Right
+
+        Arrays.sort(bottomPoints, (p1, p2) -> Double.compare(p1.x, p2.x));
+        rect[3] = bottomPoints[0]; // Bottom-Left
+        rect[2] = bottomPoints[1]; // Bottom-Right
+
+        return new MatOfPoint(rect);
+    }
+
+    // Đặt phương thức này bên trong lớp CropActivity
+    private Bitmap performPerspectiveTransform(Bitmap originalBitmap, ArrayList<PointF> cropPoints) {
+        if (originalBitmap == null || cropPoints == null || cropPoints.size() != 4) {
+            Log.e(TAG, "Dữ liệu đầu vào không hợp lệ cho biến đổi phối cảnh.");
+            return null;
+        }
+
+        Mat originalMat = new Mat();
+        // Chuyển đổi Bitmap sang Mat
+        Utils.bitmapToMat(originalBitmap, originalMat);
+
+        // Chuyển đổi ArrayList<PointF> sang mảng Point của OpenCV
+        Point[] pts = new Point[4];
+        for(int i = 0; i < 4; i++) {
+            pts[i] = new Point(cropPoints.get(i).x, cropPoints.get(i).y);
+        }
+
+        // Sắp xếp các điểm để đảm bảo thứ tự đúng cho biến đổi phối cảnh
+        MatOfPoint unsortedMatOfPoint = new MatOfPoint(pts);
+        MatOfPoint sortedPointsMat = sortPoints(unsortedMatOfPoint);
+        Point[] sortedPts = sortedPointsMat.toArray();
+
+        // Tính toán kích thước đích cho hình chữ nhật đã làm thẳng
+        // Dựa trên chiều dài lớn nhất của các cạnh đối diện
+        double widthTop = Math.sqrt(Math.pow(sortedPts[0].x - sortedPts[1].x, 2) + Math.pow(sortedPts[0].y - sortedPts[1].y, 2));
+        double widthBottom = Math.sqrt(Math.pow(sortedPts[3].x - sortedPts[2].x, 2) + Math.pow(sortedPts[3].y - sortedPts[2].y, 2));
+        int targetWidth = (int) Math.max(widthTop, widthBottom);
+
+        double heightLeft = Math.sqrt(Math.pow(sortedPts[0].x - sortedPts[3].x, 2) + Math.pow(sortedPts[0].y - sortedPts[3].y, 2));
+        double heightRight = Math.sqrt(Math.pow(sortedPts[1].x - sortedPts[2].x, 2) + Math.pow(sortedPts[1].y - sortedPts[2].y, 2));
+        int targetHeight = (int) Math.max(heightLeft, heightRight);
+
+        if (targetWidth <= 0 || targetHeight <= 0) {
+            Log.e(TAG, "Kích thước đích không hợp lệ cho biến đổi phối cảnh. Trả về null.");
+            originalMat.release();
+            sortedPointsMat.release();
+            unsortedMatOfPoint.release();
+            return null;
+        }
+
+        // Định nghĩa các điểm nguồn (tứ giác đã sắp xếp trong tọa độ bitmap)
+        MatOfPoint2f srcPoints = new MatOfPoint2f(
+                sortedPts[0], // Trên-Trái
+                sortedPts[1], // Trên-Phải
+                sortedPts[2], // Dưới-Phải
+                sortedPts[3]  // Dưới-Trái
+        );
+
+        // Định nghĩa các điểm đích (một hình chữ nhật hoàn hảo)
+        MatOfPoint2f dstPoints = new MatOfPoint2f(
+                new Point(0, 0),
+                new Point(targetWidth - 1, 0),
+                new Point(targetWidth - 1, targetHeight - 1),
+                new Point(0, targetHeight - 1)
+        );
+
+        Mat transformedMat = new Mat();
+        Mat perspectiveTransformMatrix = null;
+        Bitmap resultBitmap = null;
+
+        try {
+            perspectiveTransformMatrix = Imgproc.getPerspectiveTransform(srcPoints, dstPoints);
+            Imgproc.warpPerspective(originalMat, transformedMat, perspectiveTransformMatrix, new org.opencv.core.Size(targetWidth, targetHeight));
+
+            resultBitmap = Bitmap.createBitmap(transformedMat.cols(), transformedMat.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(transformedMat, resultBitmap);
+        } catch (Exception e) {
+            Log.e(TAG, "Lỗi khi thực hiện biến đổi phối cảnh: " + e.getMessage(), e);
+            return null;
+        } finally {
+            // Giải phóng tất cả các đối tượng Mat của OpenCV để tránh rò rỉ bộ nhớ
+            if (originalMat != null) originalMat.release();
+            if (transformedMat != null) transformedMat.release();
+            if (perspectiveTransformMatrix != null) perspectiveTransformMatrix.release();
+            if (srcPoints != null) srcPoints.release();
+            if (dstPoints != null) dstPoints.release();
+            if (unsortedMatOfPoint != null) unsortedMatOfPoint.release();
+            if (sortedPointsMat != null) sortedPointsMat.release();
+        }
+
+        return resultBitmap;
     }
 
     /**

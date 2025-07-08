@@ -351,86 +351,90 @@ public class CameraActivity extends AppCompatActivity {
                             // Tỷ lệ giữa kích thước ảnh đã chụp và kích thước ảnh mà OpenCV đã xử lý
                             float scaleBitmapToOpenCV = (float) originalFullBitmap.getWidth() / conceptualOpenCVWidth;
 
-                            // Đây là yếu tố phóng to mà bạn muốn áp dụng cho khung cắt.
-                            // Nó phải khớp với yếu tố phóng to trong CustomOverlayView.scalePointsToOverlayView
-                            final float ZOOM_FACTOR = 1.2f; // Phóng to thêm 20% cho khung cắt
+                            Point[] detectedPoints = lastDetectedQuadrilateral.toArray();
 
-                            Point[] pts = lastDetectedQuadrilateral.toArray();
-
-                            // Tìm min/max X, Y từ các điểm được phát hiện
-                            float minX_detected = Float.MAX_VALUE;
-                            float minY_detected = Float.MAX_VALUE;
-                            float maxX_detected = Float.MIN_VALUE;
-                            float maxY_detected = Float.MIN_VALUE;
-
-                            for (Point p : pts) {
-                                // Scale các điểm từ không gian ImageProxy/OpenCV sang không gian của OriginalFullBitmap
-                                float scaledX_to_bitmap = (float) (p.x * scaleBitmapToOpenCV);
-                                float scaledY_to_bitmap = (float) (p.y * scaleBitmapToOpenCV);
-
-                                minX_detected = Math.min(minX_detected, scaledX_to_bitmap);
-                                minY_detected = Math.min(minY_detected, scaledY_to_bitmap);
-                                maxX_detected = Math.max(maxX_detected, scaledX_to_bitmap);
-                                maxY_detected = Math.max(maxY_detected, scaledY_to_bitmap);
+                            // Scale các điểm từ không gian ImageProxy/OpenCV sang không gian của OriginalFullBitmap
+                            Point[] scaledPoints = new Point[4];
+                            for (int i = 0; i < 4; i++) {
+                                scaledPoints[i] = new Point(
+                                        detectedPoints[i].x * scaleBitmapToOpenCV,
+                                        detectedPoints[i].y * scaleBitmapToOpenCV
+                                );
                             }
 
-                            // Bây giờ áp dụng ZOOM_FACTOR cho các tọa độ min/max để mở rộng khung cắt
-                            float currentCropWidth = maxX_detected - minX_detected;
-                            float currentCropHeight = maxY_detected - minY_detected;
+                            // Sắp xếp lại các điểm (quan trọng cho perspective transform)
+                            // Hàm sortPoints() của bạn cần đảm bảo các điểm được sắp xếp đúng thứ tự: Top-Left, Top-Right, Bottom-Right, Bottom-Left
+                            MatOfPoint sortedScaledPoints = sortPoints(new MatOfPoint(scaledPoints));
+                            Point[] sortedPts = sortedScaledPoints.toArray();
 
-                            float newCropWidth = currentCropWidth * ZOOM_FACTOR;
-                            float newCropHeight = currentCropHeight * ZOOM_FACTOR;
+                            // Tính toán kích thước của hình chữ nhật đích
+                            // Chiều rộng là trung bình của cạnh trên và cạnh dưới
+                            double widthTop = Math.sqrt(Math.pow(sortedPts[0].x - sortedPts[1].x, 2) + Math.pow(sortedPts[0].y - sortedPts[1].y, 2));
+                            double widthBottom = Math.sqrt(Math.pow(sortedPts[3].x - sortedPts[2].x, 2) + Math.pow(sortedPts[3].y - sortedPts[2].y, 2));
+                            int targetWidth = (int) Math.max(widthTop, widthBottom);
 
-                            // Tính toán offset để giữ khung gốc nằm giữa khung đã phóng to
-                            float offsetX = (newCropWidth - currentCropWidth) / 2f;
-                            float offsetY = (newCropHeight - currentCropHeight) / 2f;
+                            // Chiều cao là trung bình của cạnh trái và cạnh phải
+                            double heightLeft = Math.sqrt(Math.pow(sortedPts[0].x - sortedPts[3].x, 2) + Math.pow(sortedPts[0].y - sortedPts[3].y, 2));
+                            double heightRight = Math.sqrt(Math.pow(sortedPts[1].x - sortedPts[2].x, 2) + Math.pow(sortedPts[1].y - sortedPts[2].y, 2));
+                            int targetHeight = (int) Math.max(heightLeft, heightRight);
 
-                            // Áp dụng offset để có các tọa độ cắt mới
-                            int cropX_start = Math.max(0, (int) Math.floor(minX_detected - offsetX));
-                            int cropY_start = Math.max(0, (int) Math.floor(minY_detected - offsetY));
-                            int cropX_end = Math.min(originalFullBitmap.getWidth(), (int) Math.ceil(maxX_detected + offsetX));
-                            int cropY_end = Math.min(originalFullBitmap.getHeight(), (int) Math.ceil(maxY_detected + offsetY));
-
-                            int cropWidth = Math.max(0, cropX_end - cropX_start);
-                            int cropHeight = Math.max(0, cropY_end - cropY_start);
-
-                            if (cropWidth > 0 && cropHeight > 0) {
-                                try {
-                                    Bitmap croppedBitmap = Bitmap.createBitmap(
-                                            originalFullBitmap,
-                                            cropX_start,
-                                            cropY_start,
-                                            cropWidth,
-                                            cropHeight
-                                    );
-
-                                    selectedImageUri = saveBitmapToCache(croppedBitmap);
-                                    Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
-                                    showImageView();
-                                    if (croppedBitmap != originalFullBitmap) croppedBitmap.recycle();
-                                    originalFullBitmap.recycle(); // Luôn recycle bitmap gốc
-
-                                    startImagePreviewActivity(selectedImageUri);
-
-                                } catch (Exception e) {
-                                    Log.e(TAG, "Lỗi khi tạo bitmap đã cắt: " + e.getMessage(), e);
-                                    Toast.makeText(CameraActivity.this, "Lỗi khi cắt ảnh: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                    // Xử lý lỗi, có thể gửi ảnh gốc
-                                    selectedImageUri = savedUri;
-                                    Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
-                                    showImageView();
-                                    originalFullBitmap.recycle();
-                                    startImagePreviewActivity(selectedImageUri);
-                                }
-
-                            } else {
-                                Log.e(TAG, "Kích thước hoặc tọa độ cắt không hợp lệ sau khi giới hạn. Hiển thị ảnh gốc đầy đủ.");
+                            // Đảm bảo kích thước không quá nhỏ
+                            if (targetWidth <= 0 || targetHeight <= 0) {
+                                Log.e(TAG, "Kích thước đích không hợp lệ cho biến đổi phối cảnh. Sử dụng ảnh gốc.");
                                 selectedImageUri = savedUri;
                                 Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
                                 showImageView();
                                 originalFullBitmap.recycle();
                                 startImagePreviewActivity(selectedImageUri);
+                                return;
                             }
+
+                            // Định nghĩa 4 điểm nguồn (tứ giác đã phát hiện) và 4 điểm đích (hình chữ nhật chuẩn)
+                            MatOfPoint2f srcPoints = new MatOfPoint2f(
+                                    sortedPts[0], // Top-Left
+                                    sortedPts[1], // Top-Right
+                                    sortedPts[2], // Bottom-Right
+                                    sortedPts[3]  // Bottom-Left
+                            );
+
+                            MatOfPoint2f dstPoints = new MatOfPoint2f(
+                                    new Point(0, 0),
+                                    new Point(targetWidth - 1, 0),
+                                    new Point(targetWidth - 1, targetHeight - 1),
+                                    new Point(0, targetHeight - 1)
+                            );
+
+                            // Chuyển đổi Bitmap gốc sang Mat của OpenCV
+                            Mat originalMat = new Mat(originalFullBitmap.getHeight(), originalFullBitmap.getWidth(), CvType.CV_8UC4);
+                            Utils.bitmapToMat(originalFullBitmap, originalMat);
+
+                            // Thực hiện biến đổi phối cảnh
+                            Mat transformedMat = new Mat();
+                            Mat perspectiveTransform = Imgproc.getPerspectiveTransform(srcPoints, dstPoints);
+                            Imgproc.warpPerspective(originalMat, transformedMat, perspectiveTransform, new org.opencv.core.Size(targetWidth, targetHeight));
+
+                            // Chuyển đổi Mat đã biến đổi trở lại thành Bitmap
+                            Bitmap resultBitmap = Bitmap.createBitmap(transformedMat.cols(), transformedMat.rows(), Bitmap.Config.ARGB_8888);
+                            Utils.matToBitmap(transformedMat, resultBitmap);
+
+                            // Lưu Bitmap đã xử lý vào bộ nhớ cache và hiển thị
+                            selectedImageUri = saveBitmapToCache(resultBitmap);
+                            Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
+                            showImageView();
+
+                            // Giải phóng tài nguyên OpenCV và Bitmap
+                            if (originalFullBitmap != null) originalFullBitmap.recycle();
+                            if (resultBitmap != null && resultBitmap != originalFullBitmap) resultBitmap.recycle();
+                            originalMat.release();
+                            transformedMat.release();
+                            perspectiveTransform.release();
+                            srcPoints.release();
+                            dstPoints.release();
+                            sortedScaledPoints.release();
+
+                            // Chuyển ảnh đã xử lý sang ImagePreviewActivity
+                            startImagePreviewActivity(selectedImageUri);
+
                         } else {
                             Log.w(TAG, "Không phát hiện khung giới hạn OpenCV hoặc khung rỗng. Hiển thị ảnh gốc đầy đủ.");
                             selectedImageUri = savedUri;
@@ -513,7 +517,7 @@ public class CameraActivity extends AppCompatActivity {
                 final Bitmap resultBitmap = Bitmap.createBitmap(rgba.cols(), rgba.rows(), Bitmap.Config.ARGB_8888);
                 if (bestQuadrilateral != null) {
                     bestQuadrilateral = sortPoints(bestQuadrilateral);
-                    Imgproc.drawContours(rgba, Collections.singletonList(bestQuadrilateral), -1, new Scalar(0, 255, 0, 255), 5);
+                    //Imgproc.drawContours(rgba, Collections.singletonList(bestQuadrilateral), -1, new Scalar(0, 255, 0, 255), 5);
                     Log.i(TAG, "Static Image - Đã phát hiện tứ giác tốt nhất với diện tích: " + Imgproc.contourArea(bestQuadrilateral));
                 } else {
                     Log.i(TAG, "Static Image - Không tìm thấy tứ giác hợp lệ nào.");
