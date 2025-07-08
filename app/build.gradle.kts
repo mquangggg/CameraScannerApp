@@ -62,4 +62,6 @@ dependencies {
     // ML Kit để nhận diện đối tượng (hoặc nhận dạng văn bản nếu đó là mục đích chính của bạn)
     implementation("com.google.mlkit:object-detection:17.0.1")
     implementation ("com.github.bumptech.glide:glide:4.12.0")
+
+    implementation("org.opencv:opencv:4.11.0")
 }

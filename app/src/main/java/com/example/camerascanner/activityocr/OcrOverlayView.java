@@ -20,8 +20,12 @@ public class OcrOverlayView extends View {
     private float translateX = 0f;
     private float translateY = 0f;
 
+    private int originalImageWidth;
+    private int originalImageHeight;
+
+
     private Paint textPaint;
-    private Paint rectPaint; // Giữ lại nếu bạn muốn vẽ khung bao quanh chữ, nếu không có thể xóa
+    private Paint rectPaint;
 
     public OcrOverlayView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -35,109 +39,117 @@ public class OcrOverlayView extends View {
 
     private void init() {
         textPaint = new Paint();
-        textPaint.setColor(Color.BLACK); // Đảm bảo chữ màu đen
+        textPaint.setColor(Color.BLACK);
         textPaint.setStyle(Paint.Style.FILL);
-        textPaint.setAntiAlias(true); // Làm mịn chữ
+        textPaint.setAntiAlias(true);
+        textPaint.setSubpixelText(true);
 
         rectPaint = new Paint();
-        rectPaint.setColor(Color.YELLOW); // Màu khung bao quanh, bạn có thể thay đổi hoặc xóa
+        rectPaint.setColor(Color.RED);
         rectPaint.setStyle(Paint.Style.STROKE);
         rectPaint.setStrokeWidth(2f);
+        rectPaint.setAlpha(120);
+        rectPaint.setAntiAlias(true);
     }
 
-    /**
-     * Đặt kết quả OCR và kích thước ảnh gốc để tính toán tỉ lệ và vị trí.
-     * @param ocrText Kết quả Text từ ML Kit.
-     * @param imageWidth Chiều rộng của ảnh gốc.
-     * @param imageHeight Chiều cao của ảnh gốc.
-     */
-    public void setOcrResult(Text ocrText, int imageWidth, int imageHeight) {
-        this.ocrTextResult = ocrText;
+    public void setOcrResult(Text result, int imageWidth, int imageHeight) {
+        this.ocrTextResult = result;
+        this.originalImageWidth = imageWidth;
+        this.originalImageHeight = imageHeight;
 
-        // Đảm bảo View đã có kích thước trước khi tính toán
-        if (getWidth() == 0 || getHeight() == 0) {
-            // Nếu View chưa được layout, đợi nó có kích thước rồi gọi lại setOcrResult
-            post(() -> setOcrResult(ocrText, imageWidth, imageHeight));
+        calculateScaleFactors();
+        invalidate();
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        calculateScaleFactors();
+    }
+
+
+    private void calculateScaleFactors() {
+        if (originalImageWidth == 0 || originalImageHeight == 0 || getWidth() == 0 || getHeight() == 0) {
+            scaleFactorX = 1f;
+            scaleFactorY = 1f;
+            translateX = 0f;
+            translateY = 0f;
             return;
         }
 
         float viewWidth = getWidth();
         float viewHeight = getHeight();
 
-        if (imageWidth > 0 && imageHeight > 0 && viewWidth > 0 && viewHeight > 0) {
-            float imageAspectRatio = (float) imageWidth / imageHeight;
-            float viewAspectRatio = viewWidth / viewHeight;
+        float imageAspectRatio = (float) originalImageWidth / originalImageHeight;
+        float viewAspectRatio = viewWidth / viewHeight;
 
-            // Tính toán scale factor để ảnh vừa khít với view trong khi giữ tỉ lệ
-            if (imageAspectRatio > viewAspectRatio) {
-                scaleFactorX = viewWidth / imageWidth;
-                scaleFactorY = scaleFactorX;
-                // Tính toán translation để căn giữa ảnh theo chiều dọc (nếu cần)
-                translateY = (viewHeight - (imageHeight * scaleFactorY)) / 2;
-                translateX = 0;
-            } else {
-                scaleFactorY = viewHeight / imageHeight;
-                scaleFactorX = scaleFactorY;
-                // Tính toán translation để căn giữa ảnh theo chiều ngang (nếu cần)
-                translateX = (viewWidth - (imageWidth * scaleFactorX)) / 2;
-                translateY = 0;
-            }
-        } else {
-            // Đặt lại các giá trị mặc định nếu kích thước không hợp lệ
-            scaleFactorX = 1f;
-            scaleFactorY = 1f;
+        if (imageAspectRatio > viewAspectRatio) {
+            scaleFactorX = viewWidth / originalImageWidth;
+            scaleFactorY = scaleFactorX;
+            translateY = (viewHeight - (originalImageHeight * scaleFactorY)) / 2;
             translateX = 0;
+        } else {
+            scaleFactorY = viewHeight / originalImageHeight;
+            scaleFactorX = scaleFactorY;
+            translateX = (viewWidth - (originalImageWidth * scaleFactorX)) / 2;
             translateY = 0;
         }
-
-        invalidate(); // Yêu cầu vẽ lại View
     }
+
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        // Đổ toàn bộ canvas bằng màu trắng làm nền
-        canvas.drawColor(Color.WHITE);
-
-        if (ocrTextResult == null) {
+        if (ocrTextResult == null || ocrTextResult.getTextBlocks().isEmpty()) {
             return;
         }
+
+        canvas.save();
+
+        // Tính toán kích thước chữ cơ sở dựa trên chiều cao tỷ lệ của ảnh
+        // Giả sử một chiều cao font mặc định trong ảnh gốc (ví dụ 20px)
+        // và scale nó theo scaleFactorY. Điều này sẽ giữ kích thước chữ ổn định.
+        final float ORIGINAL_REF_FONT_HEIGHT = 35f; // Chiều cao font tham chiếu trong ảnh gốc (pixel)
+        float baseScaledTextSize = ORIGINAL_REF_FONT_HEIGHT * scaleFactorY;
+
+        // Đặt giới hạn min/max cho kích thước chữ để đảm bảo dễ đọc và không quá to
+        final float MIN_TEXT_SIZE = 18f; // Kích thước tối thiểu (sp)
+        final float MAX_TEXT_SIZE = 60f; // Kích thước tối đa (sp)
+        baseScaledTextSize = Math.max(MIN_TEXT_SIZE, Math.min(MAX_TEXT_SIZE, baseScaledTextSize));
+
 
         for (Text.TextBlock block : ocrTextResult.getTextBlocks()) {
             for (Text.Line line : block.getLines()) {
                 for (Text.Element element : line.getElements()) {
-                    Rect boundingBox = element.getBoundingBox();
-                    if (boundingBox != null) {
-                        // Áp dụng scaling và translation tổng thể
-                        float left = boundingBox.left * scaleFactorX + translateX;
-                        float top = boundingBox.top * scaleFactorY + translateY;
-                        float right = boundingBox.right * scaleFactorX + translateX;
-                        float bottom = boundingBox.bottom * scaleFactorY + translateY;
+                    Rect elementRect = element.getBoundingBox();
+                    if (elementRect != null) {
+                        RectF drawnRect = new RectF(
+                                elementRect.left * scaleFactorX + translateX,
+                                elementRect.top * scaleFactorY + translateY,
+                                elementRect.right * scaleFactorX + translateX,
+                                elementRect.bottom * scaleFactorY + translateY
+                        );
 
-                        RectF drawnRect = new RectF(left, top, right, bottom);
-
-                        // LƯU TRẠNG THÁI HIỆN TẠI CỦA CANVAS
                         canvas.save();
 
-                        // XOAY CANVAS THEO GÓC CỦA CHỮ
-                        // ML Kit trả về góc nghiêng. Giá trị 0 độ là văn bản ngang,
-                        // góc dương là quay theo chiều kim đồng hồ.
-                        // canvas.rotate() cũng quay theo chiều kim đồng hồ.
-                        // Góc xoay cần được áp dụng quanh tâm của bounding box của element.
-                        // Lưu ý: element.getAngle() có thể trả về null, nên cần kiểm tra.
                         Float angle = element.getAngle();
                         if (angle != null) {
                             canvas.rotate(angle, drawnRect.centerX(), drawnRect.centerY());
                         }
 
-                        // VẼ KHUNG BAO QUANH CHỮ (TÙY CHỌN - có thể bỏ qua nếu bạn chỉ muốn chữ)
-                        // canvas.drawRect(drawnRect, rectPaint); // Bỏ comment nếu muốn thấy khung
+                        // VẼ KHUNG BAO QUANH CHỮ (bỏ comment nếu muốn thấy)
+                        // canvas.drawRect(drawnRect, rectPaint);
 
-                        // Đặt kích thước chữ dựa trên chiều cao đã scale của khung bao quanh
-                        // Nhân với 0.8f để chữ không quá sát viền, bạn có thể điều chỉnh giá trị này
-                        textPaint.setTextSize(element.getBoundingBox().height() * scaleFactorY * 0.7f);
-                        textPaint.setColor(Color.BLACK); // Đảm bảo màu chữ là đen
+
+                        // Đặt kích thước chữ
+                        // Sử dụng kích thước chữ cơ sở đã tính toán.
+                        // Thêm một giới hạn nhỏ để chữ không vượt quá chiều cao của từng khung nếu baseScaledTextSize quá lớn
+                        // ví dụ: Math.min(baseScaledTextSize, drawnRect.height() * 0.9f)
+                        // Nhưng thường thì chỉ cần baseScaledTextSize đã đủ.
+                        textPaint.setTextSize(baseScaledTextSize);
+
+                        textPaint.setColor(Color.BLACK);
 
                         // Tính toán vị trí chữ để căn giữa theo chiều dọc trong khung
                         Paint.FontMetrics fm = textPaint.getFontMetrics();
@@ -147,11 +159,11 @@ public class OcrOverlayView extends View {
                         // VẼ VĂN BẢN
                         canvas.drawText(element.getText(), drawnRect.left, textY, textPaint);
 
-                        // PHỤC HỒI TRẠNG THÁI CANVAS TRƯỚC KHI XOAY
                         canvas.restore();
                     }
                 }
             }
         }
+        canvas.restore();
     }
 }

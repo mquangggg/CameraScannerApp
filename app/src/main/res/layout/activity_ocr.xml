@@ -40,29 +40,34 @@
             android:layout_height="wrap_content"/>
     </LinearLayout>
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="12" android:orientation="vertical"
-        android:layout_marginStart="10dp"
-        android:layout_marginEnd="10dp"
-        android:layout_marginTop="5dp"
-        android:layout_marginBottom="5dp">
-
-        <ImageView
-            android:id="@+id/ivImageForOcr"
+        android:layout_weight="12">
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" android:scaleType="fitCenter"
-            android:background="@android:color/darker_gray"
-            android:layout_marginBottom="5dp" />
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp">
 
-        <com.example.camerascanner.activityocr.OcrOverlayView
-            android:id="@+id/ocrOverlayView"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" android:background="@android:color/white" />
-    </LinearLayout>
+            <ImageView
+                android:id="@+id/ivImageForOcr"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1.5"
+                android:background="@android:color/darker_gray"
+                android:layout_marginBottom="5dp" />
+
+            <com.example.camerascanner.activityocr.OcrOverlayView
+                android:id="@+id/ocrOverlayView"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="2.5"
+                android:background="@android:color/white" /> </LinearLayout>
+    </ScrollView>
 
     <LinearLayout
         android:layout_width="match_parent"
