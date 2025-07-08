@@ -5,6 +5,20 @@ plugins {
 android {
     namespace = "com.example.camerascanner"
     compileSdk = 35
+    android {
+        // ... các cấu hình khác của bạn
+
+        packaging {
+            jniLibs {
+                // Thay vì 'excludes.add()', hãy sử dụng 'pickFirst()'
+                pickFirsts.add("lib/arm64-v8a/libc++_shared.so")
+                pickFirsts.add("lib/armeabi-v7a/libc++_shared.so")
+                pickFirsts.add("lib/x86/libc++_shared.so")
+                pickFirsts.add("lib/x86_64/libc++_shared.so")
+                // Thêm bất kỳ ABI nào khác mà bạn đang build cho
+            }
+        }
+    }
 
     defaultConfig {
         applicationId = "com.example.camerascanner"

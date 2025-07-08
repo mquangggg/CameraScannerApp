@@ -1,38 +1,26 @@
-// CameraActivity.java
 package com.example.camerascanner.activitycamera;
 
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.Matrix; // Nhập Matrix để xoay Bitmap (vẫn giữ nếu cần cho logic bên trong)
-import android.graphics.RectF; // Nhập RectF cho ML Kit
+import android.graphics.BitmapFactory; // Thêm import này
+import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
+import android.util.Size; // Thêm import này cho CameraX
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
-import android.util.Log;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-// Các import của CameraX
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
@@ -41,99 +29,115 @@ import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import com.bumptech.glide.Glide;
 import com.example.camerascanner.ImagePreviewActivity;
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitycrop.CropActivity;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.common.util.concurrent.ListenableFuture;
 
-// Các import của ML Kit
-import com.google.mlkit.vision.common.InputImage;
-import com.google.mlkit.vision.objects.ObjectDetection;
-import com.google.mlkit.vision.objects.ObjectDetector;
-import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions;
-import com.google.mlkit.vision.objects.DetectedObject;
+import org.opencv.android.OpenCVLoader; // Import OpenCVLoader
+import org.opencv.android.Utils; // Import Utils
+import org.opencv.core.Core; // Import Core
+import org.opencv.core.CvType; // Import CvType
+import org.opencv.core.Mat; // Import Mat
+import org.opencv.core.MatOfPoint; // Import MatOfPoint
+import org.opencv.core.MatOfPoint2f; // Import MatOfPoint2f
+import org.opencv.core.Point; // Import Point
+import org.opencv.core.Scalar; // Import Scalar
+import org.opencv.imgproc.CLAHE; // Import CLAHE
+import org.opencv.imgproc.Imgproc; // Import Imgproc
 
-// Thêm import cho Glide nếu bạn muốn hiển thị ảnh trong ImageView (CameraActivity)
-import com.bumptech.glide.Glide;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class CameraActivity extends AppCompatActivity {
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "CameraActivity"; // Đổi TAG để tránh nhầm lẫn
     private static final int CAMERA_PERMISSION_REQUEST_CODE = 100;
     private static final int STORAGE_PERMISSION_REQUEST_CODE = 101;
-
-    // Request code cho ImagePreviewActivity, để biết khi nào ImagePreviewActivity trả về kết quả
     private static final int REQUEST_CODE_IMAGE_PREVIEW = 200;
 
-
-    // Các phần tử UI
     private PreviewView previewView;
-    private CustomOverlayView customOverlayView;
-    private ImageView imageView; // Vẫn cần để hiển thị ảnh tạm thời
+    private CustomOverlayView customOverlayView; // Bây giờ sẽ nhận MatOfPoint
+    private ImageView imageView;
     private FloatingActionButton btnTakePhoto;
-    private ImageButton btnSelectImage; // Đã bỏ btnConfirm, btnXoay ở đây
+    private ImageButton btnSelectImage;
 
-    // Các thành phần của CameraX
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private ImageCapture imageCapture;
     private ImageAnalysis imageAnalysis;
     private ExecutorService cameraExecutor;
 
-    // Thành phần của ML Kit
-    private ObjectDetector objectDetector;
+    // --- Các hằng số và biến OpenCV ---
+    private static final double CANNY_THRESHOLD1 = 40;
+    private static final double CANNY_THRESHOLD2 = 120;
+    private static final double APPROX_POLY_DP_EPSILON_FACTOR = 0.05;
+    private static final double MIN_COSINE_ANGLE = 0.5;
+    private static final double MIN_AREA_PERCENTAGE = 0.02;
+    private static final double MAX_AREA_PERCENTAGE = 0.90;
 
-    // Để chọn ảnh từ thư viện
+    private MatOfPoint lastDetectedQuadrilateral = null; // Lưu trữ MatOfPoint cuối cùng được phát hiện
+    private int lastImageProxyWidth = 0; // Kích thước của ImageProxy khi phát hiện được khung
+    private int lastImageProxyHeight = 0;
+    private int lastRotationDegrees = 0; // Độ xoay của ImageProxy khi phát hiện được khung
+
+    private long lastDetectionTimestamp = 0L;
+    private static final long QUAD_PERSISTENCE_TIMEOUT_MS = 1500; // 1.5 giây
+
+    private int frameCount = 0;
+    private static final int PROCESS_FRAME_INTERVAL = 3; // Xử lý mỗi 3 khung hình
+
     private Uri selectedImageUri;
     private ActivityResultLauncher<String> galleryLauncher;
-
-    // Launcher cho ImagePreviewActivity
     private ActivityResultLauncher<Intent> imagePreviewLauncher;
-
-    // Biến để lưu trữ thông tin khung nhận diện cuối cùng từ ML Kit
-    private RectF lastDetectedBoundingBox;
-    private int lastImageProxyWidth;
-    private int lastImageProxyHeight;
-    private int lastRotationDegrees;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
-        // Khởi tạo các phần tử UI
+        // Khởi tạo OpenCV
+        if (!OpenCVLoader.initLocal()) {
+            Log.e(TAG, "OpenCV initialization failed!");
+            Toast.makeText(this, "OpenCV failed to load!", Toast.LENGTH_LONG).show();
+            return;
+        } else {
+            Log.d(TAG, "OpenCV initialization successful!");
+        }
+
         previewView = findViewById(R.id.previewView);
         customOverlayView = findViewById(R.id.customOverlayView);
-        imageView = findViewById(R.id.imageView); // Giữ ImageView
+        imageView = findViewById(R.id.imageView);
         btnTakePhoto = findViewById(R.id.btnTakePhoto);
         btnSelectImage = findViewById(R.id.btnSelectImage);
 
-        previewView.setScaleType(PreviewView.ScaleType.FIT_CENTER);
+        // Điều chỉnh ScaleType của PreviewView nếu cần, ví dụ FIT_CENTER, FIT_XY
+        previewView.setScaleType(PreviewView.ScaleType.FIT_CENTER); // Hoặc PreviewView.ScaleType.FILL_CENTER để lấp đầy
 
-        // Khởi tạo CameraX executor
         cameraExecutor = Executors.newSingleThreadExecutor();
 
-        // Khởi tạo Bộ phát hiện đối tượng ML Kit
-        ObjectDetectorOptions options =
-                new ObjectDetectorOptions.Builder()
-                        .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
-                        .enableMultipleObjects()
-                        .enableClassification()
-                        .build();
-        objectDetector = ObjectDetection.getClient(options);
-
-        // --- Xử lý quyền và thiết lập Camera/Thư viện ---
         if (checkCameraPermission()) {
             startCamera();
         } else {
             requestCameraPermission();
         }
 
-        // Khởi tạo các launcher
         initLaunchers();
 
-        // --- Lắng nghe sự kiện nút ---
         btnTakePhoto.setOnClickListener(v -> takePhoto());
 
         btnSelectImage.setOnClickListener(v -> {
@@ -144,64 +148,54 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
 
-        // Trạng thái UI ban đầu: camera hiển thị, image view ẩn
         showCameraPreview();
     }
 
     private void initLaunchers() {
-        // Launcher để chọn ảnh từ thư viện
         galleryLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
             if (uri != null) {
                 selectedImageUri = uri;
                 Log.d(TAG, "Ảnh được tải từ thư viện, URI gốc: " + selectedImageUri);
-                // Hiển thị ảnh đã chọn trong ImageView tạm thời
-                Glide.with(this).load(selectedImageUri).into(imageView);
                 showImageView(); // Chuyển sang chế độ xem ảnh
-                // Gửi URI này đến ImagePreviewActivity
-                startImagePreviewActivity(selectedImageUri); // Không có bounding box từ thư viện
+                processStaticImage(selectedImageUri); // Xử lý ảnh tĩnh bằng OpenCV
             } else {
                 Toast.makeText(this, getString(R.string.failed_to_get_image_from_gallery), Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "selectedImageUri rỗng sau khi xử lý kết quả thư viện.");
-                showCameraPreview(); // Quay lại camera nếu không có gì được chọn
+                showCameraPreview();
             }
         });
 
-        // Launcher cho kết quả từ ImagePreviewActivity
         imagePreviewLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
             if (result.getResultCode() == RESULT_OK) {
                 if (result.getData() != null) {
                     Uri confirmedImageUri = result.getData().getData();
                     if (confirmedImageUri != null) {
                         Log.d(TAG, "URI ảnh đã xác nhận từ ImagePreviewActivity: " + confirmedImageUri);
-                        // Chuyển URI này sang CropActivity
                         Intent cropIntent = new Intent(CameraActivity.this, CropActivity.class);
-                        cropIntent.putExtra("imageUri", confirmedImageUri);
-                        startActivity(cropIntent); // Khởi chạy CropActivity, CropActivity sẽ tự xử lý kết quả
+                        cropIntent.putExtra("imageUri", confirmedImageUri.toString()); // Chuyển URI dưới dạng String
+                        startActivity(cropIntent);
                     } else {
-                        Toast.makeText(this, getString(R.string.no_cropped_image_received), Toast.LENGTH_SHORT).show(); // Có thể đổi chuỗi này thành "Không có ảnh được xác nhận"
+                        Toast.makeText(this, getString(R.string.no_cropped_image_received), Toast.LENGTH_SHORT).show();
                         Log.e(TAG, "URI đã xác nhận rỗng từ ImagePreviewActivity.");
                     }
                 }
             } else if (result.getResultCode() == RESULT_CANCELED) {
-                Toast.makeText(this, getString(R.string.crop_canceled), Toast.LENGTH_SHORT).show(); // Có thể đổi chuỗi này thành "Xem trước ảnh bị hủy"
+                Toast.makeText(this, getString(R.string.crop_canceled), Toast.LENGTH_SHORT).show();
                 Log.d(TAG, "Thao tác ImagePreviewActivity bị hủy.");
             } else {
-                Toast.makeText(this, getString(R.string.crop_failed), Toast.LENGTH_SHORT).show(); // Có thể đổi chuỗi này thành "Xem trước ảnh thất bại"
+                Toast.makeText(this, getString(R.string.crop_failed), Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "Thao tác ImagePreviewActivity thất bại với mã kết quả: " + result.getResultCode());
             }
-            // Sau khi quay lại từ ImagePreviewActivity, luôn hiển thị lại xem trước camera
             showCameraPreview();
         });
     }
 
     private void startImagePreviewActivity(Uri imageUri) {
         Intent intent = new Intent(CameraActivity.this, ImagePreviewActivity.class);
-        intent.putExtra("imageUri", imageUri.toString()); // Chuyển URI dưới dạng String
+        intent.putExtra("imageUri", imageUri.toString());
         imagePreviewLauncher.launch(intent);
     }
 
-
-    // --- Tích hợp CameraX và ML Kit ---
     private void startCamera() {
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(() -> {
@@ -223,11 +217,80 @@ public class CameraActivity extends AppCompatActivity {
                 .build();
 
         imageAnalysis = new ImageAnalysis.Builder()
+                .setTargetResolution(new Size(640, 480)) // Đặt độ phân giải phân tích
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
 
         imageAnalysis.setAnalyzer(cameraExecutor, imageProxy -> {
-            processImageProxy(imageProxy);
+            MatOfPoint newlyDetectedQuadrilateral = null;
+            try {
+                final MatOfPoint finalQuadrilateralForOverlay;
+
+                if (frameCount % PROCESS_FRAME_INTERVAL == 0) {
+                    newlyDetectedQuadrilateral = processImageFrame(imageProxy);
+                    Log.d(TAG, "Đã xử lý khung hình đầy đủ. Khung: " + frameCount);
+
+                    if (newlyDetectedQuadrilateral != null) {
+                        if (lastDetectedQuadrilateral != null) {
+                            lastDetectedQuadrilateral.release();
+                        }
+                        lastDetectedQuadrilateral = new MatOfPoint(newlyDetectedQuadrilateral.toArray()); // Tạo bản sao
+                        lastDetectionTimestamp = System.currentTimeMillis();
+
+                        lastImageProxyWidth = imageProxy.getWidth(); // Lưu thông tin gốc của ImageProxy
+                        lastImageProxyHeight = imageProxy.getHeight();
+                        lastRotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
+
+                        finalQuadrilateralForOverlay = newlyDetectedQuadrilateral;
+                    } else {
+                        if (lastDetectedQuadrilateral != null && (System.currentTimeMillis() - lastDetectionTimestamp > QUAD_PERSISTENCE_TIMEOUT_MS)) {
+                            Log.d(TAG, "lastDetectedQuadrilateral đã hết thời gian chờ. Giải phóng và đặt là null.");
+                            lastDetectedQuadrilateral.release();
+                            lastDetectedQuadrilateral = null;
+                        }
+                        finalQuadrilateralForOverlay = lastDetectedQuadrilateral;
+                    }
+                } else {
+                    if (lastDetectedQuadrilateral != null && (System.currentTimeMillis() - lastDetectionTimestamp > QUAD_PERSISTENCE_TIMEOUT_MS)) {
+                        Log.d(TAG, "lastDetectedQuadrilateral đã hết thời gian chờ trên khung bị bỏ qua. Giải phóng và đặt là null.");
+                        lastDetectedQuadrilateral.release();
+                        lastDetectedQuadrilateral = null;
+                    }
+                    finalQuadrilateralForOverlay = lastDetectedQuadrilateral;
+                    Log.d(TAG, "Bỏ qua xử lý khung hình đầy đủ. Khung: " + frameCount + ". Hiển thị khung cũ nếu có.");
+                }
+
+                runOnUiThread(() -> {
+                    if (finalQuadrilateralForOverlay != null) {
+                        // Tính toán lại kích thước effective của ảnh sau khi xoay để scale đúng
+                        int effectiveImageWidth = (lastRotationDegrees == 90 || lastRotationDegrees == 270) ? lastImageProxyHeight : lastImageProxyWidth;
+                        int effectiveImageHeight = (lastRotationDegrees == 90 || lastRotationDegrees == 270) ? lastImageProxyWidth : lastImageProxyHeight;
+
+                        // Gọi scalePointsToOverlayView từ CustomOverlayView
+                        customOverlayView.setQuadrilateral(
+                                CustomOverlayView.scalePointsToOverlayView(
+                                        finalQuadrilateralForOverlay,
+                                        effectiveImageWidth,
+                                        effectiveImageHeight,
+                                        previewView.getWidth(), // Sử dụng kích thước của PreviewView
+                                        previewView.getHeight()
+                                )
+                        );
+                    } else {
+                        customOverlayView.clearBoundingBox(); // Sử dụng clearBoundingBox hiện có
+                    }
+                    customOverlayView.invalidate(); // Yêu cầu vẽ lại
+                });
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error in image analysis: " + e.getMessage(), e);
+            } finally {
+                imageProxy.close();
+                if (newlyDetectedQuadrilateral != null) {
+                    newlyDetectedQuadrilateral.release();
+                }
+                frameCount++;
+            }
         });
 
         imageCapture = new ImageCapture.Builder()
@@ -243,69 +306,8 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
-    @androidx.annotation.OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)
-    private void processImageProxy(ImageProxy imageProxy) {
-        android.media.Image mediaImage = imageProxy.getImage();
-        if (mediaImage != null) {
-            InputImage image = InputImage.fromMediaImage(mediaImage, imageProxy.getImageInfo().getRotationDegrees());
 
-            objectDetector.process(image)
-                    .addOnSuccessListener(detectedObjects -> {
-                        if (!detectedObjects.isEmpty()) {
-                            DetectedObject firstObject = detectedObjects.get(0);
-                            RectF boundingBox = new RectF(firstObject.getBoundingBox());
-
-                            lastDetectedBoundingBox = new RectF(boundingBox);
-                            lastImageProxyWidth = imageProxy.getWidth();
-                            lastImageProxyHeight = imageProxy.getHeight();
-                            lastRotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
-
-                            // --- Logic chuyển đổi cho lớp phủ PreviewView ---
-                            int previewWidth = previewView.getWidth();
-                            int previewHeight = previewView.getHeight();
-
-                            int imageProxyWidth = imageProxy.getWidth();
-                            int imageProxyHeight = imageProxy.getHeight();
-                            int rotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
-
-                            int effectiveImageWidth = (rotationDegrees == 90 || rotationDegrees == 270) ? imageProxyHeight : imageProxyWidth;
-                            int effectiveImageHeight = (rotationDegrees == 90 || rotationDegrees == 270) ? imageProxyWidth : imageProxyHeight;
-
-                            Matrix matrix = new Matrix();
-
-                            float scaleX = (float) previewWidth / effectiveImageWidth;
-                            float scaleY = (float) previewHeight / effectiveImageHeight;
-                            float scale = Math.min(scaleX, scaleY);
-
-                            matrix.postScale(scale, scale);
-
-                            float dx = (previewWidth - effectiveImageWidth * scale) / 2f;
-                            float dy = (previewHeight - effectiveImageHeight * scale) / 2f;
-                            matrix.postTranslate(dx, dy);
-
-                            RectF transformedBoundingBox = new RectF();
-                            matrix.mapRect(transformedBoundingBox, boundingBox);
-
-                            customOverlayView.setBoundingBox(transformedBoundingBox);
-                            customOverlayView.postInvalidate();
-
-                        } else {
-                            customOverlayView.clearBoundingBox();
-                            customOverlayView.postInvalidate();
-                            lastDetectedBoundingBox = null;
-                        }
-                    })
-                    .addOnFailureListener(e -> {
-                        Log.e(TAG, "Phát hiện đối tượng thất bại: " + e.getMessage(), e);
-                        customOverlayView.clearBoundingBox();
-                        customOverlayView.postInvalidate();
-                        lastDetectedBoundingBox = null;
-                    })
-                    .addOnCompleteListener(task -> {
-                        imageProxy.close();
-                    });
-        }
-    }
+    // Trong CameraActivity.java
 
     private void takePhoto() {
         if (imageCapture == null) {
@@ -327,7 +329,6 @@ public class CameraActivity extends AppCompatActivity {
                     Toast.makeText(CameraActivity.this, getString(R.string.photo_captured_saved), Toast.LENGTH_SHORT).show();
                     Log.d(TAG, "Ảnh đã chụp và lưu: " + savedUri);
 
-                    // --- BẮT ĐẦU LOGIC CẮT ẢNH DỰA TRÊN KHUNG NHẬN DIỆN VÀ HIỂN THỊ ---
                     Bitmap originalFullBitmap = null;
                     try {
                         originalFullBitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), savedUri);
@@ -337,60 +338,90 @@ public class CameraActivity extends AppCompatActivity {
                         selectedImageUri = savedUri;
                         Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
                         showImageView();
-                        // Gửi ảnh gốc đã lưu sang ImagePreviewActivity
-                        startImagePreviewActivity(selectedImageUri);
+                        startImagePreviewActivity(selectedImageUri); // Gửi ảnh gốc nếu lỗi
                         return;
                     }
 
                     if (originalFullBitmap != null) {
-                        if (lastDetectedBoundingBox != null && lastImageProxyWidth > 0 && lastImageProxyHeight > 0) {
-                            RectF mlKitUprightBox = new RectF(lastDetectedBoundingBox);
+                        if (lastDetectedQuadrilateral != null && !lastDetectedQuadrilateral.empty()) {
+                            // Kích thước 'logic' của ảnh mà OpenCV đã xử lý (sau khi đã áp dụng xoay)
+                            int conceptualOpenCVWidth = (lastRotationDegrees == 90 || lastRotationDegrees == 270) ? lastImageProxyHeight : lastImageProxyWidth;
+                            int conceptualOpenCVHeight = (lastRotationDegrees == 90 || lastRotationDegrees == 270) ? lastImageProxyWidth : lastImageProxyHeight;
 
-                            float rawImageWidth = lastImageProxyWidth;
-                            float rawImageHeight = lastImageProxyHeight;
-                            float fullBitmapWidth = originalFullBitmap.getWidth();
-                            float fullBitmapHeight = originalFullBitmap.getHeight();
+                            // Tỷ lệ giữa kích thước ảnh đã chụp và kích thước ảnh mà OpenCV đã xử lý
+                            float scaleBitmapToOpenCV = (float) originalFullBitmap.getWidth() / conceptualOpenCVWidth;
 
-                            float conceptualMlKitImageWidth = (lastRotationDegrees == 90 || lastRotationDegrees == 270) ? rawImageHeight : rawImageWidth;
-                            float conceptualMlKitImageHeight = (lastRotationDegrees == 90 || lastRotationDegrees == 270) ? rawImageWidth : rawImageHeight;
+                            // Đây là yếu tố phóng to mà bạn muốn áp dụng cho khung cắt.
+                            // Nó phải khớp với yếu tố phóng to trong CustomOverlayView.scalePointsToOverlayView
+                            final float ZOOM_FACTOR = 1.2f; // Phóng to thêm 20% cho khung cắt
 
-                            float scaleFactorX = fullBitmapWidth / conceptualMlKitImageWidth;
-                            float scaleFactorY = fullBitmapHeight / conceptualMlKitImageHeight;
+                            Point[] pts = lastDetectedQuadrilateral.toArray();
 
-                            RectF finalCroppedRectFloat = new RectF(
-                                    mlKitUprightBox.left * scaleFactorX,
-                                    mlKitUprightBox.top * scaleFactorY,
-                                    mlKitUprightBox.right * scaleFactorX,
-                                    mlKitUprightBox.bottom * scaleFactorY
-                            );
+                            // Tìm min/max X, Y từ các điểm được phát hiện
+                            float minX_detected = Float.MAX_VALUE;
+                            float minY_detected = Float.MAX_VALUE;
+                            float maxX_detected = Float.MIN_VALUE;
+                            float maxY_detected = Float.MIN_VALUE;
 
-                            finalCroppedRectFloat.sort();
+                            for (Point p : pts) {
+                                // Scale các điểm từ không gian ImageProxy/OpenCV sang không gian của OriginalFullBitmap
+                                float scaledX_to_bitmap = (float) (p.x * scaleBitmapToOpenCV);
+                                float scaledY_to_bitmap = (float) (p.y * scaleBitmapToOpenCV);
 
-                            int cropX = Math.max(0, (int) Math.floor(finalCroppedRectFloat.left));
-                            int cropY = Math.max(0, (int) Math.floor(finalCroppedRectFloat.top));
-                            int cropRight = Math.min(originalFullBitmap.getWidth(), (int) Math.ceil(finalCroppedRectFloat.right));
-                            int cropBottom = Math.min(originalFullBitmap.getHeight(), (int) Math.ceil(finalCroppedRectFloat.bottom));
+                                minX_detected = Math.min(minX_detected, scaledX_to_bitmap);
+                                minY_detected = Math.min(minY_detected, scaledY_to_bitmap);
+                                maxX_detected = Math.max(maxX_detected, scaledX_to_bitmap);
+                                maxY_detected = Math.max(maxY_detected, scaledY_to_bitmap);
+                            }
 
-                            int cropWidth = Math.max(0, cropRight - cropX);
-                            int cropHeight = Math.max(0, cropBottom - cropY);
+                            // Bây giờ áp dụng ZOOM_FACTOR cho các tọa độ min/max để mở rộng khung cắt
+                            float currentCropWidth = maxX_detected - minX_detected;
+                            float currentCropHeight = maxY_detected - minY_detected;
+
+                            float newCropWidth = currentCropWidth * ZOOM_FACTOR;
+                            float newCropHeight = currentCropHeight * ZOOM_FACTOR;
+
+                            // Tính toán offset để giữ khung gốc nằm giữa khung đã phóng to
+                            float offsetX = (newCropWidth - currentCropWidth) / 2f;
+                            float offsetY = (newCropHeight - currentCropHeight) / 2f;
+
+                            // Áp dụng offset để có các tọa độ cắt mới
+                            int cropX_start = Math.max(0, (int) Math.floor(minX_detected - offsetX));
+                            int cropY_start = Math.max(0, (int) Math.floor(minY_detected - offsetY));
+                            int cropX_end = Math.min(originalFullBitmap.getWidth(), (int) Math.ceil(maxX_detected + offsetX));
+                            int cropY_end = Math.min(originalFullBitmap.getHeight(), (int) Math.ceil(maxY_detected + offsetY));
+
+                            int cropWidth = Math.max(0, cropX_end - cropX_start);
+                            int cropHeight = Math.max(0, cropY_end - cropY_start);
 
                             if (cropWidth > 0 && cropHeight > 0) {
-                                Bitmap croppedBitmap = Bitmap.createBitmap(
-                                        originalFullBitmap,
-                                        cropX,
-                                        cropY,
-                                        cropWidth,
-                                        cropHeight
-                                );
+                                try {
+                                    Bitmap croppedBitmap = Bitmap.createBitmap(
+                                            originalFullBitmap,
+                                            cropX_start,
+                                            cropY_start,
+                                            cropWidth,
+                                            cropHeight
+                                    );
 
-                                selectedImageUri = saveBitmapToCache(croppedBitmap);
-                                Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
-                                showImageView();
-                                if (croppedBitmap != originalFullBitmap) croppedBitmap.recycle();
-                                originalFullBitmap.recycle();
+                                    selectedImageUri = saveBitmapToCache(croppedBitmap);
+                                    Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
+                                    showImageView();
+                                    if (croppedBitmap != originalFullBitmap) croppedBitmap.recycle();
+                                    originalFullBitmap.recycle(); // Luôn recycle bitmap gốc
 
-                                // Gửi ảnh đã cắt sang ImagePreviewActivity
-                                startImagePreviewActivity(selectedImageUri);
+                                    startImagePreviewActivity(selectedImageUri);
+
+                                } catch (Exception e) {
+                                    Log.e(TAG, "Lỗi khi tạo bitmap đã cắt: " + e.getMessage(), e);
+                                    Toast.makeText(CameraActivity.this, "Lỗi khi cắt ảnh: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    // Xử lý lỗi, có thể gửi ảnh gốc
+                                    selectedImageUri = savedUri;
+                                    Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
+                                    showImageView();
+                                    originalFullBitmap.recycle();
+                                    startImagePreviewActivity(selectedImageUri);
+                                }
 
                             } else {
                                 Log.e(TAG, "Kích thước hoặc tọa độ cắt không hợp lệ sau khi giới hạn. Hiển thị ảnh gốc đầy đủ.");
@@ -398,26 +429,21 @@ public class CameraActivity extends AppCompatActivity {
                                 Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
                                 showImageView();
                                 originalFullBitmap.recycle();
-                                // Gửi ảnh gốc đã lưu sang ImagePreviewActivity
                                 startImagePreviewActivity(selectedImageUri);
                             }
-
                         } else {
-                            Log.w(TAG, "Không phát hiện khung giới hạn hoặc kích thước proxy ảnh không hợp lệ. Hiển thị ảnh gốc đầy đủ.");
+                            Log.w(TAG, "Không phát hiện khung giới hạn OpenCV hoặc khung rỗng. Hiển thị ảnh gốc đầy đủ.");
                             selectedImageUri = savedUri;
                             Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
                             showImageView();
                             originalFullBitmap.recycle();
-                            // Gửi ảnh gốc đã lưu sang ImagePreviewActivity
                             startImagePreviewActivity(selectedImageUri);
                         }
-
                     } else {
                         Log.e(TAG, "originalFullBitmap rỗng sau khi chụp.");
                         selectedImageUri = savedUri;
                         Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
                         showImageView();
-                        // Gửi ảnh gốc đã lưu sang ImagePreviewActivity
                         startImagePreviewActivity(selectedImageUri);
                     }
                 } else {
@@ -434,7 +460,115 @@ public class CameraActivity extends AppCompatActivity {
         });
     }
 
-    // --- Quản lý hiển thị UI ---
+    // Xử lý ảnh tĩnh được chọn từ thư viện bằng OpenCV
+    private void processStaticImage(Uri imageUri) {
+        new Thread(() -> {
+            Mat rgba = null;
+            Mat gray = null;
+            Mat edges = null;
+            Mat hierarchy = null;
+            List<MatOfPoint> contours = null;
+            MatOfPoint bestQuadrilateral = null;
+
+            try {
+                InputStream inputStream = getContentResolver().openInputStream(imageUri);
+                Bitmap originalBitmap = BitmapFactory.decodeStream(inputStream);
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+
+                if (originalBitmap == null) {
+                    Log.e(TAG, "Could not decode bitmap from URI: " + imageUri);
+                    return;
+                }
+
+                Bitmap resizedBitmap = resizeBitmap(originalBitmap, 800); // Kích thước tối đa cho xử lý
+
+                rgba = new Mat();
+                Utils.bitmapToMat(resizedBitmap, rgba);
+
+                gray = new Mat();
+                Imgproc.cvtColor(rgba, gray, Imgproc.COLOR_RGBA2GRAY);
+
+                Imgproc.medianBlur(gray, gray, 5);
+
+                CLAHE clahe = Imgproc.createCLAHE(2.0, new org.opencv.core.Size(8, 8));
+                clahe.apply(gray, gray);
+
+                edges = new Mat();
+                Imgproc.Canny(gray, edges, CANNY_THRESHOLD1, CANNY_THRESHOLD2);
+
+                Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new org.opencv.core.Size(3, 3));
+                Imgproc.dilate(edges, edges, kernel);
+                kernel.release();
+
+                contours = new ArrayList<>();
+                hierarchy = new Mat();
+                Imgproc.findContours(edges, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+
+                bestQuadrilateral = findBestQuadrilateral(contours, gray.width(), gray.height());
+
+                final MatOfPoint finalBestQuadrilateralForToast = bestQuadrilateral;
+
+                final Bitmap resultBitmap = Bitmap.createBitmap(rgba.cols(), rgba.rows(), Bitmap.Config.ARGB_8888);
+                if (bestQuadrilateral != null) {
+                    bestQuadrilateral = sortPoints(bestQuadrilateral);
+                    Imgproc.drawContours(rgba, Collections.singletonList(bestQuadrilateral), -1, new Scalar(0, 255, 0, 255), 5);
+                    Log.i(TAG, "Static Image - Đã phát hiện tứ giác tốt nhất với diện tích: " + Imgproc.contourArea(bestQuadrilateral));
+                } else {
+                    Log.i(TAG, "Static Image - Không tìm thấy tứ giác hợp lệ nào.");
+                }
+                Utils.matToBitmap(rgba, resultBitmap);
+
+                runOnUiThread(() -> {
+                    imageView.setImageBitmap(resultBitmap); // Hiển thị ảnh đã xử lý lên imageView
+                    if (finalBestQuadrilateralForToast != null) {
+                        Toast.makeText(CameraActivity.this, "Đã tìm thấy khung trên ảnh tĩnh!", Toast.LENGTH_SHORT).show();
+                        // Chuyển ảnh đã xử lý (với khung vẽ) sang ImagePreviewActivity
+                        // Lưu ý: nếu bạn muốn crop ảnh tĩnh theo khung, bạn cần thêm logic cắt ở đây
+                        startImagePreviewActivity(saveBitmapToCache(resultBitmap)); // Lưu Bitmap vào cache để truyền URI
+                    } else {
+                        Toast.makeText(CameraActivity.this, "Không tìm thấy khung trên ảnh tĩnh.", Toast.LENGTH_SHORT).show();
+                        startImagePreviewActivity(imageUri); // Nếu không tìm thấy, gửi ảnh gốc
+                    }
+                });
+
+            } catch (IOException e) {
+                Log.e(TAG, "Error loading static image: " + e.getMessage());
+                runOnUiThread(() -> Toast.makeText(CameraActivity.this, "Lỗi tải ảnh: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            } finally {
+                if (rgba != null) rgba.release();
+                if (gray != null) gray.release();
+                if (edges != null) edges.release();
+                if (hierarchy != null) hierarchy.release();
+                if (contours != null) {
+                    for (MatOfPoint contour : contours) {
+                        contour.release();
+                    }
+                }
+            }
+        }).start();
+    }
+
+    private Bitmap resizeBitmap(Bitmap bitmap, int maxDimension) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        float ratio = (float) width / height;
+
+        if (width > height) {
+            if (width > maxDimension) {
+                width = maxDimension;
+                height = (int) (width / ratio);
+            }
+        } else {
+            if (height > maxDimension) {
+                height = maxDimension;
+                width = (int) (height * ratio);
+            }
+        }
+        return Bitmap.createScaledBitmap(bitmap, width, height, true);
+    }
+
     private void showCameraPreview() {
         previewView.setVisibility(View.VISIBLE);
         customOverlayView.setVisibility(View.VISIBLE);
@@ -442,7 +576,6 @@ public class CameraActivity extends AppCompatActivity {
         btnTakePhoto.setVisibility(View.VISIBLE);
         btnSelectImage.setVisibility(View.VISIBLE);
 
-        // Đảm bảo camera được khởi động nếu chúng ta đang hiển thị xem trước
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             startCamera();
         }
@@ -455,7 +588,6 @@ public class CameraActivity extends AppCompatActivity {
         btnTakePhoto.setVisibility(View.GONE);
         btnSelectImage.setVisibility(View.GONE);
 
-        // Dừng các trường hợp sử dụng camera khi hiển thị chế độ xem hình ảnh
         if (cameraProviderFuture != null && cameraProviderFuture.isDone()) {
             try {
                 cameraProviderFuture.get().unbindAll();
@@ -465,7 +597,6 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
-    // --- Xử lý quyền ---
     private boolean checkCameraPermission() {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
     }
@@ -516,23 +647,17 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
-    // --- Xử lý nút Back ---
     @Override
     public void onBackPressed() {
-        // Nếu ImageView đang hiển thị ảnh, quay lại chế độ xem trước camera
         if (imageView.getVisibility() == View.VISIBLE) {
-            selectedImageUri = null; // Xóa URI ảnh đã chọn
-            imageView.setImageDrawable(null); // Xóa ảnh khỏi ImageView
+            selectedImageUri = null;
+            imageView.setImageDrawable(null);
             showCameraPreview();
         } else {
-            // Ngược lại, thực hiện hành động back mặc định (thoát activity)
             super.onBackPressed();
         }
     }
 
-    // --- Các phương thức tiện ích ---
-    // Phương thức rotateBitmap không còn được sử dụng trực tiếp ở đây,
-    // nhưng giữ lại để tiện nếu có logic tương lai.
     private Bitmap rotateBitmap(Bitmap bitmap, float degrees) {
         Matrix matrix = new Matrix();
         matrix.postRotate(degrees);
@@ -575,8 +700,160 @@ public class CameraActivity extends AppCompatActivity {
         if (cameraExecutor != null) {
             cameraExecutor.shutdown();
         }
-        if (objectDetector != null) {
-            objectDetector.close();
+        // Giải phóng MatOfPoint cuối cùng khi Activity bị hủy
+        if (lastDetectedQuadrilateral != null) {
+            lastDetectedQuadrilateral.release();
+            lastDetectedQuadrilateral = null;
         }
+    }
+
+    // --- Các hàm xử lý ảnh OpenCV được copy từ MainActivity ---
+
+    @androidx.annotation.OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)
+    private MatOfPoint processImageFrame(ImageProxy imageProxy) {
+        Mat gray = null;
+        Mat edges = null;
+        Mat hierarchy = null;
+        List<MatOfPoint> contours = null;
+        MatOfPoint bestQuadrilateral = null;
+
+        try {
+            ByteBuffer yBuffer = imageProxy.getPlanes()[0].getBuffer();
+            int yRowStride = imageProxy.getPlanes()[0].getRowStride();
+
+            int originalFrameWidth = imageProxy.getWidth();
+            int originalFrameHeight = imageProxy.getHeight();
+
+            gray = new Mat(originalFrameHeight, originalFrameWidth, CvType.CV_8UC1);
+
+            if (yRowStride == originalFrameWidth) {
+                yBuffer.rewind();
+                byte[] yBytes = new byte[yBuffer.remaining()];
+                yBuffer.get(yBytes);
+                gray.put(0, 0, yBytes);
+            } else {
+                byte[] rowData = new byte[yRowStride];
+                for (int r = 0; r < originalFrameHeight; r++) {
+                    yBuffer.get(rowData);
+                    gray.put(r, 0, rowData, 0, originalFrameWidth);
+                }
+            }
+
+            int rotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
+            if (rotationDegrees == 90 || rotationDegrees == 270) {
+                Mat rotatedGray = new Mat();
+                Core.transpose(gray, rotatedGray);
+                Core.flip(rotatedGray, rotatedGray, (rotationDegrees == 90) ? 1 : 0);
+                gray.release();
+                gray = rotatedGray;
+            }
+            // Không cần cập nhật frameWidth/Height ở đây, chỉ cần dùng gray.width()/height() khi gọi findBestQuadrilateral
+
+            Imgproc.medianBlur(gray, gray, 5);
+
+            CLAHE clahe = Imgproc.createCLAHE(2.0, new org.opencv.core.Size(8, 8));
+            clahe.apply(gray, gray);
+
+            edges = new Mat();
+            Imgproc.Canny(gray, edges, CANNY_THRESHOLD1, CANNY_THRESHOLD2);
+
+            Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new org.opencv.core.Size(3, 3));
+            Imgproc.dilate(edges, edges, kernel);
+            kernel.release();
+
+            contours = new ArrayList<>();
+            hierarchy = new Mat();
+            Imgproc.findContours(edges, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+
+            bestQuadrilateral = findBestQuadrilateral(contours, gray.width(), gray.height());
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error processing image frame: " + e.getMessage(), e);
+        } finally {
+            if (gray != null) gray.release();
+            if (edges != null) edges.release();
+            if (hierarchy != null) hierarchy.release();
+            if (contours != null) {
+                for (MatOfPoint m : contours) {
+                    m.release();
+                }
+            }
+        }
+        return bestQuadrilateral;
+    }
+
+    private MatOfPoint findBestQuadrilateral(List<MatOfPoint> contours, int imageWidth, int imageHeight) {
+        MatOfPoint bestQuadrilateral = null;
+        double maxArea = 0;
+        double totalArea = imageWidth * imageHeight;
+        double minAllowedArea = totalArea * MIN_AREA_PERCENTAGE;
+        double maxAllowedArea = totalArea * MAX_AREA_PERCENTAGE;
+
+        for (MatOfPoint contour : contours) {
+            MatOfPoint2f contour2f = new MatOfPoint2f(contour.toArray());
+            double perimeter = Imgproc.arcLength(contour2f, true);
+            MatOfPoint2f approxCurve = new MatOfPoint2f();
+            Imgproc.approxPolyDP(contour2f, approxCurve, APPROX_POLY_DP_EPSILON_FACTOR * perimeter, true);
+
+            long numVertices = approxCurve.total();
+            double currentArea = Imgproc.contourArea(approxCurve);
+
+            if (numVertices == 4 &&
+                    currentArea > minAllowedArea &&
+                    currentArea < maxAllowedArea) {
+
+                if (Imgproc.isContourConvex(new MatOfPoint(approxCurve.toArray()))) {
+                    double maxCosine = 0;
+                    Point[] points = approxCurve.toArray();
+
+                    for (int i = 0; i < 4; i++) {
+                        Point p1 = points[i];
+                        Point p2 = points[(i + 1) % 4];
+                        Point p3 = points[(i + 2) % 4];
+
+                        double cosineAngle = Math.abs(angle(p1, p2, p3));
+                        maxCosine = Math.max(maxCosine, cosineAngle);
+                    }
+
+                    if (maxCosine < MIN_COSINE_ANGLE) {
+                        if (currentArea > maxArea) {
+                            maxArea = currentArea;
+                            bestQuadrilateral = new MatOfPoint(points);
+                        }
+                    }
+                }
+            }
+            contour2f.release();
+            approxCurve.release();
+        }
+        return bestQuadrilateral;
+    }
+
+    private double angle(Point p1, Point p2, Point p3) {
+        double dx1 = p1.x - p2.x;
+        double dy1 = p1.y - p2.y;
+        double dx2 = p3.x - p2.x;
+        double dy2 = p3.y - p2.y;
+        return (dx1 * dx2 + dy1 * dy2) / (Math.sqrt(dx1 * dx1 + dy1 * dy1) * Math.sqrt(dx2 * dx2 + dy2 * dy2) + 1e-10);
+    }
+
+    private MatOfPoint sortPoints(MatOfPoint pointsMat) {
+        Point[] pts = pointsMat.toArray();
+        Point[] rect = new Point[4];
+
+        Arrays.sort(pts, (p1, p2) -> Double.compare(p1.y, p2.y));
+
+        Point[] topPoints = Arrays.copyOfRange(pts, 0, 2);
+        Point[] bottomPoints = Arrays.copyOfRange(pts, 2, 4);
+
+        Arrays.sort(topPoints, (p1, p2) -> Double.compare(p1.x, p2.x));
+        rect[0] = topPoints[0];
+        rect[1] = topPoints[1];
+
+        Arrays.sort(bottomPoints, (p1, p2) -> Double.compare(p1.x, p2.x));
+        rect[3] = bottomPoints[0];
+        rect[2] = bottomPoints[1];
+
+        return new MatOfPoint(rect);
     }
 }
