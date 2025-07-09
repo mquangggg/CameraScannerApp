@@ -7,15 +7,12 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
-
-//Import cho sự kiện tìm kiếm
-import android.text.Editable;
-import android.text.TextWatcher;
-
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -25,9 +22,8 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.camerascanner.activitycamera.CameraActivity;
 import com.example.camerascanner.R;
-import com.google.android.material.bottomnavigation.BottomNavigationItemView;
+import com.example.camerascanner.activitycamera.CameraActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationBarView;
@@ -45,8 +41,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import com.example.camerascanner.activitymain.MeActivity;
 
 
 /**
@@ -218,12 +212,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 int itemID = item.getItemId();
-                if(itemID == R.id.nav_home){
+                if (itemID == R.id.nav_home) {
                     return true;
-                }else if(itemID == R.id.nav_tools){
+                } else if (itemID == R.id.nav_tools) {
                     Toast.makeText(MainActivity.this, "Chức năng Tools sẽ sớm ra mắt!", Toast.LENGTH_SHORT).show();
                     return true;
-                }else if(itemID == R.id.nav_me){
+                } else if (itemID == R.id.nav_me) {
                     Intent intent = new Intent(MainActivity.this, MeActivity.class);
                     startActivity(intent);
                     finish();
@@ -235,20 +229,22 @@ public class MainActivity extends AppCompatActivity {
         // Kiểm tra và yêu cầu quyền lưu trữ khi Activity bắt đầu
         checkAndRequestStoragePermission();
     }
+
     /**
      * Phương thức lọc danh sách dựa trên văn bản tìm kiếm
+     *
      * @param text văn bản người dùng nhập vào để tìm kiếm
      */
-    private void filters(String text){
+    private void filters(String text) {
         //Kiểm tra tab
-        if (tabLayout.getSelectedTabPosition()== 0){
-            List<File> filteredList =  new ArrayList<>();
-            if(text.isEmpty()){
+        if (tabLayout.getSelectedTabPosition() == 0) {
+            List<File> filteredList = new ArrayList<>();
+            if (text.isEmpty()) {
                 filteredList.addAll(originalPdfFiles);
             } else {
                 String lowerCaseText = text.toLowerCase(Locale.getDefault());
-                for(File file : originalPdfFiles){
-                    if(file.getName().toLowerCase(Locale.getDefault()).contains(lowerCaseText)){
+                for (File file : originalPdfFiles) {
+                    if (file.getName().toLowerCase(Locale.getDefault()).contains(lowerCaseText)) {
                         filteredList.add(file);
                     }
                 }
@@ -256,15 +252,15 @@ public class MainActivity extends AppCompatActivity {
             pdfFiles.clear();
             pdfFiles.addAll(filteredList);
             pdfAdapter.notifyDataSetChanged();
-        } else if(tabLayout.getSelectedTabPosition() == 1) {
+        } else if (tabLayout.getSelectedTabPosition() == 1) {
             List<OcrPairedItem> filteredList = new ArrayList<>();
-            if(text.isEmpty()){
+            if (text.isEmpty()) {
                 filteredList.addAll(originalOcrPairedItems);
             } else {
                 String lowerCaseText = text.toLowerCase(Locale.getDefault());
-                for(OcrPairedItem item : originalOcrPairedItems){
-                    if(item.getImageFile().getName().toLowerCase(Locale.getDefault()).contains(lowerCaseText) ||
-                        item.getTextFile().getName().toLowerCase(Locale.getDefault()).contains(lowerCaseText) ){
+                for (OcrPairedItem item : originalOcrPairedItems) {
+                    if (item.getImageFile().getName().toLowerCase(Locale.getDefault()).contains(lowerCaseText) ||
+                            item.getTextFile().getName().toLowerCase(Locale.getDefault()).contains(lowerCaseText)) {
                         filteredList.add(item);
                     }
                 }
@@ -295,6 +291,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Kiểm tra xem quyền truy cập Camera đã được cấp hay chưa.
+     *
      * @return true nếu quyền đã được cấp, false nếu chưa.
      */
     private boolean checkCameraPermission() {
@@ -344,8 +341,8 @@ public class MainActivity extends AppCompatActivity {
      * Phương thức callback được gọi sau khi người dùng phản hồi yêu cầu cấp quyền.
      * Xử lý kết quả của yêu cầu quyền Camera và Lưu trữ.
      *
-     * @param requestCode Mã yêu cầu đã được cung cấp khi gọi requestPermissions.
-     * @param permissions Mảng các quyền được yêu cầu.
+     * @param requestCode  Mã yêu cầu đã được cung cấp khi gọi requestPermissions.
+     * @param permissions  Mảng các quyền được yêu cầu.
      * @param grantResults Kết quả của việc cấp quyền (PERMISSION_GRANTED hoặc PERMISSION_DENIED) tương ứng với mỗi quyền.
      */
     @Override
@@ -503,7 +500,7 @@ public class MainActivity extends AppCompatActivity {
      * Tên tệp dự kiến có định dạng "PREFIX_yyyyMMdd_HHmmss.extension".
      *
      * @param fileName Tên của tệp (ví dụ: "OCR_Image_20240703_103000.jpeg").
-     * @param prefix Tiền tố của tên tệp (ví dụ: "OCR_Image_", "OCR_Text_").
+     * @param prefix   Tiền tố của tên tệp (ví dụ: "OCR_Image_", "OCR_Text_").
      * @return Chuỗi dấu thời gian (ví dụ: "20240703_103000") hoặc null nếu tên tệp không khớp định dạng.
      */
     private String extractTimestamp(String fileName, String prefix) {

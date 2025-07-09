@@ -20,7 +20,7 @@ import android.os.Looper;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.ImageButton;
-import android.widget.ImageView; // Re-import ImageView
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -86,7 +86,7 @@ public class OCRActivity extends AppCompatActivity {
      * @param saveInstance Đối tượng Bundle chứa trạng thái Activity trước đó nếu có.
      */
     @Override
-    protected void onCreate(Bundle saveInstance){
+    protected void onCreate(Bundle saveInstance) {
         super.onCreate(saveInstance);
         setContentView(R.layout.activity_ocr);
 
@@ -130,7 +130,7 @@ public class OCRActivity extends AppCompatActivity {
         }
 
         // Thiết lập sự kiện click cho nút "Quay lại"
-        btnOCRBack.setOnClickListener(v->{ //
+        btnOCRBack.setOnClickListener(v -> { //
             Intent intent = new Intent(OCRActivity.this, MainActivity.class); //
             startActivity(intent); //
             finish(); // Đóng Activity hiện tại
@@ -173,7 +173,7 @@ public class OCRActivity extends AppCompatActivity {
         });
 
         // Thiết lập sự kiện click cho nút "Copy"
-        btnCopyOCRText.setOnClickListener(v->{ //
+        btnCopyOCRText.setOnClickListener(v -> { //
             copyTextToClipboard(); // Gọi phương thức sao chép văn bản
         });
     }
@@ -182,23 +182,22 @@ public class OCRActivity extends AppCompatActivity {
      * Sao chép văn bản được nhận diện vào clipboard của hệ thống.
      * Hiển thị thông báo Toast về kết quả sao chép.
      */
-    private void copyTextToClipboard(){ //
+    private void copyTextToClipboard() { //
         // Lấy văn bản đầy đủ từ kết quả OCR
         String textToCopy = (currentOcrResult != null) ? currentOcrResult.getText().trim() : ""; //
-        if (textToCopy.isEmpty()){ //
-            Toast.makeText(this, "Không có văn bản để sao chép",Toast.LENGTH_LONG).show(); //
+        if (textToCopy.isEmpty()) { //
+            Toast.makeText(this, "Không có văn bản để sao chép", Toast.LENGTH_LONG).show(); //
             return; //
         }
 
         // Lấy dịch vụ ClipboardManager và tạo ClipData
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE); //
-        ClipData clip = ClipData.newPlainText("Văn bản OCR",textToCopy); //
-        if(clipboard != null){ //
+        ClipData clip = ClipData.newPlainText("Văn bản OCR", textToCopy); //
+        if (clipboard != null) { //
             clipboard.setPrimaryClip(clip); // Đặt dữ liệu vào clipboard
-            Toast.makeText(this,"Đã sao chép văn bản vào bộ nhớ tạm! ",Toast.LENGTH_LONG).show(); //
-        }
-        else { //
-            Toast.makeText(this,"Không thể sao chép văn bản! ",Toast.LENGTH_LONG).show(); //
+            Toast.makeText(this, "Đã sao chép văn bản vào bộ nhớ tạm! ", Toast.LENGTH_LONG).show(); //
+        } else { //
+            Toast.makeText(this, "Không thể sao chép văn bản! ", Toast.LENGTH_LONG).show(); //
         }
     }
 
@@ -215,11 +214,11 @@ public class OCRActivity extends AppCompatActivity {
         btnSaveOCRImageAndWord.setEnabled(false); //
 
         // Chạy tác vụ OCR trên một luồng nền để tránh chặn luồng UI
-        executorService.execute(() ->{ //
+        executorService.execute(() -> { //
             String fullOcrText = "Lỗi khi trích xuất văn bản."; // Mặc định là lỗi
             Text resultText = null; // Biến để lưu đối tượng Text từ ML Kit
 
-            try{ //
+            try { //
                 if (imageBitmap == null) { //
                     throw new IOException("Bitmap để xử lý OCR là null."); //
                 }
@@ -234,7 +233,7 @@ public class OCRActivity extends AppCompatActivity {
                 // Lấy toàn bộ văn bản được nhận dạng
                 fullOcrText = resultText.getText(); //
 
-            } catch (Exception e){ //
+            } catch (Exception e) { //
                 // Xử lý lỗi nếu quá trình OCR thất bại
                 Log.e(TAG, "Lỗi khi trích xuất văn bản OCR: " + e.getMessage(), e); //
                 fullOcrText = "Lỗi: " + e.getMessage(); //
@@ -276,8 +275,8 @@ public class OCRActivity extends AppCompatActivity {
      * Xử lý kết quả yêu cầu cấp quyền từ người dùng.
      * Nếu quyền WRITE_EXTERNAL_STORAGE được cấp, thông báo cho người dùng.
      *
-     * @param requestCode Mã yêu cầu đã được cung cấp khi gọi requestPermissions.
-     * @param permissions Mảng các quyền được yêu cầu.
+     * @param requestCode  Mã yêu cầu đã được cung cấp khi gọi requestPermissions.
+     * @param permissions  Mảng các quyền được yêu cầu.
      * @param grantResults Kết quả của việc cấp quyền (PERMISSION_GRANTED hoặc PERMISSION_DENIED) tương ứng với mỗi quyền.
      */
     @Override
@@ -297,9 +296,9 @@ public class OCRActivity extends AppCompatActivity {
      * Đối với Android 10 (API 29) trở lên, sử dụng MediaStore API để lưu trữ.
      * Đối với Android 9 (API 28) trở xuống, lưu trực tiếp vào thư mục công cộng.
      *
-     * @param textToSave Văn bản cần lưu.
+     * @param textToSave      Văn bản cần lưu.
      * @param commonTimestamp Dấu thời gian chung để đặt tên tệp.
-     * @param fileExtension Phần mở rộng của tệp (ví dụ: "txt").
+     * @param fileExtension   Phần mở rộng của tệp (ví dụ: "txt").
      */
     private void saveTextToFile(String textToSave, String commonTimestamp, String fileExtension) { //
         // Kiểm tra quyền ghi bộ nhớ nếu phiên bản Android < Q (API 29)
@@ -318,9 +317,9 @@ public class OCRActivity extends AppCompatActivity {
      * Thực hiện việc lưu văn bản vào một tệp trong thư mục "Downloads/MyOCRTexts".
      * Sử dụng MediaStore cho Android Q+ và FileOutputStream cho các phiên bản cũ hơn.
      *
-     * @param textContent Nội dung văn bản cần ghi vào tệp.
+     * @param textContent     Nội dung văn bản cần ghi vào tệp.
      * @param commonTimestamp Dấu thời gian để đặt tên tệp.
-     * @param fileExtension Phần mở rộng của tệp.
+     * @param fileExtension   Phần mở rộng của tệp.
      */
     private void performSaveTextFile(String textContent, String commonTimestamp, String fileExtension) { //
         executorService.execute(() -> { // Thực hiện trên luồng nền
@@ -382,7 +381,7 @@ public class OCRActivity extends AppCompatActivity {
      * Đối với Android 10 (API 29) trở lên, sử dụng MediaStore API để lưu trữ.
      * Đối với Android 9 (API 28) trở xuống, lưu trực tiếp vào thư mục công cộng.
      *
-     * @param imageBitmap Bitmap của ảnh cần lưu.
+     * @param imageBitmap     Bitmap của ảnh cần lưu.
      * @param commonTimestamp Dấu thời gian chung để đặt tên tệp.
      */
     private void saveOcrImageToFile(Bitmap imageBitmap, String commonTimestamp) { //
@@ -401,7 +400,7 @@ public class OCRActivity extends AppCompatActivity {
      * Thực hiện việc lưu Bitmap ảnh vào tệp JPEG trong thư mục "Downloads/MyOCRImages".
      * Sử dụng MediaStore cho Android Q+ và FileOutputStream cho các phiên bản cũ hơn.
      *
-     * @param imageBitmap Bitmap của ảnh cần lưu.
+     * @param imageBitmap     Bitmap của ảnh cần lưu.
      * @param commonTimestamp Dấu thời gian để đặt tên tệp.
      */
     private void performSaveImageFile(Bitmap imageBitmap, String commonTimestamp) { //

@@ -4,7 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory; // Thêm import này
+import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Build;
@@ -12,7 +12,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Pair;
-import android.util.Size; // Thêm import này cho CameraX
+import android.util.Size;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -41,16 +41,16 @@ import com.example.camerascanner.activitycrop.CropActivity;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import org.opencv.android.OpenCVLoader; // Import OpenCVLoader
-import org.opencv.android.Utils; // Import Utils
-import org.opencv.core.Core; // Import Core
-import org.opencv.core.CvType; // Import CvType
-import org.opencv.core.Mat; // Import Mat
-import org.opencv.core.MatOfPoint; // Import MatOfPoint
-import org.opencv.core.MatOfPoint2f; // Import MatOfPoint2f
-import org.opencv.core.Point; // Import Point
-import org.opencv.imgproc.CLAHE; // Import CLAHE
-import org.opencv.imgproc.Imgproc; // Import Imgproc
+import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
+import org.opencv.imgproc.CLAHE;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -486,7 +486,8 @@ public class CameraActivity extends AppCompatActivity {
 
                             // Giải phóng tài nguyên OpenCV và Bitmap
                             if (originalFullBitmap != null) originalFullBitmap.recycle();
-                            if (resultBitmap != null && resultBitmap != originalFullBitmap) resultBitmap.recycle(); // Cẩn thận với việc giải phóng resultBitmap nếu nó có thể là originalFullBitmap
+                            if (resultBitmap != null && resultBitmap != originalFullBitmap)
+                                resultBitmap.recycle(); // Cẩn thận với việc giải phóng resultBitmap nếu nó có thể là originalFullBitmap
                             originalMat.release();
                             transformedMat.release();
                             perspectiveTransform.release();
@@ -517,6 +518,7 @@ public class CameraActivity extends AppCompatActivity {
                     Log.e(TAG, "Không thể lưu ảnh: Uri null");
                 }
             }
+
             @Override
             public void onError(ImageCaptureException exception) {
                 Log.e(TAG, "Lỗi khi chụp ảnh: " + exception.getMessage(), exception);
@@ -846,6 +848,7 @@ public class CameraActivity extends AppCompatActivity {
         }
         return new Pair<>(bestQuadrilateral, matForDimensionStorage); // ĐÃ SỬA: Trả về cả hai
     }
+
     private void adjustOpenCVParametersForResolution(int frameWidth, int frameHeight) {
         // Điều chỉnh ngưỡng Canny dựa trên chiều rộng khung hình
         // Bạn có thể tùy chỉnh các ngưỡng và khoảng độ phân giải này

@@ -20,6 +20,7 @@ import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
@@ -28,9 +29,13 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import com.example.camerascanner.R;
+import com.example.camerascanner.activitymain.MainActivity;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -42,12 +47,6 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import androidx.appcompat.app.AlertDialog;
-import android.widget.EditText; // Đảm bảo dòng này đã có hoặc thêm vào
-
-import com.example.camerascanner.R;
-import com.example.camerascanner.activitymain.MainActivity;
 
 /**
  * Activity này chịu trách nhiệm hiển thị bản xem trước của ảnh,
@@ -102,7 +101,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
      * và xử lý dữ liệu được truyền đến Activity này.
      *
      * @param savedInstanceState Nếu Activity được khởi tạo lại (ví dụ: sau khi xoay màn hình),
-     * đây là Bundle chứa dữ liệu trạng thái gần nhất của Activity.
+     *                           đây là Bundle chứa dữ liệu trạng thái gần nhất của Activity.
      */
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -130,19 +129,22 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
             imageUriToConvert = getIntent().getParcelableExtra("croppedUri");
             if (imageUriToConvert != null) {
                 // Cập nhật trạng thái trên UI.
-                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.status_loading_and_processing_image));
+                if (tvPdfPreviewStatus != null)
+                    tvPdfPreviewStatus.setText(getString(R.string.status_loading_and_processing_image));
                 // Bắt đầu quá trình tải và xử lý ảnh bất đồng bộ.
                 loadAndProcessImageAsync();
             } else {
                 // Hiển thị thông báo lỗi và đóng Activity nếu URI không hợp lệ.
                 Toast.makeText(this, getString(R.string.error_invalid_image_uri), Toast.LENGTH_SHORT).show();
-                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.error_loading_image_uri));
+                if (tvPdfPreviewStatus != null)
+                    tvPdfPreviewStatus.setText(getString(R.string.error_loading_image_uri));
                 finish();
             }
         } else {
             // Hiển thị thông báo lỗi và đóng Activity nếu không có ảnh để xử lý.
             Toast.makeText(this, getString(R.string.error_no_image_to_process), Toast.LENGTH_SHORT).show();
-            if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.error_no_image_to_process));
+            if (tvPdfPreviewStatus != null)
+                tvPdfPreviewStatus.setText(getString(R.string.error_no_image_to_process));
             finish();
         }
 
@@ -171,7 +173,8 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
             }
             if (processedBitmap != null) {
                 ivPdfPreview.setImageBitmap(processedBitmap); // Cập nhật preview
-                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Đã cập nhật bản xem trước.");
+                if (tvPdfPreviewStatus != null)
+                    tvPdfPreviewStatus.setText("Đã cập nhật bản xem trước.");
             }
         });
 
@@ -257,7 +260,8 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                             processedBitmap = croppedBitmap;
                         }
                         ivPdfPreview.setImageBitmap(processedBitmap); // Hiển thị bản xem trước
-                        if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText("Ảnh đã sẵn sàng để tạo PDF.");
+                        if (tvPdfPreviewStatus != null)
+                            tvPdfPreviewStatus.setText("Ảnh đã sẵn sàng để tạo PDF.");
                     } else {
                         Toast.makeText(PdfGenerationAndPreviewActivity.this, "Không thể tải ảnh: Bitmap rỗng.", Toast.LENGTH_SHORT).show();
                         finish();
@@ -270,7 +274,8 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                 Log.e(TAG, "Lỗi khi tải hoặc xử lý ảnh trong background: " + e.getMessage(), e);
                 mainHandler.post(() -> {
                     Toast.makeText(this, String.format(getString(R.string.error_loading_processing_image_background), e.getMessage()), Toast.LENGTH_LONG).show();
-                    if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.error_failed_to_load_image));
+                    if (tvPdfPreviewStatus != null)
+                        tvPdfPreviewStatus.setText(getString(R.string.error_failed_to_load_image));
                     finish();
                 });
             }
@@ -349,11 +354,11 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
     /**
      * Callback được gọi sau khi người dùng phản hồi yêu cầu cấp quyền.
      *
-     * @param requestCode Mã yêu cầu được truyền khi gọi `requestPermissions`.
-     * @param permissions Mảng chứa các quyền đã yêu cầu.
+     * @param requestCode  Mã yêu cầu được truyền khi gọi `requestPermissions`.
+     * @param permissions  Mảng chứa các quyền đã yêu cầu.
      * @param grantResults Mảng chứa kết quả cấp quyền cho từng quyền tương ứng.
-     * `PackageManager.PERMISSION_GRANTED` nếu quyền được cấp,
-     * `PackageManager.PERMISSION_DENIED` nếu quyền bị từ chối.
+     *                     `PackageManager.PERMISSION_GRANTED` nếu quyền được cấp,
+     *                     `PackageManager.PERMISSION_DENIED` nếu quyền bị từ chối.
      */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -367,7 +372,8 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
             } else {
                 mainHandler.post(() -> {
                     Toast.makeText(this, getString(R.string.permission_required_to_save_pdf), Toast.LENGTH_LONG).show();
-                    if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.error_no_permission_to_save_pdf));
+                    if (tvPdfPreviewStatus != null)
+                        tvPdfPreviewStatus.setText(getString(R.string.error_no_permission_to_save_pdf));
                 });
             }
         }
@@ -389,13 +395,15 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
         if (bitmapToSave == null) {
             mainHandler.post(() -> {
                 Toast.makeText(this, getString(R.string.error_no_processed_image_for_pdf), Toast.LENGTH_SHORT).show();
-                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.error_no_image_to_create_pdf));
+                if (tvPdfPreviewStatus != null)
+                    tvPdfPreviewStatus.setText(getString(R.string.error_no_image_to_create_pdf));
             });
             return;
         }
 
         mainHandler.post(() -> {
-            if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.status_generating_pdf));
+            if (tvPdfPreviewStatus != null)
+                tvPdfPreviewStatus.setText(getString(R.string.status_generating_pdf));
         });
 
         PdfDocument document = new PdfDocument();
@@ -447,7 +455,8 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                 final Uri uriAfterSave = finalPdfUri;
                 mainHandler.post(() -> {
                     Toast.makeText(this, String.format(getString(R.string.pdf_creation_successful), fileName), Toast.LENGTH_LONG).show();
-                    if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(String.format(getString(R.string.pdf_saved_at), (uriAfterSave != null ? uriAfterSave.getPath() : "Không xác định")));
+                    if (tvPdfPreviewStatus != null)
+                        tvPdfPreviewStatus.setText(String.format(getString(R.string.pdf_saved_at), (uriAfterSave != null ? uriAfterSave.getPath() : "Không xác định")));
                     Log.d(TAG, "PDF saved at: " + (uriAfterSave != null ? uriAfterSave.toString() : "null"));
                     currentPdfFileName = fileName; // Cập nhật tên file hiện tại đã lưu
                     Intent intent = new Intent(PdfGenerationAndPreviewActivity.this, MainActivity.class);
@@ -466,7 +475,8 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
             Log.e(TAG, "Lỗi khi tạo hoặc lưu PDF: " + e.getMessage(), e);
             mainHandler.post(() -> {
                 Toast.makeText(this, String.format(getString(R.string.error_creating_pdf), e.getMessage()), Toast.LENGTH_LONG).show();
-                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(String.format(getString(R.string.error_creating_pdf), e.getMessage()));
+                if (tvPdfPreviewStatus != null)
+                    tvPdfPreviewStatus.setText(String.format(getString(R.string.error_creating_pdf), e.getMessage()));
             });
             finalPdfUri = null;
         } finally {
@@ -493,7 +503,8 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             mainHandler.post(() -> {
                 Toast.makeText(this, getString(R.string.pdf_preview_unsupported_android_version), Toast.LENGTH_LONG).show();
-                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.pdf_preview_unsupported));
+                if (tvPdfPreviewStatus != null)
+                    tvPdfPreviewStatus.setText(getString(R.string.pdf_preview_unsupported));
             });
             return;
         }
@@ -534,7 +545,8 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
             // Cập nhật ImageView và trạng thái trên UI thread.
             mainHandler.post(() -> {
                 ivPdfPreview.setImageBitmap(finalRenderedBitmap);
-                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.pdf_generation_successful_confirm));
+                if (tvPdfPreviewStatus != null)
+                    tvPdfPreviewStatus.setText(getString(R.string.pdf_generation_successful_confirm));
             });
 
         } catch (IOException e) {
@@ -542,7 +554,8 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
             Log.e(TAG, "Lỗi khi hiển thị PDF: " + e.getMessage(), e);
             mainHandler.post(() -> {
                 Toast.makeText(this, getString(R.string.error_loading_pdf_preview), Toast.LENGTH_LONG).show();
-                if (tvPdfPreviewStatus != null) tvPdfPreviewStatus.setText(getString(R.string.error_cannot_preview_pdf));
+                if (tvPdfPreviewStatus != null)
+                    tvPdfPreviewStatus.setText(getString(R.string.error_cannot_preview_pdf));
             });
         } finally {
             // Đảm bảo đóng tất cả các tài nguyên để tránh rò rỉ bộ nhớ.

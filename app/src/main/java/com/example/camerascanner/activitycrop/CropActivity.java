@@ -16,15 +16,6 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
 
-//import thư viện openCv để duỗi ảnh
-import org.opencv.android.Utils;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Point;
-import org.opencv.imgproc.Imgproc;
-import java.util.Arrays; // Đảm bảo đã import cho Arrays.sort
-
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -36,10 +27,18 @@ import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.TextRecognizer;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
 
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
+import org.opencv.imgproc.Imgproc;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * CropActivity cho phép người dùng cắt (crop) ảnh bằng cách chọn 4 điểm.
@@ -203,7 +202,7 @@ public class CropActivity extends AppCompatActivity {
      *
      * @param sourceBitmap Bitmap nguồn cần cắt.
      * @param points       Một ArrayList chứa 4 đối tượng PointF, đại diện cho các góc của vùng cắt
-     * (thứ tự không quan trọng cho việc xác định min/max X/Y).
+     *                     (thứ tự không quan trọng cho việc xác định min/max X/Y).
      * @return Bitmap đã cắt, hoặc null nếu sourceBitmap rỗng, số điểm không phải là 4,
      * hoặc vùng cắt không hợp lệ (chiều rộng/chiều cao <= 0).
      */
@@ -485,7 +484,7 @@ public class CropActivity extends AppCompatActivity {
 
         // Chuyển đổi ArrayList<PointF> sang mảng Point của OpenCV
         Point[] pts = new Point[4];
-        for(int i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; i++) {
             pts[i] = new Point(cropPoints.get(i).x, cropPoints.get(i).y);
         }
 
