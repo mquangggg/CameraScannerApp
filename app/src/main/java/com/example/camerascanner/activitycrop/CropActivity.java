@@ -18,8 +18,6 @@ import android.widget.Toast;
 
 //import thư viện openCv để duỗi ảnh
 import org.opencv.android.Utils;
-import org.opencv.core.Core;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
@@ -31,9 +29,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.canhub.cropper.CropImageView;
-import com.example.camerascanner.ImageAfterCropActivity;
-import com.example.camerascanner.activityocr.OCRActivity;
-import com.example.camerascanner.activitypdf.PdfGenerationAndPreviewActivity;
 import com.example.camerascanner.R;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.text.Text;

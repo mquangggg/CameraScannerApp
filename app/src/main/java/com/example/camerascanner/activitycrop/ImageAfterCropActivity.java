@@ -1,6 +1,4 @@
-package com.example.camerascanner;
-
-import static androidx.fragment.app.FragmentManager.TAG;
+package com.example.camerascanner.activitycrop;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -10,14 +8,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.Rotate;
 import com.bumptech.glide.request.RequestOptions;
-import com.example.camerascanner.activitycrop.CropActivity;
+import com.example.camerascanner.R;
 import com.example.camerascanner.activityocr.OCRActivity;
 import com.example.camerascanner.activitypdf.PdfGenerationAndPreviewActivity;
 

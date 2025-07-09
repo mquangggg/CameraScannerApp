@@ -33,7 +33,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
-import com.example.camerascanner.ImagePreviewActivity;
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitycrop.CropActivity;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -47,7 +46,6 @@ import org.opencv.core.Mat; // Import Mat
 import org.opencv.core.MatOfPoint; // Import MatOfPoint
 import org.opencv.core.MatOfPoint2f; // Import MatOfPoint2f
 import org.opencv.core.Point; // Import Point
-import org.opencv.core.Scalar; // Import Scalar
 import org.opencv.imgproc.CLAHE; // Import CLAHE
 import org.opencv.imgproc.Imgproc; // Import Imgproc
 
@@ -58,7 +56,6 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
