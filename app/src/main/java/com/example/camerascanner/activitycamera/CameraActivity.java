@@ -27,6 +27,8 @@ import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
+import androidx.camera.core.resolutionselector.ResolutionSelector;
+import androidx.camera.core.resolutionselector.ResolutionStrategy;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
@@ -82,6 +84,8 @@ public class CameraActivity extends AppCompatActivity {
     // --- Các hằng số và biến OpenCV ---
     private static final double CANNY_THRESHOLD1 = 40;
     private static final double CANNY_THRESHOLD2 = 120;
+    private double dynamicCannyThreshold1 = CANNY_THRESHOLD1;
+    private double dynamicCannyThreshold2 = CANNY_THRESHOLD2;
     private static final double APPROX_POLY_DP_EPSILON_FACTOR = 0.05;
     private static final double MIN_COSINE_ANGLE = 0.5;
     private static final double MIN_AREA_PERCENTAGE = 0.02;
@@ -214,11 +218,17 @@ public class CameraActivity extends AppCompatActivity {
                 .build();
 
         imageAnalysis = new ImageAnalysis.Builder()
-                .setTargetResolution(new Size(640, 480)) // Đặt độ phân giải phân tích
+                .setResolutionSelector(new ResolutionSelector.Builder()
+                        .setResolutionStrategy(new ResolutionStrategy(new Size(640, 480),
+                                ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER))
+                        .build()) // Đặt độ phân giải phân tích
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
 
         imageAnalysis.setAnalyzer(cameraExecutor, imageProxy -> {
+
+            Log.d(TAG, "Độ phân giải ImageProxy thực tế: " + imageProxy.getWidth() + "x" + imageProxy.getHeight());
+
             MatOfPoint newlyDetectedQuadrilateral = null;
             try {
                 final MatOfPoint finalQuadrilateralForOverlay;
@@ -719,27 +729,68 @@ public class CameraActivity extends AppCompatActivity {
         MatOfPoint bestQuadrilateral = null;
 
         try {
-            ByteBuffer yBuffer = imageProxy.getPlanes()[0].getBuffer();
-            int yRowStride = imageProxy.getPlanes()[0].getRowStride();
+            ImageProxy.PlaneProxy yPlane = imageProxy.getPlanes()[0];
+            ByteBuffer yBuffer = yPlane.getBuffer();
+            int yRowStride = yPlane.getRowStride();
+            int yPixelStride = yPlane.getPixelStride(); // Pixel stride cũng quan trọng!
 
             int originalFrameWidth = imageProxy.getWidth();
             int originalFrameHeight = imageProxy.getHeight();
 
+            // *** GỌI HÀM ĐIỀU CHỈNH THAM SỐ TẠI ĐÂY ***
+            adjustOpenCVParametersForResolution(originalFrameWidth, originalFrameHeight);
+
+
+            // Tạo Mat để chứa dữ liệu Y
             gray = new Mat(originalFrameHeight, originalFrameWidth, CvType.CV_8UC1);
 
-            if (yRowStride == originalFrameWidth) {
-                yBuffer.rewind();
-                byte[] yBytes = new byte[yBuffer.remaining()];
-                yBuffer.get(yBytes);
-                gray.put(0, 0, yBytes);
-            } else {
-                byte[] rowData = new byte[yRowStride];
-                for (int r = 0; r < originalFrameHeight; r++) {
-                    yBuffer.get(rowData);
-                    gray.put(r, 0, rowData, 0, originalFrameWidth);
+            // Sử dụng một mảng byte trung gian có kích thước chính xác cho toàn bộ dữ liệu ảnh Y
+            byte[] data = new byte[originalFrameWidth * originalFrameHeight];
+            int bufferOffset = 0; // Để theo dõi vị trí trong mảng data[]
+
+            // Log initial buffer state for debugging
+            Log.d(TAG, "YBuffer initial remaining: " + yBuffer.remaining() +
+                    ", width: " + originalFrameWidth + ", height: " + originalFrameHeight +
+                    ", rowStride: " + yRowStride + ", pixelStride: " + yPixelStride);
+
+            for (int row = 0; row < originalFrameHeight; ++row) {
+                int bytesToReadInRow = originalFrameWidth;
+                int paddingBytes = yRowStride - originalFrameWidth;
+
+                // KIỂM TRA QUAN TRỌNG: Đảm bảo có đủ bytes để đọc dữ liệu ảnh của hàng hiện tại
+                if (yBuffer.remaining() < bytesToReadInRow) {
+                    Log.e(TAG, "BufferUnderflow: Not enough bytes for row " + row + ". Remaining: " + yBuffer.remaining() + ", Needed: " + bytesToReadInRow + ". Skipping frame.");
+                    // Nếu không đủ bytes, không thể xử lý khung hình này một cách đáng tin cậy.
+                    // Trả về null để bỏ qua khung hình này.
+                    return null;
+                }
+
+                // Đọc dữ liệu ảnh thực tế cho hàng hiện tại
+                yBuffer.get(data, bufferOffset, bytesToReadInRow);
+                bufferOffset += bytesToReadInRow;
+
+                // Bỏ qua các byte padding nếu chúng tồn tại và nếu có đủ bytes còn lại cho padding
+                if (paddingBytes > 0) {
+                    if (yBuffer.remaining() >= paddingBytes) {
+                        yBuffer.position(yBuffer.position() + paddingBytes);
+                    } else {
+                        // Trường hợp này có nghĩa là chúng ta đã đọc thành công dữ liệu ảnh,
+                        // nhưng không đủ buffer để bỏ qua padding dự kiến cho hàng hiện tại.
+                        // Điều này chỉ ra một buffer bị lỗi định dạng cho stride đã cho.
+                        Log.w(TAG, "Not enough buffer remaining to skip padding for row " + row + ". Remaining: " + yBuffer.remaining() + ", Expected padding: " + paddingBytes + ". Further rows might be misaligned.");
+                        // Chúng ta vẫn có thể cố gắng xử lý dữ liệu đã có, nhưng hãy ghi lại cảnh báo.
+                        // Việc này có thể dẫn đến các vấn đề không thẳng hàng.
+                        // Nếu đây là một lỗi nghiêm trọng hơn, bạn có thể cân nhắc return null tại đây.
+                        // Tuy nhiên, việc thiếu padding ở cuối có thể không gây crash ngay lập tức
+                        // nếu dữ liệu ảnh chính đã được đọc.
+                        // Để an toàn hơn cho các trường hợp hiếm gặp, ta vẫn có thể thoát.
+                        break; // Dừng xử lý các hàng tiếp theo vì định dạng buffer không mong muốn.
+                    }
                 }
             }
+            gray.put(0, 0, data); // Đặt toàn bộ dữ liệu vào Mat
 
+            // --- Phần xoay ảnh vẫn giữ nguyên ---
             int rotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
             if (rotationDegrees == 90 || rotationDegrees == 270) {
                 Mat rotatedGray = new Mat();
@@ -748,24 +799,19 @@ public class CameraActivity extends AppCompatActivity {
                 gray.release();
                 gray = rotatedGray;
             }
-            // Không cần cập nhật frameWidth/Height ở đây, chỉ cần dùng gray.width()/height() khi gọi findBestQuadrilateral
 
+            // --- Các bước xử lý ảnh OpenCV còn lại giữ nguyên ---
             Imgproc.medianBlur(gray, gray, 5);
-
             CLAHE clahe = Imgproc.createCLAHE(2.0, new org.opencv.core.Size(8, 8));
             clahe.apply(gray, gray);
-
             edges = new Mat();
-            Imgproc.Canny(gray, edges, CANNY_THRESHOLD1, CANNY_THRESHOLD2);
-
+            Imgproc.Canny(gray, edges, dynamicCannyThreshold1, dynamicCannyThreshold2);
             Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new org.opencv.core.Size(3, 3));
             Imgproc.dilate(edges, edges, kernel);
             kernel.release();
-
             contours = new ArrayList<>();
             hierarchy = new Mat();
             Imgproc.findContours(edges, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
-
             bestQuadrilateral = findBestQuadrilateral(contours, gray.width(), gray.height());
 
         } catch (Exception e) {
@@ -781,6 +827,30 @@ public class CameraActivity extends AppCompatActivity {
             }
         }
         return bestQuadrilateral;
+    }
+
+    private void adjustOpenCVParametersForResolution(int frameWidth, int frameHeight) {
+        // Điều chỉnh ngưỡng Canny dựa trên chiều rộng khung hình
+        // Bạn có thể tùy chỉnh các ngưỡng và khoảng độ phân giải này
+        // dựa trên kết quả thử nghiệm trên các thiết bị khác nhau của mình.
+        if (frameWidth <= 480) { // Ví dụ: Cho độ phân giải rất thấp (VD: 480p hoặc thấp hơn)
+            dynamicCannyThreshold1 = 20;
+            dynamicCannyThreshold2 = 60;
+        } else if (frameWidth <= 640) { // Ví dụ: Cho độ phân giải 640x480
+            dynamicCannyThreshold1 = 30;
+            dynamicCannyThreshold2 = 90;
+        } else if (frameWidth <= 1280) { // Ví dụ: Cho độ phân giải 720p hoặc 1024x768
+            dynamicCannyThreshold1 = 40;
+            dynamicCannyThreshold2 = 120;
+        } else { // Ví dụ: Cho độ phân giải 1080p trở lên
+            dynamicCannyThreshold1 = 50;
+            dynamicCannyThreshold2 = 150;
+        }
+        Log.d(TAG, "Canny thresholds adjusted to: " + dynamicCannyThreshold1 + ", " + dynamicCannyThreshold2 + " for resolution " + frameWidth + "x" + frameHeight);
+
+        // MIN_AREA_PERCENTAGE và MAX_AREA_PERCENTAGE đã là hằng số tỷ lệ phần trăm
+        // và được tính toán động thành minAllowedArea, maxAllowedArea trong findBestQuadrilateral.
+        // Do đó, không cần điều chỉnh trực tiếp ở đây.
     }
 
     private MatOfPoint findBestQuadrilateral(List<MatOfPoint> contours, int imageWidth, int imageHeight) {
