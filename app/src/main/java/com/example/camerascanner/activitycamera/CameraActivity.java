@@ -11,6 +11,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.util.Pair;
 import android.util.Size; // Thêm import này cho CameraX
 import android.view.View;
 import android.widget.ImageButton;
@@ -227,28 +228,38 @@ public class CameraActivity extends AppCompatActivity {
 
         imageAnalysis.setAnalyzer(cameraExecutor, imageProxy -> {
 
-            Log.d(TAG, "Độ phân giải ImageProxy thực tế: " + imageProxy.getWidth() + "x" + imageProxy.getHeight());
+            Log.d(TAG, "DEBUG_DIM: ImageProxy original dimensions: " + imageProxy.getWidth() + "x" + imageProxy.getHeight() + " Rotation: " + imageProxy.getImageInfo().getRotationDegrees());
 
+            // ĐÃ SỬA: Biến để giữ MatOfPoint và Mat từ processImageFrame
             MatOfPoint newlyDetectedQuadrilateral = null;
+            Mat processedFrameForDimensions = null; // ĐÃ SỬA: Biến để giữ Mat đã xử lý
+
             try {
                 final MatOfPoint finalQuadrilateralForOverlay;
 
                 if (frameCount % PROCESS_FRAME_INTERVAL == 0) {
-                    newlyDetectedQuadrilateral = processImageFrame(imageProxy);
+                    // ĐÃ SỬA: Thay đổi cách gọi processImageFrame và nhận Pair
+                    Pair<MatOfPoint, Mat> detectionResult = processImageFrame(imageProxy);
+                    newlyDetectedQuadrilateral = detectionResult.first; // <--- Lấy MatOfPoint từ Pair
+                    processedFrameForDimensions = detectionResult.second; // <--- Lấy Mat đã xử lý
+
                     Log.d(TAG, "Đã xử lý khung hình đầy đủ. Khung: " + frameCount);
 
-                    if (newlyDetectedQuadrilateral != null) {
+                    if (newlyDetectedQuadrilateral != null && processedFrameForDimensions != null) { // <--- ĐÃ SỬA: Kiểm tra cả Mat
                         if (lastDetectedQuadrilateral != null) {
                             lastDetectedQuadrilateral.release();
                         }
                         lastDetectedQuadrilateral = new MatOfPoint(newlyDetectedQuadrilateral.toArray()); // Tạo bản sao
                         lastDetectionTimestamp = System.currentTimeMillis();
 
-                        lastImageProxyWidth = imageProxy.getWidth(); // Lưu thông tin gốc của ImageProxy
-                        lastImageProxyHeight = imageProxy.getHeight();
-                        lastRotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
+                        // LƯU Ý QUAN TRỌNG: Lưu kích thước của MAT ĐÃ ĐƯỢC XOAY mà OpenCV đã xử lý
+                        lastImageProxyWidth = processedFrameForDimensions.width(); // <--- ĐÃ SỬA
+                        lastImageProxyHeight = processedFrameForDimensions.height(); // <--- ĐÃ SỬA
+                        lastRotationDegrees = imageProxy.getImageInfo().getRotationDegrees(); // Vẫn lấy độ xoay của ImageProxy
 
                         finalQuadrilateralForOverlay = newlyDetectedQuadrilateral;
+                        Log.d(TAG, "DEBUG_DIM: Processed Mat dimensions (from processedFrameForDimensions): " + processedFrameForDimensions.width() + "x" + processedFrameForDimensions.height());
+                        Log.d(TAG, "DEBUG_DIM: Stored lastImageProxyWidth: " + lastImageProxyWidth + " lastImageProxyHeight: " + lastImageProxyHeight);
                     } else {
                         if (lastDetectedQuadrilateral != null && (System.currentTimeMillis() - lastDetectionTimestamp > QUAD_PERSISTENCE_TIMEOUT_MS)) {
                             Log.d(TAG, "lastDetectedQuadrilateral đã hết thời gian chờ. Giải phóng và đặt là null.");
@@ -269,9 +280,10 @@ public class CameraActivity extends AppCompatActivity {
 
                 runOnUiThread(() -> {
                     if (finalQuadrilateralForOverlay != null) {
-                        // Tính toán lại kích thước effective của ảnh sau khi xoay để scale đúng
-                        int effectiveImageWidth = (lastRotationDegrees == 90 || lastRotationDegrees == 270) ? lastImageProxyHeight : lastImageProxyWidth;
-                        int effectiveImageHeight = (lastRotationDegrees == 90 || lastRotationDegrees == 270) ? lastImageProxyWidth : lastImageProxyHeight;
+                        // Kích thước overlay view của bạn đã được tính toán đúng dựa trên effectiveImageWidth/Height
+                        // Đây là kích thước Mat mà các điểm được phát hiện trên đó.
+                        int effectiveImageWidth = lastImageProxyWidth; // <--- ĐÃ SỬA: đã lưu kích thước đúng rồi
+                        int effectiveImageHeight = lastImageProxyHeight; // <--- ĐÃ SỬA: đã lưu kích thước đúng rồi
 
                         // Gọi scalePointsToOverlayView từ CustomOverlayView
                         customOverlayView.setQuadrilateral(
@@ -296,6 +308,9 @@ public class CameraActivity extends AppCompatActivity {
                 if (newlyDetectedQuadrilateral != null) {
                     newlyDetectedQuadrilateral.release();
                 }
+                if (processedFrameForDimensions != null) { // <--- ĐÃ SỬA: Giải phóng Mat được trả về
+                    processedFrameForDimensions.release();
+                }
                 frameCount++;
             }
         });
@@ -303,6 +318,7 @@ public class CameraActivity extends AppCompatActivity {
         imageCapture = new ImageCapture.Builder()
                 .setTargetRotation(previewView.getDisplay().getRotation())
                 .build();
+        Log.d("CameraActivity", "ImageCapture target rotation: " + imageCapture.getTargetRotation());
 
         cameraProvider.unbindAll();
 
@@ -339,6 +355,13 @@ public class CameraActivity extends AppCompatActivity {
                     Bitmap originalFullBitmap = null;
                     try {
                         originalFullBitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), savedUri);
+                        if (originalFullBitmap.getWidth() > originalFullBitmap.getHeight()) {
+                            Matrix matrix = new Matrix();
+                            matrix.postRotate(90); // Xoay 90 độ theo chiều kim đồng hồ
+                            originalFullBitmap = Bitmap.createBitmap(originalFullBitmap, 0, 0,
+                                    originalFullBitmap.getWidth(), originalFullBitmap.getHeight(), matrix, true);
+                            Log.d("CameraActivity", "Đã xoay Original Full Bitmap 90 độ. Kích thước mới: " + originalFullBitmap.getWidth() + "x" + originalFullBitmap.getHeight());
+                        }
                     } catch (IOException e) {
                         Log.e(TAG, "Không thể tải full bitmap để xử lý: " + e.getMessage(), e);
                         Toast.makeText(CameraActivity.this, getString(R.string.failed_to_load_captured_image), Toast.LENGTH_SHORT).show();
@@ -351,21 +374,57 @@ public class CameraActivity extends AppCompatActivity {
 
                     if (originalFullBitmap != null) {
                         if (lastDetectedQuadrilateral != null && !lastDetectedQuadrilateral.empty()) {
-                            // Kích thước 'logic' của ảnh mà OpenCV đã xử lý (sau khi đã áp dụng xoay)
-                            int conceptualOpenCVWidth = (lastRotationDegrees == 90 || lastRotationDegrees == 270) ? lastImageProxyHeight : lastImageProxyWidth;
-                            int conceptualOpenCVHeight = (lastRotationDegrees == 90 || lastRotationDegrees == 270) ? lastImageProxyWidth : lastImageProxyHeight;
+                            // Kích thước của Mat mà lastDetectedQuadrilateral được tìm thấy
+                            // Đây là các giá trị đã được lưu đúng sau khi xoay Mat
+                            int originalDetectionWidth = lastImageProxyWidth; // <--- ĐÃ SỬA
+                            int originalDetectionHeight = lastImageProxyHeight; // <--- ĐÃ SỬA
 
-                            // Tỷ lệ giữa kích thước ảnh đã chụp và kích thước ảnh mà OpenCV đã xử lý
-                            float scaleBitmapToOpenCV = (float) originalFullBitmap.getWidth() / conceptualOpenCVWidth;
+                            // Kích thước của ảnh Bitmap đã chụp
+                            int capturedBitmapWidth = originalFullBitmap.getWidth();
+                            int capturedBitmapHeight = originalFullBitmap.getHeight();
+
+                            // Tính toán tỷ lệ khung hình của khung phân tích và ảnh chụp
+                            double analysisAspectRatio = (double) originalDetectionWidth / originalDetectionHeight;
+                            double captureAspectRatio = (double) capturedBitmapWidth / capturedBitmapHeight;
+
+                            Log.d(TAG, "Tỷ lệ khung hình phân tích: " + analysisAspectRatio + ", Tỷ lệ khung hình chụp: " + captureAspectRatio);
+
+                            double effectiveSrcWidth = originalDetectionWidth;
+                            double effectiveSrcHeight = originalDetectionHeight;
+                            double offsetX = 0;
+                            double offsetY = 0;
+
+                            // Điều chỉnh cho sự không khớp tỷ lệ khung hình tiềm ẩn và cắt xén/letterboxing ngầm bởi CameraX
+                            // Đây là một heuristic phổ biến nếu CameraX cắt xén một luồng để phù hợp với tỷ lệ khung hình của luồng khác.
+                            // Sử dụng ngưỡng nhỏ để tránh vấn đề dấu phẩy động
+                            if (Math.abs(analysisAspectRatio - captureAspectRatio) > 0.01) {
+                                if (analysisAspectRatio > captureAspectRatio) {
+                                    // Khung phân tích rộng hơn khung chụp (ví dụ: phân tích 16:9, chụp 4:3)
+                                    // Điều này có nghĩa là CameraX có thể đã cắt theo chiều dọc của khung phân tích
+                                    effectiveSrcHeight = (double) originalDetectionWidth / captureAspectRatio;
+                                    offsetY = (originalDetectionHeight - effectiveSrcHeight) / 2.0;
+                                    Log.d(TAG, "Điều chỉnh cho tỷ lệ khung hình phân tích rộng hơn, effectiveSrcHeight mới: " + effectiveSrcHeight + ", offsetY: " + offsetY);
+                                } else {
+                                    // Khung phân tích hẹp hơn khung chụp (ví dụ: phân tích 4:3, chụp 16:9)
+                                    // Điều này có nghĩa là CameraX có thể đã cắt theo chiều ngang của khung phân tích
+                                    effectiveSrcWidth = (double) originalDetectionHeight * captureAspectRatio;
+                                    offsetX = (originalDetectionWidth - effectiveSrcWidth) / 2.0;
+                                    Log.d(TAG, "Điều chỉnh cho tỷ lệ khung hình phân tích hẹp hơn, effectiveSrcWidth mới: " + effectiveSrcWidth + ", offsetX: " + offsetX);
+                                }
+                            }
+
+                            // Tính toán tỷ lệ scale dựa trên kích thước nguồn hiệu quả (đã điều chỉnh)
+                            double scaleX = (double) capturedBitmapWidth / effectiveSrcWidth;
+                            double scaleY = (double) capturedBitmapHeight / effectiveSrcHeight;
 
                             Point[] detectedPoints = lastDetectedQuadrilateral.toArray();
 
-                            // Scale các điểm từ không gian ImageProxy/OpenCV sang không gian của OriginalFullBitmap
+                            // Scale và dịch chuyển các điểm
                             Point[] scaledPoints = new Point[4];
                             for (int i = 0; i < 4; i++) {
                                 scaledPoints[i] = new Point(
-                                        detectedPoints[i].x * scaleBitmapToOpenCV,
-                                        detectedPoints[i].y * scaleBitmapToOpenCV
+                                        (detectedPoints[i].x - offsetX) * scaleX, // Áp dụng offset sau đó scale
+                                        (detectedPoints[i].y - offsetY) * scaleY  // Áp dụng offset sau đó scale
                                 );
                             }
 
@@ -391,7 +450,7 @@ public class CameraActivity extends AppCompatActivity {
                                 selectedImageUri = savedUri;
                                 Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
                                 showImageView();
-                                originalFullBitmap.recycle();
+                                if (originalFullBitmap != null) originalFullBitmap.recycle();
                                 startImagePreviewActivity(selectedImageUri);
                                 return;
                             }
@@ -431,7 +490,7 @@ public class CameraActivity extends AppCompatActivity {
 
                             // Giải phóng tài nguyên OpenCV và Bitmap
                             if (originalFullBitmap != null) originalFullBitmap.recycle();
-                            if (resultBitmap != null && resultBitmap != originalFullBitmap) resultBitmap.recycle();
+                            if (resultBitmap != null && resultBitmap != originalFullBitmap) resultBitmap.recycle(); // Cẩn thận với việc giải phóng resultBitmap nếu nó có thể là originalFullBitmap
                             originalMat.release();
                             transformedMat.release();
                             perspectiveTransform.release();
@@ -447,7 +506,7 @@ public class CameraActivity extends AppCompatActivity {
                             selectedImageUri = savedUri;
                             Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
                             showImageView();
-                            originalFullBitmap.recycle();
+                            if (originalFullBitmap != null) originalFullBitmap.recycle();
                             startImagePreviewActivity(selectedImageUri);
                         }
                     } else {
@@ -462,7 +521,6 @@ public class CameraActivity extends AppCompatActivity {
                     Log.e(TAG, "Không thể lưu ảnh: Uri null");
                 }
             }
-
             @Override
             public void onError(ImageCaptureException exception) {
                 Log.e(TAG, "Lỗi khi chụp ảnh: " + exception.getMessage(), exception);
@@ -470,6 +528,7 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
     }
+
 
     // Xử lý ảnh tĩnh được chọn từ thư viện bằng OpenCV
     private void processStaticImage(Uri imageUri) {
@@ -658,27 +717,6 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        if (imageView.getVisibility() == View.VISIBLE) {
-            selectedImageUri = null;
-            imageView.setImageDrawable(null);
-            showCameraPreview();
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-    private Bitmap rotateBitmap(Bitmap bitmap, float degrees) {
-        Matrix matrix = new Matrix();
-        matrix.postRotate(degrees);
-        Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-        if (rotatedBitmap != bitmap) {
-            bitmap.recycle();
-        }
-        return rotatedBitmap;
-    }
-
     private Uri saveBitmapToCache(Bitmap bitmap) {
         String fileName = "temp_processed_image_" + System.currentTimeMillis() + ".jpeg";
         File cachePath = new File(getCacheDir(), "processed_images");
@@ -720,87 +758,66 @@ public class CameraActivity extends AppCompatActivity {
 
     // --- Các hàm xử lý ảnh OpenCV được copy từ MainActivity ---
 
+    // Thêm import này nếu chưa có
+
     @androidx.annotation.OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)
-    private MatOfPoint processImageFrame(ImageProxy imageProxy) {
+    private Pair<MatOfPoint, Mat> processImageFrame(ImageProxy imageProxy) { // ĐÃ SỬA: Thay đổi kiểu trả về
         Mat gray = null;
         Mat edges = null;
         Mat hierarchy = null;
         List<MatOfPoint> contours = null;
         MatOfPoint bestQuadrilateral = null;
+        Mat matForDimensionStorage = null; // ĐÃ SỬA: Biến mới để lưu Mat cần lấy kích thước
 
         try {
             ImageProxy.PlaneProxy yPlane = imageProxy.getPlanes()[0];
             ByteBuffer yBuffer = yPlane.getBuffer();
             int yRowStride = yPlane.getRowStride();
-            int yPixelStride = yPlane.getPixelStride(); // Pixel stride cũng quan trọng!
+            int yPixelStride = yPlane.getPixelStride();
 
             int originalFrameWidth = imageProxy.getWidth();
             int originalFrameHeight = imageProxy.getHeight();
 
-            // *** GỌI HÀM ĐIỀU CHỈNH THAM SỐ TẠI ĐÂY ***
             adjustOpenCVParametersForResolution(originalFrameWidth, originalFrameHeight);
 
-
-            // Tạo Mat để chứa dữ liệu Y
             gray = new Mat(originalFrameHeight, originalFrameWidth, CvType.CV_8UC1);
 
-            // Sử dụng một mảng byte trung gian có kích thước chính xác cho toàn bộ dữ liệu ảnh Y
             byte[] data = new byte[originalFrameWidth * originalFrameHeight];
-            int bufferOffset = 0; // Để theo dõi vị trí trong mảng data[]
-
-            // Log initial buffer state for debugging
-            Log.d(TAG, "YBuffer initial remaining: " + yBuffer.remaining() +
-                    ", width: " + originalFrameWidth + ", height: " + originalFrameHeight +
-                    ", rowStride: " + yRowStride + ", pixelStride: " + yPixelStride);
+            int bufferOffset = 0;
 
             for (int row = 0; row < originalFrameHeight; ++row) {
                 int bytesToReadInRow = originalFrameWidth;
-                int paddingBytes = yRowStride - originalFrameWidth;
-
-                // KIỂM TRA QUAN TRỌNG: Đảm bảo có đủ bytes để đọc dữ liệu ảnh của hàng hiện tại
                 if (yBuffer.remaining() < bytesToReadInRow) {
                     Log.e(TAG, "BufferUnderflow: Not enough bytes for row " + row + ". Remaining: " + yBuffer.remaining() + ", Needed: " + bytesToReadInRow + ". Skipping frame.");
-                    // Nếu không đủ bytes, không thể xử lý khung hình này một cách đáng tin cậy.
-                    // Trả về null để bỏ qua khung hình này.
-                    return null;
+                    return new Pair<>(null, null); // ĐÃ SỬA: Trả về null cho cả hai nếu lỗi
                 }
-
-                // Đọc dữ liệu ảnh thực tế cho hàng hiện tại
                 yBuffer.get(data, bufferOffset, bytesToReadInRow);
                 bufferOffset += bytesToReadInRow;
 
-                // Bỏ qua các byte padding nếu chúng tồn tại và nếu có đủ bytes còn lại cho padding
+                int paddingBytes = yRowStride - originalFrameWidth;
                 if (paddingBytes > 0) {
                     if (yBuffer.remaining() >= paddingBytes) {
                         yBuffer.position(yBuffer.position() + paddingBytes);
                     } else {
-                        // Trường hợp này có nghĩa là chúng ta đã đọc thành công dữ liệu ảnh,
-                        // nhưng không đủ buffer để bỏ qua padding dự kiến cho hàng hiện tại.
-                        // Điều này chỉ ra một buffer bị lỗi định dạng cho stride đã cho.
                         Log.w(TAG, "Not enough buffer remaining to skip padding for row " + row + ". Remaining: " + yBuffer.remaining() + ", Expected padding: " + paddingBytes + ". Further rows might be misaligned.");
-                        // Chúng ta vẫn có thể cố gắng xử lý dữ liệu đã có, nhưng hãy ghi lại cảnh báo.
-                        // Việc này có thể dẫn đến các vấn đề không thẳng hàng.
-                        // Nếu đây là một lỗi nghiêm trọng hơn, bạn có thể cân nhắc return null tại đây.
-                        // Tuy nhiên, việc thiếu padding ở cuối có thể không gây crash ngay lập tức
-                        // nếu dữ liệu ảnh chính đã được đọc.
-                        // Để an toàn hơn cho các trường hợp hiếm gặp, ta vẫn có thể thoát.
-                        break; // Dừng xử lý các hàng tiếp theo vì định dạng buffer không mong muốn.
+                        break;
                     }
                 }
             }
-            gray.put(0, 0, data); // Đặt toàn bộ dữ liệu vào Mat
+            gray.put(0, 0, data);
 
-            // --- Phần xoay ảnh vẫn giữ nguyên ---
+            // --- Phần xoay ảnh ---
             int rotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
+            Log.d("CameraActivity", "ImageAnalysis rotationDegrees: " + rotationDegrees);
             if (rotationDegrees == 90 || rotationDegrees == 270) {
                 Mat rotatedGray = new Mat();
                 Core.transpose(gray, rotatedGray);
                 Core.flip(rotatedGray, rotatedGray, (rotationDegrees == 90) ? 1 : 0);
-                gray.release();
-                gray = rotatedGray;
+                gray.release(); // Giải phóng Mat gốc
+                gray = rotatedGray; // 'gray' bây giờ là Mat đã được xoay
             }
 
-            // --- Các bước xử lý ảnh OpenCV còn lại giữ nguyên ---
+            // --- Các bước xử lý ảnh OpenCV còn lại giữ nguyên, thao tác trên 'gray' đã xoay ---
             Imgproc.medianBlur(gray, gray, 5);
             CLAHE clahe = Imgproc.createCLAHE(2.0, new org.opencv.core.Size(8, 8));
             clahe.apply(gray, gray);
@@ -814,10 +831,15 @@ public class CameraActivity extends AppCompatActivity {
             Imgproc.findContours(edges, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
             bestQuadrilateral = findBestQuadrilateral(contours, gray.width(), gray.height());
 
+            // Lưu trữ Mat đã xử lý cuối cùng để trả về lấy kích thước
+            matForDimensionStorage = gray.clone(); // ĐÃ SỬA: Clone Mat để tránh bị release trong finally
+
         } catch (Exception e) {
             Log.e(TAG, "Error processing image frame: " + e.getMessage(), e);
+            return new Pair<>(null, null); // ĐÃ SỬA: Trả về null nếu có lỗi
         } finally {
-            if (gray != null) gray.release();
+            // ĐÃ SỬA: Không giải phóng 'gray' ở đây vì nó đã được clone và sẽ được trả về
+            // if (gray != null) gray.release();
             if (edges != null) edges.release();
             if (hierarchy != null) hierarchy.release();
             if (contours != null) {
@@ -826,9 +848,8 @@ public class CameraActivity extends AppCompatActivity {
                 }
             }
         }
-        return bestQuadrilateral;
+        return new Pair<>(bestQuadrilateral, matForDimensionStorage); // ĐÃ SỬA: Trả về cả hai
     }
-
     private void adjustOpenCVParametersForResolution(int frameWidth, int frameHeight) {
         // Điều chỉnh ngưỡng Canny dựa trên chiều rộng khung hình
         // Bạn có thể tùy chỉnh các ngưỡng và khoảng độ phân giải này

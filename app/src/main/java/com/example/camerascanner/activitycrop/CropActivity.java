@@ -198,43 +198,6 @@ public class CropActivity extends AppCompatActivity {
     }
 
     /**
-     * Phương thức trợ giúp để lưu Bitmap vào thư mục cache của ứng dụng và trả về Uri của tệp đã lưu.
-     * Tệp này là tạm thời và sẽ được xóa khi ứng dụng cần không gian hoặc khi onDestroy của OCRActivity được gọi.
-     *
-     * @param bitmap Bitmap cần lưu.
-     * @return Uri của tệp đã lưu, hoặc null nếu có lỗi.
-     * @deprecated Phương thức này có vẻ không được sử dụng và có một phương thức tương tự `saveBitmapToCache` bên dưới.
-     * Cân nhắc hợp nhất hoặc xóa nếu không cần thiết.
-     */
-    private Uri saveBitmapToCacheAndGetUri(Bitmap bitmap) {
-        String fileName = "cropped_temp_" + System.currentTimeMillis() + ".jpeg";
-        // Tạo thư mục con trong thư mục cache của ứng dụng để lưu ảnh đã cắt tạm thời
-        File cachePath = new File(getCacheDir(), "cropped_images");
-        cachePath.mkdirs(); // Tạo thư mục nếu nó chưa tồn tại
-
-        File file = new File(cachePath, fileName);
-
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos); // Nén ảnh với chất lượng 90%
-            fos.flush(); // Đảm bảo tất cả dữ liệu được ghi vào tệp
-            return Uri.fromFile(file); // Trả về URI từ File
-        } catch (IOException e) {
-            Log.e(TAG, "Lỗi khi lưu bitmap vào cache: " + e.getMessage(), e);
-            return null;
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close(); // Đóng FileOutputStream
-                } catch (IOException e) {
-                    Log.e(TAG, "Lỗi khi đóng FileOutputStream: " + e.getMessage(), e);
-                }
-            }
-        }
-    }
-
-    /**
      * Cắt một Bitmap dựa trên một tập hợp 4 điểm được cung cấp.
      * Các điểm này định nghĩa một vùng hình chữ nhật để cắt từ ảnh nguồn.
      *

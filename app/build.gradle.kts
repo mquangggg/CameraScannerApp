@@ -26,13 +26,17 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+        ndk {
+            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
+        }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -74,7 +78,7 @@ dependencies {
     implementation ("androidx.camera:camera-extensions:1.4.2") // Hoặc phiên bản mới nhất, ổn định
 
     // ML Kit để nhận diện đối tượng (hoặc nhận dạng văn bản nếu đó là mục đích chính của bạn)
-    implementation("com.google.mlkit:object-detection:17.0.1")
+
     implementation ("com.github.bumptech.glide:glide:4.12.0")
 
     implementation("org.opencv:opencv:4.11.0")
