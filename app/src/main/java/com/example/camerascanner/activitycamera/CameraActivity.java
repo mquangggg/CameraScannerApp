@@ -360,10 +360,8 @@ public class CameraActivity extends AppCompatActivity {
                             matrix.postRotate(90); // Xoay 90 độ theo chiều kim đồng hồ
                             originalFullBitmap = Bitmap.createBitmap(originalFullBitmap, 0, 0,
                                     originalFullBitmap.getWidth(), originalFullBitmap.getHeight(), matrix, true);
-                            Log.d("CameraActivity", "Đã xoay Original Full Bitmap 90 độ. Kích thước mới: " + originalFullBitmap.getWidth() + "x" + originalFullBitmap.getHeight());
                         }
                     } catch (IOException e) {
-                        Log.e(TAG, "Không thể tải full bitmap để xử lý: " + e.getMessage(), e);
                         Toast.makeText(CameraActivity.this, getString(R.string.failed_to_load_captured_image), Toast.LENGTH_SHORT).show();
                         selectedImageUri = savedUri;
                         Glide.with(CameraActivity.this).load(selectedImageUri).into(imageView);
@@ -386,8 +384,6 @@ public class CameraActivity extends AppCompatActivity {
                             // Tính toán tỷ lệ khung hình của khung phân tích và ảnh chụp
                             double analysisAspectRatio = (double) originalDetectionWidth / originalDetectionHeight;
                             double captureAspectRatio = (double) capturedBitmapWidth / capturedBitmapHeight;
-
-                            Log.d(TAG, "Tỷ lệ khung hình phân tích: " + analysisAspectRatio + ", Tỷ lệ khung hình chụp: " + captureAspectRatio);
 
                             double effectiveSrcWidth = originalDetectionWidth;
                             double effectiveSrcHeight = originalDetectionHeight;
