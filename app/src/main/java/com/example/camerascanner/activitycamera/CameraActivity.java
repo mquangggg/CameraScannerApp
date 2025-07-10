@@ -40,6 +40,7 @@ import com.example.camerascanner.R;
 import com.example.camerascanner.activitycrop.CropActivity;
 import com.example.camerascanner.activitycamera.AppPermissionHandler;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.tabs.TabLayout;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import org.opencv.android.OpenCVLoader;
@@ -102,10 +103,23 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
 
     private int frameCount = 0;
     private static final int PROCESS_FRAME_INTERVAL = 3; // Xử lý mỗi 3 khung hình
-
+    private TabLayout tabLayoutCameraModes;
     private Uri selectedImageUri;
     private ActivityResultLauncher<String> galleryLauncher;
     private ActivityResultLauncher<Intent> imagePreviewLauncher;
+
+    // --- Các biến và hằng số mới cho chức năng tự động chụp thẻ ID ---
+
+    private boolean isIdCardMode = false; // Biến cờ để kiểm tra xem có đang ở chế độ thẻ ID không
+    private boolean autoCaptureEnabled = true; // Biến cờ để bật/tắt tự động chụp
+    private long lastAutoCaptureTime = 0L;
+    private static final long AUTO_CAPTURE_COOLDOWN_MS = 3000; // Thời gian chờ 3 giây giữa các lần tự động chụp
+    private static final double ID_CARD_ASPECT_RATIO_MIN = 1.5; // Tỷ lệ khung hình tối thiểu cho thẻ ID (ví dụ: 1.5 - 1.6)
+    private static final double ID_CARD_ASPECT_RATIO_MAX = 1.85; // Tỷ lệ khung hình tối đa cho thẻ ID
+    private int consecutiveValidFrames = 0; // <--- BIẾN MỚI: Đếm số khung hình liên tiếp hợp lệ
+    private static final int REQUIRED_CONSECUTIVE_FRAMES = 10; // <--- HẰNG SỐ MỚI: Số khung hình liên tiếp cần thiết
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -154,6 +168,43 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
         });
 
         showCameraPreview();
+
+        tabLayoutCameraModes = findViewById(R.id.tabLayoutCameraModes);
+
+        tabLayoutCameraModes.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                int position = tab.getPosition();
+                isIdCardMode = false; // Đặt lại mỗi khi chuyển tab
+                switch (position) {
+                    case 0:
+                        Log.d(TAG, "Chế độ: Quét");
+                        // Logic cho chế độ quét
+                        break;
+                    case 1:
+                        Log.d(TAG, "Chế độ: Thẻ ID");
+                        isIdCardMode = true; // Bật cờ cho chế độ thẻ ID
+                        Toast.makeText(CameraActivity.this, "Đã chuyển sang chế độ Thẻ ID. Tự động chụp nếu phát hiện.", Toast.LENGTH_SHORT).show();
+                        break;
+                }
+                customOverlayView.clearBoundingBox();
+                customOverlayView.invalidate();
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+                // Không cần làm gì đặc biệt ở đây
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+                // Không cần làm gì đặc biệt ở đây
+            }
+        });
+
+        if (tabLayoutCameraModes.getTabCount() > 0) {
+            tabLayoutCameraModes.selectTab(tabLayoutCameraModes.getTabAt(0)); // Chọn tab mặc định
+        }
     }
 
     @Override
@@ -286,6 +337,61 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
                         finalQuadrilateralForOverlay = newlyDetectedQuadrilateral;
                         Log.d(TAG, "DEBUG_DIM: Processed Mat dimensions (from processedFrameForDimensions): " + processedFrameForDimensions.width() + "x" + processedFrameForDimensions.height());
                         Log.d(TAG, "DEBUG_DIM: Stored lastImageProxyWidth: " + lastImageProxyWidth + " lastImageProxyHeight: " + lastImageProxyHeight);
+
+                        // --- Logic TỰ ĐỘNG CHỤP THẺ ID ---
+                        if (isIdCardMode && autoCaptureEnabled) {
+                            // Trong imageAnalysis.setAnalyzer, bên trong khối if (isIdCardMode && autoCaptureEnabled)
+                            long currentTime = System.currentTimeMillis();
+                                // Kiểm tra tỷ lệ khung hình của tứ giác phát hiện
+                                Point[] points = newlyDetectedQuadrilateral.toArray();
+                                if (points.length == 4) {
+                                    // Sắp xếp điểm để tính toán chiều rộng/chiều cao
+                                    MatOfPoint sortedPoints = sortPoints(new MatOfPoint(points));
+                                    Point[] sortedPts = sortedPoints.toArray();
+
+                                    double widthTop = Math.sqrt(Math.pow(sortedPts[0].x - sortedPts[1].x, 2) + Math.pow(sortedPts[0].y - sortedPts[1].y, 2));
+                                    double widthBottom = Math.sqrt(Math.pow(sortedPts[3].x - sortedPts[2].x, 2) + Math.pow(sortedPts[3].y - sortedPts[2].y, 2));
+                                    double avgWidth = (widthTop + widthBottom) / 2.0;
+
+                                    double heightLeft = Math.sqrt(Math.pow(sortedPts[0].x - sortedPts[3].x, 2) + Math.pow(sortedPts[0].y - sortedPts[3].y, 2));
+                                    double heightRight = Math.sqrt(Math.pow(sortedPts[1].x - sortedPts[2].x, 2) + Math.pow(sortedPts[1].y - sortedPts[2].y, 2));
+                                    double avgHeight = (heightLeft + heightRight) / 2.0;
+
+                                    if (avgHeight > 0) {
+                                            double aspectRatio = avgWidth / avgHeight;
+                                            Log.d(TAG, "Calculated Aspect Ratio: " + String.format("%.2f", aspectRatio) + " (Min: " + ID_CARD_ASPECT_RATIO_MIN + ", Max: " + ID_CARD_ASPECT_RATIO_MAX + ")");
+
+                                            if (aspectRatio >= ID_CARD_ASPECT_RATIO_MIN && aspectRatio <= ID_CARD_ASPECT_RATIO_MAX) {
+                                                consecutiveValidFrames++; // Tăng biến đếm nếu hợp lệ
+                                                Log.d(TAG, "Valid frame. Consecutive: " + consecutiveValidFrames + "/" + REQUIRED_CONSECUTIVE_FRAMES);
+
+                                                if (consecutiveValidFrames >= REQUIRED_CONSECUTIVE_FRAMES) {
+                                                    if (currentTime - lastAutoCaptureTime > AUTO_CAPTURE_COOLDOWN_MS) { // Kiểm tra cooldown ở đây
+                                                        Log.d(TAG, "Phát hiện thẻ ID hợp lệ liên tục. Đang tự động chụp...");
+                                                        runOnUiThread(() -> {
+                                                            Toast.makeText(CameraActivity.this, "Tự động chụp thẻ ID!", Toast.LENGTH_SHORT).show();
+                                                            takePhoto(); // Kích hoạt chụp ảnh
+                                                        });
+                                                        lastAutoCaptureTime = currentTime; // Cập nhật thời gian chụp cuối cùng
+                                                        consecutiveValidFrames = 0; // Đặt lại biến đếm sau khi chụp
+                                                    }
+                                                }
+                                            } else {
+                                                consecutiveValidFrames = 0; // Đặt lại biến đếm nếu không hợp lệ
+                                                Log.d(TAG, "Aspect ratio out of range. Resetting consecutive frames.");
+                                            }
+                                    } else {
+                                            consecutiveValidFrames = 0; // Đặt lại biến đếm nếu avgHeight = 0
+                                            Log.d(TAG, "AvgHeight is zero. Resetting consecutive frames.");
+                                        }
+                                        sortedPoints.release();
+                                } else {
+                                        consecutiveValidFrames = 0; // Đặt lại biến đếm nếu không phải tứ giác
+                                        Log.d(TAG, "Not a 4-point quadrilateral. Resetting consecutive frames.");
+                                    }
+                            } else {
+                                    consecutiveValidFrames = 0; // Đặt lại biến đếm nếu không ở chế độ thẻ ID hoặc tự động chụp tắt
+                        }
                     } else {
                         if (lastDetectedQuadrilateral != null && (System.currentTimeMillis() - lastDetectionTimestamp > QUAD_PERSISTENCE_TIMEOUT_MS)) {
                             Log.d(TAG, "lastDetectedQuadrilateral đã hết thời gian chờ. Giải phóng và đặt là null.");
@@ -603,11 +709,6 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
         galleryLauncher.launch("image/*");
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
-
     private Uri saveBitmapToCache(Bitmap bitmap) {
         String fileName = "temp_processed_image_" + System.currentTimeMillis() + ".jpeg";
         File cachePath = new File(getCacheDir(), "processed_images");
@@ -723,7 +824,11 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
             bestQuadrilateral = findBestQuadrilateral(contours, gray.width(), gray.height());
 
             // Lưu trữ Mat đã xử lý cuối cùng để trả về lấy kích thước
-            matForDimensionStorage = gray.clone(); // ĐÃ SỬA: Clone Mat để tránh bị release trong finally
+            if (bestQuadrilateral != null && !bestQuadrilateral.empty()) {
+                // Chỉ clone Mat nếu tìm thấy hình tứ giác và cần kích thước của nó
+                matForDimensionStorage = gray.clone();
+            }
+
 
         } catch (Exception e) {
             Log.e(TAG, "Error processing image frame: " + e.getMessage(), e);
