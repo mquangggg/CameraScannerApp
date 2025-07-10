@@ -38,6 +38,7 @@ import androidx.core.content.ContextCompat;
 import com.bumptech.glide.Glide;
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitycrop.CropActivity;
+import com.example.camerascanner.activitycamera.AppPermissionHandler;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -64,11 +65,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class CameraActivity extends AppCompatActivity {
+public class CameraActivity extends AppCompatActivity implements AppPermissionHandler.PermissionCallbacks{
 
     private static final String TAG = "CameraActivity"; // Đổi TAG để tránh nhầm lẫn
-    private static final int CAMERA_PERMISSION_REQUEST_CODE = 100;
-    private static final int STORAGE_PERMISSION_REQUEST_CODE = 101;
     private static final int REQUEST_CODE_IMAGE_PREVIEW = 200;
 
     private PreviewView previewView;
@@ -81,6 +80,7 @@ public class CameraActivity extends AppCompatActivity {
     private ImageCapture imageCapture;
     private ImageAnalysis imageAnalysis;
     private ExecutorService cameraExecutor;
+    private AppPermissionHandler appPermissionHandler;
 
     // --- Các hằng số và biến OpenCV ---
     private static final double CANNY_THRESHOLD1 = 40;
@@ -132,10 +132,13 @@ public class CameraActivity extends AppCompatActivity {
 
         cameraExecutor = Executors.newSingleThreadExecutor();
 
-        if (checkCameraPermission()) {
+        appPermissionHandler = new AppPermissionHandler(this, this); // 'this' là CameraActivity implement PermissionCallbacks
+
+
+        if (appPermissionHandler.checkCameraPermission()) {
             startCamera();
         } else {
-            requestCameraPermission();
+            appPermissionHandler.requestCameraPermission();
         }
 
         initLaunchers();
@@ -143,14 +146,38 @@ public class CameraActivity extends AppCompatActivity {
         btnTakePhoto.setOnClickListener(v -> takePhoto());
 
         btnSelectImage.setOnClickListener(v -> {
-            if (checkStoragePermission()) {
+            if (appPermissionHandler.checkStoragePermission()) {
                 openGallery();
             } else {
-                requestStoragePermission();
+                appPermissionHandler.requestStoragePermission();
             }
         });
 
         showCameraPreview();
+    }
+
+    @Override
+    public void onCameraPermissionGranted() {
+        startCamera();
+    }
+
+    @Override
+    public void onCameraPermissionDenied() {
+        Toast.makeText(this, getString(R.string.permission_denied_function_unavailable), Toast.LENGTH_LONG).show();
+        Log.w(TAG, "Quyền camera bị từ chối.");
+        // Bạn có thể hiển thị một thông báo hoặc chuyển sang Activity khác ở đây
+    }
+
+    @Override
+    public void onStoragePermissionGranted() {
+        openGallery();
+    }
+
+    @Override
+    public void onStoragePermissionDenied() {
+        Toast.makeText(this, getString(R.string.permission_denied_function_unavailable), Toast.LENGTH_LONG).show();
+        Log.w(TAG, "Quyền lưu trữ bị từ chối.");
+        // Bạn có thể hiển thị một thông báo hoặc chuyển sang Activity khác ở đây
     }
 
     private void initLaunchers() {
@@ -158,9 +185,8 @@ public class CameraActivity extends AppCompatActivity {
             if (uri != null) {
                 selectedImageUri = uri;
                 Log.d(TAG, "Ảnh được tải từ thư viện, URI gốc: " + selectedImageUri);
-                showImageView(); // Chuyển sang chế độ xem ảnh
-                processStaticImage(selectedImageUri); // Xử lý ảnh tĩnh bằng OpenCV
-            } else {
+                startImagePreviewActivity(selectedImageUri);
+                } else {
                 Toast.makeText(this, getString(R.string.failed_to_get_image_from_gallery), Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "selectedImageUri rỗng sau khi xử lý kết quả thư viện.");
                 showCameraPreview();
@@ -527,97 +553,6 @@ public class CameraActivity extends AppCompatActivity {
         });
     }
 
-
-    // Xử lý ảnh tĩnh được chọn từ thư viện bằng OpenCV
-    private void processStaticImage(Uri imageUri) {
-        new Thread(() -> {
-            Mat rgba = null;
-            Mat gray = null;
-            Mat edges = null;
-            Mat hierarchy = null;
-            List<MatOfPoint> contours = null;
-            MatOfPoint bestQuadrilateral = null;
-
-            try {
-                InputStream inputStream = getContentResolver().openInputStream(imageUri);
-                Bitmap originalBitmap = BitmapFactory.decodeStream(inputStream);
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-
-                if (originalBitmap == null) {
-                    Log.e(TAG, "Could not decode bitmap from URI: " + imageUri);
-                    return;
-                }
-
-                Bitmap resizedBitmap = resizeBitmap(originalBitmap, 800); // Kích thước tối đa cho xử lý
-
-                rgba = new Mat();
-                Utils.bitmapToMat(resizedBitmap, rgba);
-
-                gray = new Mat();
-                Imgproc.cvtColor(rgba, gray, Imgproc.COLOR_RGBA2GRAY);
-
-                Imgproc.medianBlur(gray, gray, 5);
-
-                CLAHE clahe = Imgproc.createCLAHE(2.0, new org.opencv.core.Size(8, 8));
-                clahe.apply(gray, gray);
-
-                edges = new Mat();
-                Imgproc.Canny(gray, edges, CANNY_THRESHOLD1, CANNY_THRESHOLD2);
-
-                Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new org.opencv.core.Size(3, 3));
-                Imgproc.dilate(edges, edges, kernel);
-                kernel.release();
-
-                contours = new ArrayList<>();
-                hierarchy = new Mat();
-                Imgproc.findContours(edges, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
-
-                bestQuadrilateral = findBestQuadrilateral(contours, gray.width(), gray.height());
-
-                final MatOfPoint finalBestQuadrilateralForToast = bestQuadrilateral;
-
-                final Bitmap resultBitmap = Bitmap.createBitmap(rgba.cols(), rgba.rows(), Bitmap.Config.ARGB_8888);
-                if (bestQuadrilateral != null) {
-                    bestQuadrilateral = sortPoints(bestQuadrilateral);
-                    //Imgproc.drawContours(rgba, Collections.singletonList(bestQuadrilateral), -1, new Scalar(0, 255, 0, 255), 5);
-                    Log.i(TAG, "Static Image - Đã phát hiện tứ giác tốt nhất với diện tích: " + Imgproc.contourArea(bestQuadrilateral));
-                } else {
-                    Log.i(TAG, "Static Image - Không tìm thấy tứ giác hợp lệ nào.");
-                }
-                Utils.matToBitmap(rgba, resultBitmap);
-
-                runOnUiThread(() -> {
-                    imageView.setImageBitmap(resultBitmap); // Hiển thị ảnh đã xử lý lên imageView
-                    if (finalBestQuadrilateralForToast != null) {
-                        Toast.makeText(CameraActivity.this, "Đã tìm thấy khung trên ảnh tĩnh!", Toast.LENGTH_SHORT).show();
-                        // Chuyển ảnh đã xử lý (với khung vẽ) sang ImagePreviewActivity
-                        // Lưu ý: nếu bạn muốn crop ảnh tĩnh theo khung, bạn cần thêm logic cắt ở đây
-                        startImagePreviewActivity(saveBitmapToCache(resultBitmap)); // Lưu Bitmap vào cache để truyền URI
-                    } else {
-                        Toast.makeText(CameraActivity.this, "Không tìm thấy khung trên ảnh tĩnh.", Toast.LENGTH_SHORT).show();
-                        startImagePreviewActivity(imageUri); // Nếu không tìm thấy, gửi ảnh gốc
-                    }
-                });
-
-            } catch (IOException e) {
-                Log.e(TAG, "Error loading static image: " + e.getMessage());
-                runOnUiThread(() -> Toast.makeText(CameraActivity.this, "Lỗi tải ảnh: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-            } finally {
-                if (rgba != null) rgba.release();
-                if (gray != null) gray.release();
-                if (edges != null) edges.release();
-                if (hierarchy != null) hierarchy.release();
-                if (contours != null) {
-                    for (MatOfPoint contour : contours) {
-                        contour.release();
-                    }
-                }
-            }
-        }).start();
-    }
-
     private Bitmap resizeBitmap(Bitmap bitmap, int maxDimension) {
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
@@ -664,37 +599,6 @@ public class CameraActivity extends AppCompatActivity {
             }
         }
     }
-
-    private boolean checkCameraPermission() {
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
-    }
-
-    private boolean checkStoragePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED;
-        } else {
-            return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
-        }
-    }
-
-    private void requestCameraPermission() {
-        ActivityCompat.requestPermissions(this,
-                new String[]{Manifest.permission.CAMERA},
-                CAMERA_PERMISSION_REQUEST_CODE);
-    }
-
-    private void requestStoragePermission() {
-        String permission;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permission = Manifest.permission.READ_MEDIA_IMAGES;
-        } else {
-            permission = Manifest.permission.READ_EXTERNAL_STORAGE;
-        }
-        ActivityCompat.requestPermissions(this,
-                new String[]{permission},
-                STORAGE_PERMISSION_REQUEST_CODE);
-    }
-
     private void openGallery() {
         galleryLauncher.launch("image/*");
     }
@@ -702,17 +606,6 @@ public class CameraActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
-                startCamera();
-            } else if (requestCode == STORAGE_PERMISSION_REQUEST_CODE) {
-                openGallery();
-            }
-        } else {
-            String permissionName = (permissions.length > 0) ? permissions[0] : "Quyền không xác định";
-            Toast.makeText(this, permissionName + getString(R.string.permission_denied_function_unavailable), Toast.LENGTH_LONG).show();
-            Log.w(TAG, "Quyền bị từ chối cho: " + permissionName + " (Mã yêu cầu: " + requestCode + ")");
-        }
     }
 
     private Uri saveBitmapToCache(Bitmap bitmap) {
