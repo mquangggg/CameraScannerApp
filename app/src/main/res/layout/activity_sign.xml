@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/white">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="Kí tên ở đây"
+        android:gravity="center"
+        android:textColor="@color/white"
+        android:background="#333"/>
+    <com.example.camerascanner.SignatureView
+        android:id="@+id/signatureView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="8" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.5"
+        android:orientation="horizontal"
+        android:background="#333">
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnDeleteSign"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="Xóa"/>
+        <Space
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"/>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnYesSign"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="Xác nhận"
+            />
+
+    </LinearLayout>
+
+</LinearLayout>

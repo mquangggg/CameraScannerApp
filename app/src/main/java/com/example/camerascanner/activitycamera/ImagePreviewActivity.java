@@ -6,6 +6,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log; // Import Log
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -17,6 +18,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.Rotate; // Import để xoay ảnh với Glide
 import com.bumptech.glide.request.RequestOptions; // Import RequestOptions
 import com.example.camerascanner.R;
+import com.example.camerascanner.SignatureActivity;
 import com.example.camerascanner.activitycrop.CropActivity;
 import com.example.camerascanner.activityocr.OCRActivity;
 import com.example.camerascanner.activitypdf.PdfGenerationAndPreviewActivity;
@@ -29,13 +31,15 @@ public class ImagePreviewActivity extends AppCompatActivity {
 
     private static final String TAG = "ImagePreviewActivity"; // Thêm TAG cho logging
     private ImageView imageViewPreview;
-    private Button btnRotatePreview,btnSign,btnReTake,btnCrop;
+    private Button btnRotatePreview,btnSign,btnReTake,btnCrop,btnMakeOcr;
     private Button btnConfirmPreview;
     private Uri imageUri;
     private int rotationAngle = 0; // Để theo dõi góc xoay hiện tại
 
     // Request code cho CropActivity, để biết khi nào CropActivity trả về kết quả
     private static final int REQUEST_CODE_CROP_IMAGE = 101;
+    private static final int REQUEST_SIGNATURE = 102;
+    private ResizableSignatureView resizableSignatureView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,8 +50,11 @@ public class ImagePreviewActivity extends AppCompatActivity {
         btnRotatePreview = findViewById(R.id.btnRotate );
         btnConfirmPreview = findViewById(R.id.btnConfirmPreview);
         btnSign = findViewById(R.id.btnSign);
+        btnMakeOcr = findViewById(R.id.btnMakeOcr);
         btnReTake = findViewById(R.id.btnRetake);
         btnCrop = findViewById(R.id.btnCrop);
+        resizableSignatureView = findViewById(R.id.signatureOverlay);
+
         String imageUriString = getIntent().getStringExtra("imageUri");
         if (imageUriString != null) {
             imageUri = Uri.parse(imageUriString);
@@ -96,7 +103,7 @@ public class ImagePreviewActivity extends AppCompatActivity {
             pdfIntent.putExtra("croppedUri", tempUri);
             startActivity(pdfIntent);
         });
-        btnSign.setOnClickListener(v->{
+        btnMakeOcr.setOnClickListener(v->{
             if (imageViewPreview.getDrawable() instanceof BitmapDrawable) {
                 Bitmap currentBitmap = ((BitmapDrawable) imageViewPreview.getDrawable()).getBitmap();
 
@@ -124,6 +131,10 @@ public class ImagePreviewActivity extends AppCompatActivity {
             }
         });
         btnReTake.setOnClickListener(v-> finish());
+        btnSign.setOnClickListener(v->{
+            Intent intent = new Intent(ImagePreviewActivity.this, SignatureActivity.class);
+            startActivityForResult(intent, REQUEST_SIGNATURE);
+        });
     }
     private Uri saveBitmapToCache(Bitmap bitmap) {
         String fileName = "rotated_temp_" + System.currentTimeMillis() + ".jpeg";
@@ -185,6 +196,13 @@ public class ImagePreviewActivity extends AppCompatActivity {
             }
         } else if (resultCode == RESULT_CANCELED) {
             Log.d(TAG, "ImagePreviewActivity: Crop activity canceled."); // Log khi CropActivity bị hủy
+        }
+        if (requestCode == REQUEST_SIGNATURE && resultCode == RESULT_OK && data != null) {
+            Uri signatureUri = data.getData();
+            if (signatureUri != null) {
+                resizableSignatureView.setVisibility(View.VISIBLE);
+                resizableSignatureView.setSignatureImage(signatureUri);
+            }
         }
     }
 }

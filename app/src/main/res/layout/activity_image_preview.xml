@@ -7,15 +7,32 @@
     android:layout_height="match_parent"
     android:background="#000">
 
-    <ImageView
-        android:id="@+id/imageViewPreview"
+    <FrameLayout
+        android:id="@+id/frameContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:scaleType="fitCenter"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/linearLayoutActions"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        >
+
+        <!-- Ảnh gốc -->
+        <ImageView
+            android:id="@+id/imageViewPreview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter" />
+
+        <!-- Overlay chữ ký (ẩn ban đầu) -->
+        <com.example.camerascanner.activitycamera.ResizableSignatureView
+            android:id="@+id/signatureOverlay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/border_rectangle"
+            android:visibility="gone" />
+    </FrameLayout>
+
 
     <LinearLayout
         android:id="@+id/linearLayoutActions"
@@ -33,7 +50,7 @@
                 android:id="@+id/actionButtons"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="4"
+                android:layout_weight="5"
                 android:orientation="horizontal"
                 android:gravity="center">
 
@@ -44,13 +61,14 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Retake"
-                    android:textSize="8sp"
+                    android:textSize="7sp"
                     app:icon="@drawable/ic_rephoto"
                     app:iconGravity="top"
                     app:iconPadding="4dp"
                     android:textAlignment="center"
                     app:iconTint="@android:color/white"
                     android:textColor="@color/white" />
+
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnCrop"
@@ -59,7 +77,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Crop"
-                    android:textSize="8sp"
+                    android:textSize="7sp"
                     app:iconTint="@android:color/white"
                     android:textColor="@color/white"
                     app:icon="@drawable/ic_crop"
@@ -73,8 +91,8 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Rotate"
-                    android:textSize="8sp"
+                    android:text="Xoay"
+                    android:textSize="7sp"
                     app:icon="@drawable/ic_rotate"
                     app:iconGravity="top"
                     app:iconPadding="4dp"
@@ -84,14 +102,29 @@
 
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMakeOcr"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="OCR"
+                    android:textSize="7sp"
+                    app:icon="@drawable/icon_ky_ten"
+                    app:iconGravity="top"
+                    app:iconPadding="4dp"
+                    android:textAlignment="center"
+                    app:iconTint="@android:color/white"
+                    android:textColor="@color/white" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSign"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="ký tên"
-                    android:textSize="8sp"
-                    app:icon="@drawable/icon_ky_ten"
+                    android:text="Ký Tên"
+                    android:textSize="7sp"
+                    app:icon="@drawable/ic_rephoto"
                     app:iconGravity="top"
                     app:iconPadding="4dp"
                     android:textAlignment="center"
@@ -107,6 +140,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/confirm"
+            android:textSize="8sp"
             android:textColor="@android:color/white"
             android:backgroundTint="#555"
             android:layout_marginStart="8dp" />
