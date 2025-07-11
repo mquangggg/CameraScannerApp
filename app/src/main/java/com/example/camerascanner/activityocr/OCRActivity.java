@@ -103,10 +103,11 @@ public class OCRActivity extends AppCompatActivity {
         mainHandler = new Handler(Looper.getMainLooper());
 
         // Lấy URI ảnh từ Intent
-        imageUriToProcess = getIntent().getParcelableExtra(EXTRA_IMAGE_URI_FOR_OCR); //
+        String imageUriString = getIntent().getStringExtra(EXTRA_IMAGE_URI_FOR_OCR);
 
         // Kiểm tra xem URI ảnh có tồn tại không
-        if (imageUriToProcess != null) { //
+        if (imageUriString != null) { //
+            imageUriToProcess = Uri.parse(imageUriString);
             try { //
                 // Mở InputStream từ URI và giải mã thành Bitmap
                 InputStream inputStream = getContentResolver().openInputStream(imageUriToProcess); //

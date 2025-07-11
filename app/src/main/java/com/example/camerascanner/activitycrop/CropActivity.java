@@ -181,9 +181,10 @@ public class CropActivity extends AppCompatActivity {
             Bitmap straightenedBitmap = performPerspectiveTransform(originalBitmapLoaded, transformedPoints);
             if (straightenedBitmap != null) {
                 Uri straightenedUri = saveBitmapToCache(straightenedBitmap);
-                Intent intent = new Intent(CropActivity.this, ImageAfterCropActivity.class);
-                intent.putExtra("croppedUri", straightenedUri);
-                startActivity(intent);
+                Intent resultIntent = new Intent();
+                resultIntent.setData(straightenedUri); // Đặt URI đã cắt vào Intent
+                setResult(RESULT_OK, resultIntent);   // Đặt kết quả thành công
+                finish();
                 if (straightenedBitmap != originalBitmapLoaded) { // Giải phóng bitmap nếu là bản sao
                     straightenedBitmap.recycle();
                 }

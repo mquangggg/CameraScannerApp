@@ -23,21 +23,83 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:padding="16dp"
+        android:padding="1dp"
         android:background="#333"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
+            <!-- 4 nút chức năng -->
+            <LinearLayout
+                android:id="@+id/actionButtons"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="4"
+                android:orientation="horizontal"
+                android:gravity="center">
 
-        <Button
-            android:id="@+id/btnRotatePreview"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/rotate"
-            android:textColor="@android:color/white"
-            android:backgroundTint="#555"
-            android:layout_marginEnd="8dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnRetake"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Retake"
+                    android:textSize="8sp"
+                    app:icon="@drawable/ic_rephoto"
+                    app:iconGravity="top"
+                    app:iconPadding="4dp"
+                    android:textAlignment="center"
+                    app:iconTint="@android:color/white"
+                    android:textColor="@color/white" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCrop"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Crop"
+                    android:textSize="8sp"
+                    app:iconTint="@android:color/white"
+                    android:textColor="@color/white"
+                    app:icon="@drawable/ic_crop"
+                    app:iconGravity="top"
+                    app:iconPadding="4dp"
+                    android:textAlignment="center" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnRotate"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Rotate"
+                    android:textSize="8sp"
+                    app:icon="@drawable/ic_rotate"
+                    app:iconGravity="top"
+                    app:iconPadding="4dp"
+                    android:textAlignment="center"
+                    app:iconTint="@android:color/white"
+                    android:textColor="@color/white" />
+
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSign"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="ký tên"
+                    android:textSize="8sp"
+                    app:icon="@drawable/icon_ky_ten"
+                    app:iconGravity="top"
+                    app:iconPadding="4dp"
+                    android:textAlignment="center"
+                    app:iconTint="@android:color/white"
+                    android:textColor="@color/white" />
+            </LinearLayout>
+
+
 
         <Button
             android:id="@+id/btnConfirmPreview"

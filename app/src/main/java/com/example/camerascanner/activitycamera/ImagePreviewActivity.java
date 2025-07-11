@@ -18,6 +18,8 @@ import com.bumptech.glide.load.resource.bitmap.Rotate; // Import để xoay ản
 import com.bumptech.glide.request.RequestOptions; // Import RequestOptions
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitycrop.CropActivity;
+import com.example.camerascanner.activityocr.OCRActivity;
+import com.example.camerascanner.activitypdf.PdfGenerationAndPreviewActivity;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -27,7 +29,7 @@ public class ImagePreviewActivity extends AppCompatActivity {
 
     private static final String TAG = "ImagePreviewActivity"; // Thêm TAG cho logging
     private ImageView imageViewPreview;
-    private Button btnRotatePreview;
+    private Button btnRotatePreview,btnSign,btnReTake,btnCrop;
     private Button btnConfirmPreview;
     private Uri imageUri;
     private int rotationAngle = 0; // Để theo dõi góc xoay hiện tại
@@ -41,9 +43,11 @@ public class ImagePreviewActivity extends AppCompatActivity {
         setContentView(R.layout.activity_image_preview);
 
         imageViewPreview = findViewById(R.id.imageViewPreview);
-        btnRotatePreview = findViewById(R.id.btnRotatePreview);
+        btnRotatePreview = findViewById(R.id.btnRotate );
         btnConfirmPreview = findViewById(R.id.btnConfirmPreview);
-
+        btnSign = findViewById(R.id.btnSign);
+        btnReTake = findViewById(R.id.btnRetake);
+        btnCrop = findViewById(R.id.btnCrop);
         String imageUriString = getIntent().getStringExtra("imageUri");
         if (imageUriString != null) {
             imageUri = Uri.parse(imageUriString);
@@ -61,7 +65,7 @@ public class ImagePreviewActivity extends AppCompatActivity {
             Log.d(TAG, "ImagePreviewActivity: Rotated image to " + rotationAngle + " degrees."); // Log khi xoay ảnh
         });
 
-        btnConfirmPreview.setOnClickListener(v -> {
+        btnCrop.setOnClickListener(v -> {
             Bitmap rotatedBitmap = null;
             if (imageViewPreview.getDrawable() instanceof BitmapDrawable) {
                 rotatedBitmap = ((BitmapDrawable) imageViewPreview.getDrawable()).getBitmap();
@@ -74,7 +78,7 @@ public class ImagePreviewActivity extends AppCompatActivity {
                     Intent cropIntent = new Intent(ImagePreviewActivity.this, CropActivity.class);
                     cropIntent.putExtra("imageUri", tempUri.toString());
                     Log.d(TAG, "ImagePreviewActivity: Launching CropActivity with TEMPORARY URI: " + tempUri.toString());
-                    startActivityForResult(cropIntent, REQUEST_CODE_CROP_IMAGE);finish();
+                    startActivityForResult(cropIntent, REQUEST_CODE_CROP_IMAGE);
                 } else {
                     Toast.makeText(this, "Lỗi khi lưu ảnh đã xoay.", Toast.LENGTH_SHORT).show();
                     Log.e(TAG, "ImagePreviewActivity: Failed to save rotated bitmap to cache.");
@@ -84,6 +88,42 @@ public class ImagePreviewActivity extends AppCompatActivity {
                 Log.e(TAG, "ImagePreviewActivity: Could not get bitmap from ImageView.");
             }
         });
+        btnConfirmPreview.setOnClickListener(v->{
+            Bitmap rotatedBitmap = ((BitmapDrawable)imageViewPreview.getDrawable()).getBitmap();
+            // Phương thức saveBitmapToCache() đã tồn tại trong ImagePreviewActivity.java
+            Uri tempUri = saveBitmapToCache(rotatedBitmap);
+            Intent pdfIntent = new Intent(ImagePreviewActivity.this, PdfGenerationAndPreviewActivity.class);
+            pdfIntent.putExtra("croppedUri", tempUri);
+            startActivity(pdfIntent);
+        });
+        btnSign.setOnClickListener(v->{
+            if (imageViewPreview.getDrawable() instanceof BitmapDrawable) {
+                Bitmap currentBitmap = ((BitmapDrawable) imageViewPreview.getDrawable()).getBitmap();
+
+                // 2. Lưu Bitmap vào bộ nhớ cache
+                // Điều này đảm bảo rằng chúng ta có một tệp ảnh để gửi tới OCRActivity
+                Uri tempUri = saveBitmapToCache(currentBitmap);
+
+                if (tempUri != null) {
+                    // 3. Tạo Intent để mở OCRActivity và gửi URI
+                    Intent intent = new Intent(ImagePreviewActivity.this, OCRActivity.class);
+
+                    // OCRActivity đã được cung cấp sử dụng một key cho URI,
+                    // thường là "imageUriForOcr" hoặc một biến tĩnh tương tự.
+                    // Nếu OCRActivity.java sử dụng EXTRA_IMAGE_URI_FOR_OCR, hãy sử dụng nó.
+                    // Nếu không, sử dụng một chuỗi thông thường như "imageUriForOcr".
+                    intent.putExtra("image_uri_for_ocr", tempUri.toString());
+
+                    startActivity(intent);
+                } else {
+                    // Xử lý lỗi nếu không lưu được ảnh tạm thời
+                    Toast.makeText(ImagePreviewActivity.this, "Không thể chuẩn bị ảnh cho OCR.", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(ImagePreviewActivity.this, "Không có ảnh để xử lý OCR.", Toast.LENGTH_SHORT).show();
+            }
+        });
+        btnReTake.setOnClickListener(v-> finish());
     }
     private Uri saveBitmapToCache(Bitmap bitmap) {
         String fileName = "rotated_temp_" + System.currentTimeMillis() + ".jpeg";
@@ -136,10 +176,10 @@ public class ImagePreviewActivity extends AppCompatActivity {
                 // Bạn có thể chuyển URI này sang PdfGenerationAndPreviewActivity
                 // hoặc xử lý lưu trữ, hoặc quay về MainActivity với kết quả.
                 // Ví dụ:
-                Intent resultIntent = new Intent();
-                resultIntent.setData(croppedImageUri);
-                setResult(RESULT_OK, resultIntent);
-                finish(); // Kết thúc ImagePreviewActivity và trả về kết quả cho Activity gọi nó (CameraActivity hoặc MainActivity)
+                imageUri = croppedImageUri;
+                // Tải lại ảnh đã cắt vào ImageView
+                loadImageWithRotation();
+                // Kết thúc ImagePreviewActivity và trả về kết quả cho Activity gọi nó (CameraActivity hoặc MainActivity)
             } else {
                 Log.e(TAG, "ImagePreviewActivity: No cropped image URI returned from CropActivity."); // Log lỗi nếu không có URI đã cắt
             }
