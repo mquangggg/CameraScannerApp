@@ -18,7 +18,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.Rotate; // Import để xoay ảnh với Glide
 import com.bumptech.glide.request.RequestOptions; // Import RequestOptions
 import com.example.camerascanner.R;
-import com.example.camerascanner.SignatureActivity;
+import com.example.camerascanner.activitysignature.SignatureActivity;
 import com.example.camerascanner.activitycrop.CropActivity;
 import com.example.camerascanner.activityocr.OCRActivity;
 import com.example.camerascanner.activitypdf.PdfGenerationAndPreviewActivity;
@@ -53,7 +53,6 @@ public class ImagePreviewActivity extends AppCompatActivity {
         btnMakeOcr = findViewById(R.id.btnMakeOcr);
         btnReTake = findViewById(R.id.btnRetake);
         btnCrop = findViewById(R.id.btnCrop);
-        resizableSignatureView = findViewById(R.id.signatureOverlay);
 
         String imageUriString = getIntent().getStringExtra("imageUri");
         if (imageUriString != null) {
@@ -132,8 +131,10 @@ public class ImagePreviewActivity extends AppCompatActivity {
         });
         btnReTake.setOnClickListener(v-> finish());
         btnSign.setOnClickListener(v->{
-            Intent intent = new Intent(ImagePreviewActivity.this, SignatureActivity.class);
+            Intent intent = new Intent(this, SignatureActivity.class);
+            intent.putExtra("imageUri", imageUri);
             startActivityForResult(intent, REQUEST_SIGNATURE);
+
         });
     }
     private Uri saveBitmapToCache(Bitmap bitmap) {
@@ -176,33 +177,40 @@ public class ImagePreviewActivity extends AppCompatActivity {
     }
 
     // Xử lý kết quả trả về từ CropActivity
+    // ... (các khai báo và phương thức khác) ...
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
         if (requestCode == REQUEST_CODE_CROP_IMAGE && resultCode == RESULT_OK) {
+            // ... (Logic xử lý crop đã có) ...
             if (data != null && data.getData() != null) {
                 Uri croppedImageUri = data.getData();
-                Log.d(TAG, "ImagePreviewActivity: Received cropped image URI: " + croppedImageUri.toString()); // Log khi nhận URI đã cắt
-                // TODO: Bây giờ bạn đã có URI của ảnh đã cắt.
-                // Bạn có thể chuyển URI này sang PdfGenerationAndPreviewActivity
-                // hoặc xử lý lưu trữ, hoặc quay về MainActivity với kết quả.
-                // Ví dụ:
+                Log.d(TAG, "ImagePreviewActivity: Received cropped image URI: " + croppedImageUri.toString());
                 imageUri = croppedImageUri;
-                // Tải lại ảnh đã cắt vào ImageView
                 loadImageWithRotation();
-                // Kết thúc ImagePreviewActivity và trả về kết quả cho Activity gọi nó (CameraActivity hoặc MainActivity)
             } else {
-                Log.e(TAG, "ImagePreviewActivity: No cropped image URI returned from CropActivity."); // Log lỗi nếu không có URI đã cắt
+                Log.e(TAG, "ImagePreviewActivity: No cropped image URI returned from CropActivity.");
+            }
+        } else if (requestCode == REQUEST_SIGNATURE && resultCode == RESULT_OK) {
+            // Thêm logic để xử lý kết quả từ SignatureActivity
+            if (data != null) {
+                // Nhận mergedImageUri được gửi từ SignatureActivity
+                Uri mergedImageUri = data.getParcelableExtra("mergedImageUri");
+                if (mergedImageUri != null) {
+                    Log.d(TAG, "ImagePreviewActivity: Received merged image URI: " + mergedImageUri.toString());
+
+                    // Cập nhật URI ảnh hiện tại của Activity
+                    this.imageUri = mergedImageUri;
+
+                    // Tải lại ảnh trong ImageView với URI mới
+                    loadImageWithRotation();
+                    Toast.makeText(this, "Ảnh đã được ký và hợp nhất thành công.", Toast.LENGTH_SHORT).show();
+                }
             }
         } else if (resultCode == RESULT_CANCELED) {
-            Log.d(TAG, "ImagePreviewActivity: Crop activity canceled."); // Log khi CropActivity bị hủy
-        }
-        if (requestCode == REQUEST_SIGNATURE && resultCode == RESULT_OK && data != null) {
-            Uri signatureUri = data.getData();
-            if (signatureUri != null) {
-                resizableSignatureView.setVisibility(View.VISIBLE);
-                resizableSignatureView.setSignatureImage(signatureUri);
-            }
+            Log.d(TAG, "Activity canceled.");
         }
     }
 }

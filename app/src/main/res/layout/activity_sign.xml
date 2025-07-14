@@ -13,7 +13,7 @@
         android:gravity="center"
         android:textColor="@color/white"
         android:background="#333"/>
-    <com.example.camerascanner.SignatureView
+    <com.example.camerascanner.activitysignature.SignatureView
         android:id="@+id/signatureView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
