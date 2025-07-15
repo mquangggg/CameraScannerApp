@@ -7,9 +7,12 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -19,9 +22,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.camerascanner.R;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class ImageSignPreviewActivity extends AppCompatActivity implements SignatureView.OnSignatureChangeListener {
 
@@ -41,29 +44,27 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_image);
 
-        // Ánh xạ View
         imageViewPreview = findViewById(R.id.imageViewPreview);
         signatureOverlay = findViewById(R.id.signatureOverlay);
         btnCancel = findViewById(R.id.btnCancelImageSign);
         btnConfirm = findViewById(R.id.btnYesImageSign);
 
-        // Lấy dữ liệu từ Intent
         imageUri = getIntent().getParcelableExtra("imageUri");
         signatureUri = getIntent().getParcelableExtra("signatureUri");
         boundingBoxLeft = getIntent().getFloatExtra("boundingBoxLeft", 0f);
         boundingBoxTop = getIntent().getFloatExtra("boundingBoxTop", 0f);
 
-        // Tải ảnh gốc và chữ ký
         if (imageUri != null) {
             originalImageBitmap = getBitmapFromUri(imageUri);
-            imageViewPreview.setImageURI(imageUri);
+            imageViewPreview.setImageBitmap(originalImageBitmap); // dùng setImageBitmap để tránh delay render
         }
+
         loadSignatureBitmap();
 
-        // Cấu hình SignatureOverlay
-        setupSignatureOverlay();
+        imageViewPreview.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            setupSignatureOverlay();
+        });
 
-        // Thiết lập listener cho các nút
         btnConfirm.setOnClickListener(v -> {
             if (imageUri != null && signatureUri != null && signatureBitmap != null) {
                 mergeImagesAndFinish();
@@ -77,19 +78,16 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
     }
 
     private void setupSignatureOverlay() {
-        // Đặt SignatureView ở chế độ xem trước, bật hiển thị khung và cho phép resize
         signatureOverlay.setDrawingMode(false);
         signatureOverlay.showSignatureFrame(true);
         signatureOverlay.setFrameResizable(true);
         signatureOverlay.setOnSignatureChangeListener(this);
 
-        // Tải chữ ký bitmap vào SignatureView
         if (signatureBitmap != null) {
             signatureOverlay.post(() -> {
                 signatureOverlay.loadBitmap(signatureBitmap);
-
-                // Tính toán vị trí chữ ký trên ImageView theo tỷ lệ
                 RectF adjustedFrame = calculateAdjustedSignatureFrame();
+                Log.d("DEBUG", "Adjusted frame: " + adjustedFrame.toString());
                 signatureOverlay.setSignatureFrame(adjustedFrame);
             });
             signatureOverlay.setVisibility(View.VISIBLE);
@@ -98,40 +96,25 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
         }
     }
 
-    /**
-     * Tính toán vị trí chữ ký trên ImageView dựa trên tỷ lệ scale và offset
-     */
     private RectF calculateAdjustedSignatureFrame() {
-        if (originalImageBitmap == null || signatureBitmap == null) {
-            return new RectF();
-        }
+        if (originalImageBitmap == null || signatureBitmap == null) return new RectF();
 
-        // Lấy kích thước ImageView
         int imageViewWidth = imageViewPreview.getWidth();
         int imageViewHeight = imageViewPreview.getHeight();
-
-        // Lấy kích thước ảnh gốc
         int bitmapWidth = originalImageBitmap.getWidth();
         int bitmapHeight = originalImageBitmap.getHeight();
 
-        // Tính toán scale và offset khi ImageView sử dụng fitCenter
         float scaleX = (float) imageViewWidth / bitmapWidth;
         float scaleY = (float) imageViewHeight / bitmapHeight;
-        float scale = Math.min(scaleX, scaleY); // fitCenter sử dụng scale nhỏ nhất
+        float scale = Math.min(scaleX, scaleY);
 
-        // Tính toán kích thước ảnh sau khi scale
         float scaledWidth = bitmapWidth * scale;
         float scaledHeight = bitmapHeight * scale;
-
-        // Tính toán offset để căn giữa ảnh trong ImageView
         float offsetX = (imageViewWidth - scaledWidth) / 2;
         float offsetY = (imageViewHeight - scaledHeight) / 2;
 
-        // Chuyển đổi tọa độ từ SignatureActivity sang ImageView
         float signatureWidthInImageView = signatureBitmap.getWidth() * scale;
         float signatureHeightInImageView = signatureBitmap.getHeight() * scale;
-
-        // Tính vị trí chữ ký trên ImageView
         float signatureLeftInImageView = offsetX + (boundingBoxLeft * scale);
         float signatureTopInImageView = offsetY + (boundingBoxTop * scale);
 
@@ -150,7 +133,7 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
         }
         try {
             signatureBitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(signatureUri));
-        } catch (FileNotFoundException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(this, "Không tìm thấy file chữ ký.", Toast.LENGTH_SHORT).show();
             signatureBitmap = null;
@@ -158,35 +141,23 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
     }
 
     private void mergeImagesAndFinish() {
-        // Lấy khung signatureFrame hiện tại từ SignatureView
         RectF signatureFrame = signatureOverlay.getSignatureFrame();
-
         if (signatureBitmap == null || originalImageBitmap == null) {
             Toast.makeText(this, "Không có chữ ký hợp lệ hoặc ảnh gốc để hợp nhất.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Xử lý trên luồng nền
         new Thread(() -> {
             try {
-                // Resize ảnh gốc nếu cần
                 Bitmap processedImage = resizeIfNeeded(originalImageBitmap, 1080, 1920);
+                RectF realImageFrame = convertUICoordinatesToImageCoordinates(signatureFrame, processedImage);
+                Log.d("DEBUG", "Converted frame: " + realImageFrame.toString());
 
-                // Chuyển đổi tọa độ từ ImageView về tọa độ ảnh gốc
-                RectF realImageFrame = convertUICoordinatesToImageCoordinates(signatureFrame);
-
-                // Hợp nhất ảnh với tọa độ đã chuyển đổi
                 Bitmap mergedImage = mergeBitmap(processedImage, signatureBitmap, realImageFrame);
-
-                // Lưu ảnh
                 Uri mergedImageUri = saveBitmapToCache(mergedImage);
 
-                // Giải phóng bộ nhớ
-                if (mergedImage != null && !mergedImage.isRecycled()) {
-                    mergedImage.recycle();
-                }
+                if (mergedImage != null && !mergedImage.isRecycled()) mergedImage.recycle();
 
-                // Quay lại UI thread
                 runOnUiThread(() -> {
                     if (mergedImageUri != null) {
                         Intent resultIntent = new Intent();
@@ -207,34 +178,23 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
         }).start();
     }
 
-    /**
-     * Chuyển đổi tọa độ từ UI (ImageView) về tọa độ ảnh gốc
-     */
-    private RectF convertUICoordinatesToImageCoordinates(RectF uiFrame) {
-        if (originalImageBitmap == null) {
-            return new RectF();
-        }
+    private RectF convertUICoordinatesToImageCoordinates(RectF uiFrame, Bitmap actualBitmap) {
+        if (actualBitmap == null) return new RectF();
 
-        // Lấy kích thước ImageView
         int imageViewWidth = imageViewPreview.getWidth();
         int imageViewHeight = imageViewPreview.getHeight();
+        int bitmapWidth = actualBitmap.getWidth();
+        int bitmapHeight = actualBitmap.getHeight();
 
-        // Lấy kích thước ảnh gốc
-        int bitmapWidth = originalImageBitmap.getWidth();
-        int bitmapHeight = originalImageBitmap.getHeight();
-
-        // Tính toán scale và offset của ImageView (fitCenter)
         float scaleX = (float) imageViewWidth / bitmapWidth;
         float scaleY = (float) imageViewHeight / bitmapHeight;
         float scale = Math.min(scaleX, scaleY);
 
-        // Tính toán offset
         float scaledWidth = bitmapWidth * scale;
         float scaledHeight = bitmapHeight * scale;
         float offsetX = (imageViewWidth - scaledWidth) / 2;
         float offsetY = (imageViewHeight - scaledHeight) / 2;
 
-        // Chuyển đổi ngược lại về tọa độ ảnh gốc
         float realLeft = (uiFrame.left - offsetX) / scale;
         float realTop = (uiFrame.top - offsetY) / scale;
         float realRight = (uiFrame.right - offsetX) / scale;
@@ -252,10 +212,33 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
 
     private Bitmap getBitmapFromUri(Uri uri) {
         try {
-            return BitmapFactory.decodeStream(getContentResolver().openInputStream(uri));
+            InputStream input = getContentResolver().openInputStream(uri);
+            Bitmap bitmap = BitmapFactory.decodeStream(input);
+
+            // Xử lý xoay ảnh từ Exif
+            InputStream exifStream = getContentResolver().openInputStream(uri);
+            ExifInterface exif = new ExifInterface(exifStream);
+            int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            int rotation = exifToDegrees(orientation);
+            if (rotation != 0) {
+                Matrix matrix = new Matrix();
+                matrix.postRotate(rotation);
+                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+            }
+
+            return bitmap;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+    }
+
+    private int exifToDegrees(int exifOrientation) {
+        switch (exifOrientation) {
+            case ExifInterface.ORIENTATION_ROTATE_90: return 90;
+            case ExifInterface.ORIENTATION_ROTATE_180: return 180;
+            case ExifInterface.ORIENTATION_ROTATE_270: return 270;
+            default: return 0;
         }
     }
 
@@ -263,9 +246,9 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
         try {
             File cachePath = new File(getCacheDir(), "merged_images");
             cachePath.mkdirs();
-            File file = new File(cachePath, "merged_image_" + System.currentTimeMillis() + ".png");
+            File file = new File(cachePath, "merged_image_" + System.currentTimeMillis() + ".jpg");
             FileOutputStream fos = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos);
             fos.close();
             return Uri.fromFile(file);
         } catch (IOException e) {
@@ -282,7 +265,6 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
         return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true);
     }
 
-    // Implement các callback từ SignatureView
     @Override
     public void onSignatureChanged() {}
 

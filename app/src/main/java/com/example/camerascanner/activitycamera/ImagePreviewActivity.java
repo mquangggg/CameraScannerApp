@@ -131,8 +131,12 @@ public class ImagePreviewActivity extends AppCompatActivity {
         });
         btnReTake.setOnClickListener(v-> finish());
         btnSign.setOnClickListener(v->{
+            Bitmap rotatedBitmap = ((BitmapDrawable)imageViewPreview.getDrawable()).getBitmap();
+            // Phương thức saveBitmapToCache() đã tồn tại trong ImagePreviewActivity.java
+            Uri tempUri = saveBitmapToCache(rotatedBitmap);
+
             Intent intent = new Intent(this, SignatureActivity.class);
-            intent.putExtra("imageUri", imageUri);
+            intent.putExtra("imageUri", tempUri);
             startActivityForResult(intent, REQUEST_SIGNATURE);
 
         });
