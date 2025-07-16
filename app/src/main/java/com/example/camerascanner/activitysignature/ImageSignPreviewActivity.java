@@ -142,6 +142,8 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
 
     private void mergeImagesAndFinish() {
         RectF signatureFrame = signatureOverlay.getSignatureFrame();
+        float rotationAngle = signatureOverlay.getRotationAngle();
+
         if (signatureBitmap == null || originalImageBitmap == null) {
             Toast.makeText(this, "Không có chữ ký hợp lệ hoặc ảnh gốc để hợp nhất.", Toast.LENGTH_SHORT).show();
             return;
@@ -152,8 +154,9 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
                 Bitmap processedImage = resizeIfNeeded(originalImageBitmap, 1080, 1920);
                 RectF realImageFrame = convertUICoordinatesToImageCoordinates(signatureFrame, processedImage);
                 Log.d("DEBUG", "Converted frame: " + realImageFrame.toString());
+                Log.d("DEBUG", "Rotation angle: " + Math.toDegrees(rotationAngle));
 
-                Bitmap mergedImage = mergeBitmap(processedImage, signatureBitmap, realImageFrame);
+                Bitmap mergedImage = mergeBitmapWithRotation(processedImage, signatureBitmap, realImageFrame, rotationAngle);
                 Uri mergedImageUri = saveBitmapToCache(mergedImage);
 
                 if (mergedImage != null && !mergedImage.isRecycled()) mergedImage.recycle();
@@ -201,6 +204,31 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
         float realBottom = (uiFrame.bottom - offsetY) / scale;
 
         return new RectF(realLeft, realTop, realRight, realBottom);
+    }
+
+    private Bitmap mergeBitmapWithRotation(Bitmap baseBitmap, Bitmap overlayBitmap, RectF overlayFrame, float rotationAngle) {
+        Bitmap mergedBitmap = baseBitmap.copy(baseBitmap.getConfig(), true);
+        Canvas canvas = new Canvas(mergedBitmap);
+
+        // Tính toán center của overlay frame
+        float centerX = overlayFrame.centerX();
+        float centerY = overlayFrame.centerY();
+
+        // Lưu trạng thái canvas
+        canvas.save();
+
+        // Áp dụng rotation quanh center của overlay frame
+        if (rotationAngle != 0f) {
+            canvas.rotate((float) Math.toDegrees(rotationAngle), centerX, centerY);
+        }
+
+        // Vẽ overlay bitmap
+        canvas.drawBitmap(overlayBitmap, null, overlayFrame, null);
+
+        // Khôi phục trạng thái canvas
+        canvas.restore();
+
+        return mergedBitmap;
     }
 
     private Bitmap mergeBitmap(Bitmap baseBitmap, Bitmap overlayBitmap, RectF overlayFrame) {
