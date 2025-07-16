@@ -67,6 +67,7 @@ public class SignatureActivity extends AppCompatActivity {
                 intent.putExtra("boundingBoxTop", boundingBox.top);
 
                 startActivityForResult(intent, 200); // eg: REQUEST_MERGE
+                signatureView.clear();
             }
         });
     }
