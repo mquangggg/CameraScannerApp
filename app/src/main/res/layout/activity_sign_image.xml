@@ -25,7 +25,7 @@
             android:layout_height="match_parent"
             android:scaleType="fitCenter" />
 
-        <com.example.camerascanner.activitysignature.SignatureView
+        <com.example.camerascanner.activitysignature.signatureview.SignatureView
             android:id="@+id/signatureOverlay"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

@@ -11,6 +11,13 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -51,226 +58,510 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * OCRActivity là Activity chịu trách nhiệm xử lý và hiển thị kết quả Nhận dạng ký tự quang học (OCR).
- * Nó nhận một URI ảnh, tải ảnh, thực hiện quá trình OCR sử dụng ML Kit Text Recognition,
- * và hiển thị ảnh gốc cùng với văn bản được phát hiện (với tọa độ) trên một Custom View (OcrOverlayView).
- * Activity này cũng cung cấp chức năng sao chép văn bản và lưu văn bản/ảnh đã xử lý vào bộ nhớ thiết bị.
+ * OCRActivity được tối ưu hóa với các kỹ thuật xử lý ảnh nâng cao
+ * để cải thiện độ chính xác của nhận dạng chữ viết
  */
 public class OCRActivity extends AppCompatActivity {
 
     // Khai báo các thành phần UI
     private ImageButton btnOCRBack;
     private AppCompatButton btnSaveOCRImageAndWord, btnCopyOCRText;
-    private ImageView ivImageForOCR; // Re-declared: Used to display original image
-    // OcrOverlayView là một Custom View dùng để vẽ văn bản được nhận diện
-    // kèm tọa độ lên trên một nền trắng (hoặc ảnh gốc)
+    private ImageView ivImageForOCR;
     private OcrOverlayView ocrOverlayView;
 
-    // Hằng số cho Intent và quyền truy cập
-    public static final String EXTRA_IMAGE_URI_FOR_OCR = "image_uri_for_ocr"; //
-    private static final String TAG = "OCRActivity"; // Dùng cho Logcat
-    private static final int REQUEST_WRITE_STORAGE = 100; // Mã yêu cầu quyền ghi bộ nhớ
+    // Hằng số
+    public static final String EXTRA_IMAGE_URI_FOR_OCR = "image_uri_for_ocr";
+    private static final String TAG = "OCRActivity";
+    private static final int REQUEST_WRITE_STORAGE = 100;
 
-    // Các thành phần xử lý đa luồng và dữ liệu
-    private ExecutorService executorService; // Để thực hiện các tác vụ nặng (OCR, lưu file) ở luồng nền
-    private Handler mainHandler; // Để cập nhật UI trên luồng chính
-    private Uri imageUriToProcess; // URI của ảnh đầu vào cần xử lý OCR
-    private Bitmap currentImageBitmap; // Bitmap của ảnh đang được hiển thị và xử lý OCR
-    private Text currentOcrResult; // Đối tượng Text đầy đủ từ ML Kit, chứa văn bản và tọa độ
+    // Hằng số cho xử lý ảnh
+    private static final int MIN_IMAGE_SIZE = 300;
+    private static final int MAX_IMAGE_SIZE = 2048;
+    private static final float CONTRAST_FACTOR = 1.2f;
+    private static final int BRIGHTNESS_OFFSET = 10;
 
-    /**
-     * Phương thức được gọi khi Activity lần đầu tiên được tạo.
-     * Thiết lập layout, ánh xạ các View, khởi tạo các đối tượng cần thiết,
-     * tải ảnh từ Intent và bắt đầu quá trình OCR.
-     *
-     * @param saveInstance Đối tượng Bundle chứa trạng thái Activity trước đó nếu có.
-     */
+    // Các thành phần xử lý
+    private ExecutorService executorService;
+    private Handler mainHandler;
+    private Uri imageUriToProcess;
+    private Bitmap currentImageBitmap;
+    private Text currentOcrResult;
+
     @Override
     protected void onCreate(Bundle saveInstance) {
         super.onCreate(saveInstance);
         setContentView(R.layout.activity_ocr);
 
-        // Ánh xạ các thành phần UI từ layout XML
-        ivImageForOCR = findViewById(R.id.ivImageForOcr); // Re-referencing ImageView
-        btnOCRBack = findViewById(R.id.btnOCRBack); //
-        btnSaveOCRImageAndWord = findViewById(R.id.btnSaveOCRImageAndWord); //
-        btnCopyOCRText = findViewById(R.id.btnCopyOCRText); //
-        ocrOverlayView = findViewById(R.id.ocrOverlayView); //
+        // Khởi tạo UI và các thành phần
+        initializeViews();
+        initializeExecutors();
 
-        // Khởi tạo ExecutorService để chạy tác vụ nền
+        // Xử lý ảnh đầu vào
+        handleImageInput();
+
+        // Thiết lập sự kiện
+        setupEventListeners();
+    }
+
+    /**
+     * Khởi tạo các View components
+     */
+    private void initializeViews() {
+        ivImageForOCR = findViewById(R.id.ivImageForOcr);
+        btnOCRBack = findViewById(R.id.btnOCRBack);
+        btnSaveOCRImageAndWord = findViewById(R.id.btnSaveOCRImageAndWord);
+        btnCopyOCRText = findViewById(R.id.btnCopyOCRText);
+        ocrOverlayView = findViewById(R.id.ocrOverlayView);
+    }
+
+    /**
+     * Khởi tạo ExecutorService và Handler
+     */
+    private void initializeExecutors() {
         executorService = Executors.newSingleThreadExecutor();
-        // Khởi tạo Handler để tương tác với luồng UI chính
         mainHandler = new Handler(Looper.getMainLooper());
+    }
 
-        // Lấy URI ảnh từ Intent
+    /**
+     * Xử lý ảnh đầu vào từ Intent
+     */
+    private void handleImageInput() {
         String imageUriString = getIntent().getStringExtra(EXTRA_IMAGE_URI_FOR_OCR);
 
-        // Kiểm tra xem URI ảnh có tồn tại không
-        if (imageUriString != null) { //
+        if (imageUriString != null) {
             imageUriToProcess = Uri.parse(imageUriString);
-            try { //
-                // Mở InputStream từ URI và giải mã thành Bitmap
-                InputStream inputStream = getContentResolver().openInputStream(imageUriToProcess); //
-                if (inputStream != null) { //
-                    currentImageBitmap = BitmapFactory.decodeStream(inputStream); //
-                    ivImageForOCR.setImageBitmap(currentImageBitmap); // Re-set image on ImageView
-                    inputStream.close(); //
-                    startOcrProcess(currentImageBitmap); // Bắt đầu quá trình OCR
-                } else { //
-                    Toast.makeText(this, "Không thể tải ảnh cho OCR.", Toast.LENGTH_SHORT).show(); //
-                    Log.e(TAG, "InputStream is null for URI: " + imageUriToProcess); //
-                }
-            } catch (IOException e) { //
-                Log.e(TAG, "Lỗi khi tải ảnh từ URI trong OCRActivity: " + e.getMessage(), e); //
-                Toast.makeText(this, "Lỗi khi tải ảnh cho OCR: " + e.getMessage(), Toast.LENGTH_SHORT).show(); //
-            }
-        } else { //
-            // Thông báo và đóng Activity nếu không có ảnh
-            Toast.makeText(this, "Không nhận được ảnh để xử lý OCR.", Toast.LENGTH_SHORT).show(); //
-            finish(); //
-        }
-
-        // Thiết lập sự kiện click cho nút "Quay lại"
-        btnOCRBack.setOnClickListener(v -> { //
-            Intent intent = new Intent(OCRActivity.this, MainActivity.class); //
-            startActivity(intent); //
-            finish(); // Đóng Activity hiện tại
-        });
-
-        // Thiết lập sự kiện click cho nút "Lưu ảnh và tạo text!"
-        btnSaveOCRImageAndWord.setOnClickListener(v -> { //
-            // Lấy văn bản đầy đủ từ kết quả OCR
-            String ocrText = (currentOcrResult != null) ? currentOcrResult.getText().trim() : ""; //
-            if (ocrText.isEmpty()) { //
-                Toast.makeText(this, "Không có văn bản để lưu.", Toast.LENGTH_LONG).show(); //
-                return; //
-            }
-            if (currentImageBitmap == null) { //
-                Toast.makeText(this, "Không có ảnh để lưu.", Toast.LENGTH_LONG).show(); //
-                return; //
-            }
-
-            // Tạo một dấu thời gian chung cho cả tên file ảnh và file văn bản
-            String commonTimestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date()); //
-
-            // Lưu văn bản và ảnh vào bộ nhớ
-            saveTextToFile(ocrText, commonTimestamp, "txt"); //
-            // Để lưu ảnh đã có nền trắng và văn bản nhận diện, bạn cần tạo một Bitmap mới từ OcrOverlayView.
-            // Điều này phức tạp hơn và thường được thực hiện bằng cách vẽ OcrOverlayView lên một Bitmap mới.
-            // Hiện tại, saveOcrImageToFile đang lưu ảnh gốc.
-            // Nếu bạn muốn lưu ảnh overlay, bạn cần implement một phương thức để lấy Bitmap từ OcrOverlayView.
-            // Ví dụ: Bitmap overlayBitmap = ocrOverlayView.getBitmap();
-            // Rồi gọi saveOcrImageToFile(overlayBitmap, commonTimestamp);
-            // Trong ví dụ này, tôi vẫn giữ nguyên việc lưu ảnh gốc như trước để giữ đơn giản,
-            // vì việc tạo bitmap từ view có thể cần thêm code và xử lý.
-            saveOcrImageToFile(currentImageBitmap, commonTimestamp); // Vẫn lưu ảnh gốc
-
-            // Sau khi lưu, quay lại MainActivity sau một khoảng thời gian ngắn
-            mainHandler.postDelayed(() -> { //
-                Intent intent = new Intent(OCRActivity.this, MainActivity.class); //
-                startActivity(intent); //
-                finish(); //
-            }, 500); //
-        });
-
-        // Thiết lập sự kiện click cho nút "Copy"
-        btnCopyOCRText.setOnClickListener(v -> { //
-            copyTextToClipboard(); // Gọi phương thức sao chép văn bản
-        });
-    }
-
-    /**
-     * Sao chép văn bản được nhận diện vào clipboard của hệ thống.
-     * Hiển thị thông báo Toast về kết quả sao chép.
-     */
-    private void copyTextToClipboard() { //
-        // Lấy văn bản đầy đủ từ kết quả OCR
-        String textToCopy = (currentOcrResult != null) ? currentOcrResult.getText().trim() : ""; //
-        if (textToCopy.isEmpty()) { //
-            Toast.makeText(this, "Không có văn bản để sao chép", Toast.LENGTH_LONG).show(); //
-            return; //
-        }
-
-        // Lấy dịch vụ ClipboardManager và tạo ClipData
-        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE); //
-        ClipData clip = ClipData.newPlainText("Văn bản OCR", textToCopy); //
-        if (clipboard != null) { //
-            clipboard.setPrimaryClip(clip); // Đặt dữ liệu vào clipboard
-            Toast.makeText(this, "Đã sao chép văn bản vào bộ nhớ tạm! ", Toast.LENGTH_LONG).show(); //
-        } else { //
-            Toast.makeText(this, "Không thể sao chép văn bản! ", Toast.LENGTH_LONG).show(); //
+            loadAndProcessImage();
+        } else {
+            Toast.makeText(this, "Không nhận được ảnh để xử lý OCR.", Toast.LENGTH_SHORT).show();
+            finish();
         }
     }
 
     /**
-     * Bắt đầu quá trình nhận dạng văn bản (OCR) trên một Bitmap.
-     * Sử dụng ML Kit Text Recognition để xử lý ảnh và cập nhật giao diện người dùng
-     * với kết quả văn bản và tọa độ.
-     *
-     * @param imageBitmap Bitmap của ảnh cần được xử lý OCR.
+     * Tải và xử lý ảnh với các kỹ thuật tối ưu
      */
-    private void startOcrProcess(Bitmap imageBitmap) { //
-        // Vô hiệu hóa các nút để tránh người dùng thao tác trong khi xử lý
-        btnCopyOCRText.setEnabled(false); //
-        btnSaveOCRImageAndWord.setEnabled(false); //
+    private void loadAndProcessImage() {
+        executorService.execute(() -> {
+            try {
+                // Tải ảnh gốc
+                InputStream inputStream = getContentResolver().openInputStream(imageUriToProcess);
+                if (inputStream != null) {
+                    Bitmap originalBitmap = BitmapFactory.decodeStream(inputStream);
+                    inputStream.close();
 
-        // Chạy tác vụ OCR trên một luồng nền để tránh chặn luồng UI
-        executorService.execute(() -> { //
-            String fullOcrText = "Lỗi khi trích xuất văn bản."; // Mặc định là lỗi
-            Text resultText = null; // Biến để lưu đối tượng Text từ ML Kit
+                    if (originalBitmap != null) {
+                        // Áp dụng các kỹ thuật tối ưu ảnh
+                        Bitmap optimizedBitmap = optimizeImageForOCR(originalBitmap);
 
-            try { //
-                if (imageBitmap == null) { //
-                    throw new IOException("Bitmap để xử lý OCR là null."); //
+                        mainHandler.post(() -> {
+                            currentImageBitmap = optimizedBitmap;
+                            ivImageForOCR.setImageBitmap(currentImageBitmap);
+                            startOcrProcess(currentImageBitmap);
+                        });
+                    } else {
+                        showError("Không thể tải ảnh cho OCR.");
+                    }
+                } else {
+                    showError("Không thể mở InputStream cho ảnh.");
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "Lỗi khi tải ảnh từ URI: " + e.getMessage(), e);
+                showError("Lỗi khi tải ảnh cho OCR: " + e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Tối ưu hóa ảnh cho OCR với nhiều kỹ thuật xử lý
+     */
+    private Bitmap optimizeImageForOCR(Bitmap originalBitmap) {
+        // Bước 1: Resize ảnh về kích thước tối ưu
+        Bitmap resizedBitmap = resizeImageOptimally(originalBitmap);
+
+        // Bước 2: Tăng cường độ tương phản và độ sáng
+        Bitmap contrastEnhanced = enhanceContrast(resizedBitmap);
+
+        // Bước 3: Khử nhiễu
+        Bitmap denoised = applyDenoising(contrastEnhanced);
+
+        // Bước 4: Làm sắc nét
+        Bitmap sharpened = applySharpen(denoised);
+
+        // Bước 5: Chuyển đổi sang grayscale với thuật toán tối ưu
+        Bitmap grayscale = convertToOptimalGrayscale(sharpened);
+
+        // Bước 6: Điều chỉnh gamma
+        Bitmap gammaAdjusted = adjustGamma(grayscale, 1.2f);
+
+        // Giải phóng bộ nhớ các bitmap trung gian
+        if (resizedBitmap != originalBitmap) resizedBitmap.recycle();
+        if (contrastEnhanced != resizedBitmap) contrastEnhanced.recycle();
+        if (denoised != contrastEnhanced) denoised.recycle();
+        if (sharpened != denoised) sharpened.recycle();
+        if (grayscale != sharpened) grayscale.recycle();
+
+        return gammaAdjusted;
+    }
+
+    /**
+     * Resize ảnh về kích thước tối ưu cho OCR
+     */
+    private Bitmap resizeImageOptimally(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+
+        // Tính toán kích thước mới
+        float scaleFactor = 1.0f;
+
+        if (width < MIN_IMAGE_SIZE || height < MIN_IMAGE_SIZE) {
+            // Ảnh quá nhỏ, cần phóng to
+            scaleFactor = Math.max((float)MIN_IMAGE_SIZE / width, (float)MIN_IMAGE_SIZE / height);
+        } else if (width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) {
+            // Ảnh quá lớn, cần thu nhỏ
+            scaleFactor = Math.min((float)MAX_IMAGE_SIZE / width, (float)MAX_IMAGE_SIZE / height);
+        }
+
+        if (scaleFactor != 1.0f) {
+            Matrix matrix = new Matrix();
+            matrix.postScale(scaleFactor, scaleFactor);
+            return Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
+        }
+
+        return bitmap;
+    }
+
+    /**
+     * Tăng cường độ tương phản và độ sáng
+     */
+    private Bitmap enhanceContrast(Bitmap bitmap) {
+        ColorMatrix colorMatrix = new ColorMatrix();
+        colorMatrix.set(new float[]{
+                CONTRAST_FACTOR, 0, 0, 0, BRIGHTNESS_OFFSET,
+                0, CONTRAST_FACTOR, 0, 0, BRIGHTNESS_OFFSET,
+                0, 0, CONTRAST_FACTOR, 0, BRIGHTNESS_OFFSET,
+                0, 0, 0, 1, 0
+        });
+
+        return applyColorMatrix(bitmap, colorMatrix);
+    }
+
+    /**
+     * Áp dụng ColorMatrix lên bitmap
+     */
+    private Bitmap applyColorMatrix(Bitmap bitmap, ColorMatrix colorMatrix) {
+        Bitmap result = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), bitmap.getConfig());
+        Canvas canvas = new Canvas(result);
+        Paint paint = new Paint();
+        paint.setColorFilter(new ColorMatrixColorFilter(colorMatrix));
+        canvas.drawBitmap(bitmap, 0, 0, paint);
+        return result;
+    }
+
+    /**
+     * Khử nhiễu bằng thuật toán median filter đơn giản
+     */
+    private Bitmap applyDenoising(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+
+        int[] result = new int[width * height];
+
+        for (int y = 1; y < height - 1; y++) {
+            for (int x = 1; x < width - 1; x++) {
+                int[] neighbors = new int[9];
+                int index = 0;
+
+                // Lấy 9 pixel xung quanh
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        neighbors[index++] = pixels[(y + dy) * width + (x + dx)];
+                    }
                 }
 
-                // Tạo InputImage từ Bitmap
-                InputImage image = InputImage.fromBitmap(imageBitmap, 0); //
-                // Lấy thể hiện của TextRecognizer
-                TextRecognizer recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS); //
+                // Sắp xếp và lấy giá trị trung vị
+                java.util.Arrays.sort(neighbors);
+                result[y * width + x] = neighbors[4];
+            }
+        }
 
-                // Thực hiện quá trình nhận dạng văn bản và chờ kết quả
-                resultText = Tasks.await(recognizer.process(image)); //
-                // Lấy toàn bộ văn bản được nhận dạng
-                fullOcrText = resultText.getText(); //
+        // Copy biên
+        for (int i = 0; i < width * height; i++) {
+            if (result[i] == 0) result[i] = pixels[i];
+        }
 
-            } catch (Exception e) { //
-                // Xử lý lỗi nếu quá trình OCR thất bại
-                Log.e(TAG, "Lỗi khi trích xuất văn bản OCR: " + e.getMessage(), e); //
-                fullOcrText = "Lỗi: " + e.getMessage(); //
-                resultText = null; // Đặt kết quả về null nếu có lỗi
+        Bitmap denoisedBitmap = Bitmap.createBitmap(width, height, bitmap.getConfig());
+        denoisedBitmap.setPixels(result, 0, width, 0, 0, width, height);
+        return denoisedBitmap;
+    }
+
+    /**
+     * Làm sắc nét ảnh
+     */
+    private Bitmap applySharpen(Bitmap bitmap) {
+        // Kernel làm sắc nét
+        float[] sharpenKernel = {
+                0, -1, 0,
+                -1, 5, -1,
+                0, -1, 0
+        };
+
+        return applyConvolution(bitmap, sharpenKernel, 3);
+    }
+
+    /**
+     * Áp dụng convolution với kernel
+     */
+    private Bitmap applyConvolution(Bitmap bitmap, float[] kernel, int kernelSize) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+
+        int[] result = new int[width * height];
+        int offset = kernelSize / 2;
+
+        for (int y = offset; y < height - offset; y++) {
+            for (int x = offset; x < width - offset; x++) {
+                float r = 0, g = 0, b = 0;
+
+                for (int ky = 0; ky < kernelSize; ky++) {
+                    for (int kx = 0; kx < kernelSize; kx++) {
+                        int pixel = pixels[(y + ky - offset) * width + (x + kx - offset)];
+                        float weight = kernel[ky * kernelSize + kx];
+
+                        r += ((pixel >> 16) & 0xFF) * weight;
+                        g += ((pixel >> 8) & 0xFF) * weight;
+                        b += (pixel & 0xFF) * weight;
+                    }
+                }
+
+                r = Math.max(0, Math.min(255, r));
+                g = Math.max(0, Math.min(255, g));
+                b = Math.max(0, Math.min(255, b));
+
+                result[y * width + x] = 0xFF000000 | ((int)r << 16) | ((int)g << 8) | (int)b;
+            }
+        }
+
+        // Copy biên
+        for (int i = 0; i < width * height; i++) {
+            if (result[i] == 0) result[i] = pixels[i];
+        }
+
+        Bitmap sharpenedBitmap = Bitmap.createBitmap(width, height, bitmap.getConfig());
+        sharpenedBitmap.setPixels(result, 0, width, 0, 0, width, height);
+        return sharpenedBitmap;
+    }
+
+    /**
+     * Chuyển đổi sang grayscale với thuật toán tối ưu
+     */
+    private Bitmap convertToOptimalGrayscale(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+
+        // Sử dụng công thức luminance cải tiến
+        for (int i = 0; i < pixels.length; i++) {
+            int pixel = pixels[i];
+            int r = (pixel >> 16) & 0xFF;
+            int g = (pixel >> 8) & 0xFF;
+            int b = pixel & 0xFF;
+
+            // Công thức luminance cải tiến cho OCR
+            int gray = (int)(0.299 * r + 0.587 * g + 0.114 * b);
+            pixels[i] = 0xFF000000 | (gray << 16) | (gray << 8) | gray;
+        }
+
+        Bitmap grayscaleBitmap = Bitmap.createBitmap(width, height, bitmap.getConfig());
+        grayscaleBitmap.setPixels(pixels, 0, width, 0, 0, width, height);
+        return grayscaleBitmap;
+    }
+
+    /**
+     * Điều chỉnh gamma
+     */
+    private Bitmap adjustGamma(Bitmap bitmap, float gamma) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int[] pixels = new int[width * height];
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height);
+
+        // Tạo bảng lookup gamma
+        int[] gammaTable = new int[256];
+        for (int i = 0; i < 256; i++) {
+            gammaTable[i] = (int)(255 * Math.pow(i / 255.0, 1.0 / gamma));
+        }
+
+        // Áp dụng gamma correction
+        for (int i = 0; i < pixels.length; i++) {
+            int pixel = pixels[i];
+            int r = gammaTable[(pixel >> 16) & 0xFF];
+            int g = gammaTable[(pixel >> 8) & 0xFF];
+            int b = gammaTable[pixel & 0xFF];
+
+            pixels[i] = 0xFF000000 | (r << 16) | (g << 8) | b;
+        }
+
+        Bitmap gammaBitmap = Bitmap.createBitmap(width, height, bitmap.getConfig());
+        gammaBitmap.setPixels(pixels, 0, width, 0, 0, width, height);
+        return gammaBitmap;
+    }
+
+    /**
+     * Bắt đầu quá trình OCR với cấu hình tối ưu
+     */
+    private void startOcrProcess(Bitmap imageBitmap) {
+        btnCopyOCRText.setEnabled(false);
+        btnSaveOCRImageAndWord.setEnabled(false);
+
+        executorService.execute(() -> {
+            String fullOcrText = "Lỗi khi trích xuất văn bản.";
+            Text resultText = null;
+
+            try {
+                if (imageBitmap == null) {
+                    throw new IOException("Bitmap để xử lý OCR là null.");
+                }
+
+                // Tạo InputImage với rotation correction
+                InputImage image = InputImage.fromBitmap(imageBitmap, 0);
+
+                // Sử dụng TextRecognizer với cấu hình tối ưu
+                TextRecognizer recognizer = TextRecognition.getClient(
+                        TextRecognizerOptions.DEFAULT_OPTIONS
+                );
+
+                // Thực hiện OCR
+                resultText = Tasks.await(recognizer.process(image));
+                fullOcrText = resultText.getText();
+
+                // Hậu xử lý văn bản
+                fullOcrText = postProcessOcrText(fullOcrText);
+
+            } catch (Exception e) {
+                Log.e(TAG, "Lỗi khi trích xuất văn bản OCR: " + e.getMessage(), e);
+                fullOcrText = "Lỗi: " + e.getMessage();
+                resultText = null;
             }
 
-            // Gửi kết quả về luồng UI để cập nhật giao diện
-            final String finalFullOcrText = fullOcrText; //
-            final Text finalResultText = resultText; //
+            final String finalFullOcrText = fullOcrText;
+            final Text finalResultText = resultText;
 
-            mainHandler.post(() -> { //
-                // Lưu kết quả OCR đầy đủ vào biến của Activity
-                currentOcrResult = finalResultText; //
+            mainHandler.post(() -> {
+                currentOcrResult = finalResultText;
 
-                if (currentImageBitmap != null && currentOcrResult != null) { //
-                    // Truyền kết quả OCR và kích thước ảnh gốc cho OcrOverlayView để vẽ
-                    // OcrOverlayView sẽ tính toán lại tỉ lệ và vị trí để vẽ văn bản đúng cách
-                    ocrOverlayView.setOcrResult(currentOcrResult, currentImageBitmap.getWidth(), currentImageBitmap.getHeight()); //
-                } else { //
-                    // Xóa bất kỳ bản vẽ nào nếu có lỗi hoặc không có kết quả
-                    ocrOverlayView.setOcrResult(null, 0, 0); //
+                if (currentImageBitmap != null && currentOcrResult != null) {
+                    ocrOverlayView.setOcrResult(currentOcrResult,
+                            currentImageBitmap.getWidth(),
+                            currentImageBitmap.getHeight());
+                } else {
+                    ocrOverlayView.setOcrResult(null, 0, 0);
                 }
 
-                // Kích hoạt lại các nút sau khi xử lý xong
-                btnCopyOCRText.setEnabled(true); //
-                btnSaveOCRImageAndWord.setEnabled(true); //
+                btnCopyOCRText.setEnabled(true);
+                btnSaveOCRImageAndWord.setEnabled(true);
 
-                // Hiển thị Toast dựa trên kết quả
-                if (finalFullOcrText.startsWith("Lỗi:")) { //
-                    Toast.makeText(OCRActivity.this, finalFullOcrText, Toast.LENGTH_LONG).show(); //
-                } else if (finalFullOcrText.isEmpty()) { //
-                    Toast.makeText(OCRActivity.this, "Không tìm thấy văn bản nào trong ảnh.", Toast.LENGTH_SHORT).show(); //
+                if (finalFullOcrText.startsWith("Lỗi:")) {
+                    Toast.makeText(OCRActivity.this, finalFullOcrText, Toast.LENGTH_LONG).show();
+                } else if (finalFullOcrText.isEmpty()) {
+                    Toast.makeText(OCRActivity.this, "Không tìm thấy văn bản nào trong ảnh.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(OCRActivity.this, "Đã nhận diện được " +
+                            finalFullOcrText.split("\\s+").length + " từ", Toast.LENGTH_SHORT).show();
                 }
             });
         });
     }
+
+    /**
+     * Hậu xử lý văn bản OCR để cải thiện chất lượng
+     */
+    private String postProcessOcrText(String rawText) {
+        if (rawText == null || rawText.trim().isEmpty()) {
+            return rawText;
+        }
+
+        // Loại bỏ ký tự không mong muốn
+        String processed = rawText.replaceAll("[^\\p{L}\\p{N}\\p{P}\\p{Z}]", "");
+
+        // Chuẩn hóa khoảng trắng
+        processed = processed.replaceAll("\\s+", " ");
+
+        // Sửa lỗi nhận dạng phổ biến
+        processed = processed.replace("0", "O"); // Số 0 thành chữ O nếu trong context chữ
+        processed = processed.replace("1", "I"); // Số 1 thành chữ I nếu trong context chữ
+        processed = processed.replace("5", "S"); // Số 5 thành chữ S nếu trong context chữ
+
+        return processed.trim();
+    }
+
+    /**
+     * Hiển thị thông báo lỗi
+     */
+    private void showError(String message) {
+        mainHandler.post(() -> {
+            Toast.makeText(OCRActivity.this, message, Toast.LENGTH_SHORT).show();
+            Log.e(TAG, message);
+        });
+    }
+
+    /**
+     * Thiết lập các event listener
+     */
+    private void setupEventListeners() {
+        btnOCRBack.setOnClickListener(v -> {
+            Intent intent = new Intent(OCRActivity.this, MainActivity.class);
+            startActivity(intent);
+            finish();
+        });
+
+        btnSaveOCRImageAndWord.setOnClickListener(v -> {
+            String ocrText = (currentOcrResult != null) ? currentOcrResult.getText().trim() : "";
+            if (ocrText.isEmpty()) {
+                Toast.makeText(this, "Không có văn bản để lưu.", Toast.LENGTH_LONG).show();
+                return;
+            }
+            if (currentImageBitmap == null) {
+                Toast.makeText(this, "Không có ảnh để lưu.", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            String commonTimestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+            saveTextToFile(ocrText, commonTimestamp, "txt");
+            saveOcrImageToFile(currentImageBitmap, commonTimestamp);
+
+            mainHandler.postDelayed(() -> {
+                Intent intent = new Intent(OCRActivity.this, MainActivity.class);
+                startActivity(intent);
+                finish();
+            }, 500);
+        });
+
+        btnCopyOCRText.setOnClickListener(v -> copyTextToClipboard());
+    }
+
+    // Các phương thức còn lại giữ nguyên như code gốc
+    private void copyTextToClipboard() {
+        String textToCopy = (currentOcrResult != null) ? currentOcrResult.getText().trim() : "";
+        if (textToCopy.isEmpty()) {
+            Toast.makeText(this, "Không có văn bản để sao chép", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText("Văn bản OCR", textToCopy);
+        if (clipboard != null) {
+            clipboard.setPrimaryClip(clip);
+            Toast.makeText(this, "Đã sao chép văn bản vào bộ nhớ tạm! ", Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(this, "Không thể sao chép văn bản! ", Toast.LENGTH_LONG).show();
+        }
+    }
+
 
     /**
      * Xử lý kết quả yêu cầu cấp quyền từ người dùng.

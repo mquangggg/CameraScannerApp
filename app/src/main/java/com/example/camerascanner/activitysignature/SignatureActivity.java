@@ -3,18 +3,16 @@ package com.example.camerascanner.activitysignature;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.camerascanner.R;
-import com.example.camerascanner.activitycamera.ImagePreviewActivity;
+import com.example.camerascanner.activitysignature.signatureview.SignatureView;
 
 import java.io.File;
 import java.io.FileOutputStream;

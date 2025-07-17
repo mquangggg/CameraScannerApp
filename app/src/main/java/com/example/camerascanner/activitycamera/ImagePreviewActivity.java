@@ -39,7 +39,6 @@ public class ImagePreviewActivity extends AppCompatActivity {
     // Request code cho CropActivity, để biết khi nào CropActivity trả về kết quả
     private static final int REQUEST_CODE_CROP_IMAGE = 101;
     private static final int REQUEST_SIGNATURE = 102;
-    private ResizableSignatureView resizableSignatureView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
