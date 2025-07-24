@@ -80,7 +80,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
         rgPdfStyle = findViewById(R.id.rgPdfStyle);
         rbOriginal = findViewById(R.id.rbOriginal);
         rbBlackWhite = findViewById(R.id.rbBlackWhite);
-
+        // Luồng đơn
         executorService = Executors.newSingleThreadExecutor();
         mainHandler = new Handler(Looper.getMainLooper());
     }
@@ -152,7 +152,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                 // Chọn phương pháp phù hợp
                 blackWhiteBitmap = ImageProcessor.convertToBlackAndWhite(
                         croppedBitmap,
-                        ImageProcessor.ConversionMethod.OTSU // hoặc ADAPTIVE cho tài liệu
+                        ImageProcessor.ConversionMethod.ADAPTIVE // hoặc ADAPTIVE cho tài liệu
                 );
 
                 // Hoặc sử dụng method chuyên biệt

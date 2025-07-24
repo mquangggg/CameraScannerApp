@@ -57,20 +57,6 @@
                     android:textColor="@color/white" />
 
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnCrop"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Crop"
-                    android:textSize="7sp"
-                    app:iconTint="@android:color/white"
-                    android:textColor="@color/white"
-                    app:icon="@drawable/ic_crop"
-                    app:iconGravity="top"
-                    app:iconPadding="4dp"
-                    android:textAlignment="center" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRotate"

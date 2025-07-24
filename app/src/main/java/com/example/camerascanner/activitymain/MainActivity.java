@@ -79,7 +79,6 @@ public class MainActivity extends AppCompatActivity {
      * Phương thức được gọi khi Activity lần đầu tiên được tạo.
      * Thiết lập layout, ánh xạ các View, khởi tạo Adapters và các danh sách dữ liệu,
      * thiết lập listener cho tab và nút FAB, và kiểm tra/yêu cầu quyền cần thiết.
-     *
      * @param savedInstanceState Đối tượng Bundle chứa trạng thái Activity trước đó nếu có.
      */
     @Override

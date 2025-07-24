@@ -1,4 +1,5 @@
 // File: com/example/camerascanner/activityocr/OCRActivity.java
+// File: com/example/camerascanner/activityocr/OCRActivity.java
 package com.example.camerascanner.activityocr;
 
 import android.Manifest;
@@ -85,6 +86,7 @@ public class OCRActivity extends AppCompatActivity {
     private Handler mainHandler;
     private Uri imageUriToProcess;
     private Bitmap currentImageBitmap;
+    private Bitmap originalImageBitmap; // Thêm biến để lưu ảnh gốc
     private Text currentOcrResult;
 
     @Override
@@ -146,17 +148,19 @@ public class OCRActivity extends AppCompatActivity {
                 // Tải ảnh gốc
                 InputStream inputStream = getContentResolver().openInputStream(imageUriToProcess);
                 if (inputStream != null) {
-                    Bitmap originalBitmap = BitmapFactory.decodeStream(inputStream);
+                    originalImageBitmap = BitmapFactory.decodeStream(inputStream); // Lưu ảnh gốc
                     inputStream.close();
 
-                    if (originalBitmap != null) {
-                        // Áp dụng các kỹ thuật tối ưu ảnh
-                        Bitmap optimizedBitmap = optimizeImageForOCR(originalBitmap);
+                    if (originalImageBitmap != null) {
+                        // Áp dụng các kỹ thuật tối ưu ảnh cho OCR
+                        Bitmap optimizedBitmap = optimizeImageForOCR(originalImageBitmap);
 
                         mainHandler.post(() -> {
                             currentImageBitmap = optimizedBitmap;
-                            ivImageForOCR.setImageBitmap(currentImageBitmap);
-                            startOcrProcess(currentImageBitmap);
+                            // Hiển thị ảnh gốc trong ImageView để user thấy
+                            ivImageForOCR.setImageBitmap(originalImageBitmap);
+                            // Thực hiện OCR trên ảnh đã tối ưu
+                            startOcrProcess(optimizedBitmap);
                         });
                     } else {
                         showError("Không thể tải ảnh cho OCR.");
@@ -427,7 +431,7 @@ public class OCRActivity extends AppCompatActivity {
                     throw new IOException("Bitmap để xử lý OCR là null.");
                 }
 
-                // Tạo InputImage với rotation correction
+                // Thử nhiều orientation nếu cần
                 InputImage image = InputImage.fromBitmap(imageBitmap, 0);
 
                 // Sử dụng TextRecognizer với cấu hình tối ưu
@@ -438,6 +442,8 @@ public class OCRActivity extends AppCompatActivity {
                 // Thực hiện OCR
                 resultText = Tasks.await(recognizer.process(image));
                 fullOcrText = resultText.getText();
+
+                // Nếu kết quả kém, thử với ảnh xoay
 
                 // Hậu xử lý văn bản
                 fullOcrText = postProcessOcrText(fullOcrText);
@@ -454,12 +460,14 @@ public class OCRActivity extends AppCompatActivity {
             mainHandler.post(() -> {
                 currentOcrResult = finalResultText;
 
-                if (currentImageBitmap != null && currentOcrResult != null) {
+                if (imageBitmap != null && currentOcrResult != null) {
                     ocrOverlayView.setOcrResult(currentOcrResult,
-                            currentImageBitmap.getWidth(),
-                            currentImageBitmap.getHeight());
+                            originalImageBitmap.getWidth(),
+                            originalImageBitmap.getHeight(),
+                            imageBitmap.getWidth(), // This is the optimized bitmap
+                            imageBitmap.getHeight());
                 } else {
-                    ocrOverlayView.setOcrResult(null, 0, 0);
+                    ocrOverlayView.setOcrResult(null, 0, 0,0,0);
                 }
 
                 btnCopyOCRText.setEnabled(true);
@@ -476,6 +484,7 @@ public class OCRActivity extends AppCompatActivity {
             });
         });
     }
+
 
     /**
      * Hậu xử lý văn bản OCR để cải thiện chất lượng
@@ -562,126 +571,86 @@ public class OCRActivity extends AppCompatActivity {
         }
     }
 
-
-    /**
-     * Xử lý kết quả yêu cầu cấp quyền từ người dùng.
-     * Nếu quyền WRITE_EXTERNAL_STORAGE được cấp, thông báo cho người dùng.
-     *
-     * @param requestCode  Mã yêu cầu đã được cung cấp khi gọi requestPermissions.
-     * @param permissions  Mảng các quyền được yêu cầu.
-     * @param grantResults Kết quả của việc cấp quyền (PERMISSION_GRANTED hoặc PERMISSION_DENIED) tương ứng với mỗi quyền.
-     */
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) { //
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults); //
-        if (requestCode == REQUEST_WRITE_STORAGE) { //
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) { //
-                Toast.makeText(this, "Đã cấp quyền lưu trữ. Vui lòng thử lại hành động lưu.", Toast.LENGTH_SHORT).show(); //
-            } else { //
-                Toast.makeText(this, "Ứng dụng cần quyền ghi để lưu tệp.", Toast.LENGTH_LONG).show(); //
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_WRITE_STORAGE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Đã cấp quyền lưu trữ. Vui lòng thử lại hành động lưu.", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Ứng dụng cần quyền ghi để lưu tệp.", Toast.LENGTH_LONG).show();
             }
         }
     }
 
-    /**
-     * Yêu cầu quyền WRITE_EXTERNAL_STORAGE (nếu cần) và sau đó tiến hành lưu văn bản vào tệp.
-     * Đối với Android 10 (API 29) trở lên, sử dụng MediaStore API để lưu trữ.
-     * Đối với Android 9 (API 28) trở xuống, lưu trực tiếp vào thư mục công cộng.
-     *
-     * @param textToSave      Văn bản cần lưu.
-     * @param commonTimestamp Dấu thời gian chung để đặt tên tệp.
-     * @param fileExtension   Phần mở rộng của tệp (ví dụ: "txt").
-     */
-    private void saveTextToFile(String textToSave, String commonTimestamp, String fileExtension) { //
-        // Kiểm tra quyền ghi bộ nhớ nếu phiên bản Android < Q (API 29)
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) //
-                != PackageManager.PERMISSION_GRANTED && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { //
-            ActivityCompat.requestPermissions(this, //
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, //
-                    REQUEST_WRITE_STORAGE); //
-        } else { //
-            // Nếu quyền đã được cấp hoặc là Android Q trở lên, tiến hành lưu
-            performSaveTextFile(textToSave, commonTimestamp, fileExtension); //
+    private void saveTextToFile(String textToSave, String commonTimestamp, String fileExtension) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQUEST_WRITE_STORAGE);
+        } else {
+            performSaveTextFile(textToSave, commonTimestamp, fileExtension);
         }
     }
 
-    /**
-     * Thực hiện việc lưu văn bản vào một tệp trong thư mục "Downloads/MyOCRTexts".
-     * Sử dụng MediaStore cho Android Q+ và FileOutputStream cho các phiên bản cũ hơn.
-     *
-     * @param textContent     Nội dung văn bản cần ghi vào tệp.
-     * @param commonTimestamp Dấu thời gian để đặt tên tệp.
-     * @param fileExtension   Phần mở rộng của tệp.
-     */
-    private void performSaveTextFile(String textContent, String commonTimestamp, String fileExtension) { //
-        executorService.execute(() -> { // Thực hiện trên luồng nền
-            String fileName = "OCR_Text_" + commonTimestamp + "." + fileExtension; //
-            String mimeType = "text/plain"; //
+    private void performSaveTextFile(String textContent, String commonTimestamp, String fileExtension) {
+        executorService.execute(() -> {
+            String fileName = "OCR_Text_" + commonTimestamp + "." + fileExtension;
+            String mimeType = "text/plain";
 
-            Uri fileUri = null; //
-            ContentResolver resolver = getContentResolver(); //
-            ContentValues contentValues = new ContentValues(); //
-            contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName); //
-            contentValues.put(MediaStore.MediaColumns.MIME_TYPE, mimeType); //
+            Uri fileUri = null;
+            ContentResolver resolver = getContentResolver();
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+            contentValues.put(MediaStore.MediaColumns.MIME_TYPE, mimeType);
 
-            OutputStream outputStream = null; //
-            try { //
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) { //
-                    // Đối với Android Q trở lên, sử dụng MediaStore.Downloads
-                    contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + File.separator + "MyOCRTexts"); //
-                    fileUri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues); //
-                    if (fileUri == null) { //
-                        throw new IOException("Không thể tạo URI cho tệp."); //
+            OutputStream outputStream = null;
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + File.separator + "MyOCRTexts");
+                    fileUri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues);
+                    if (fileUri == null) {
+                        throw new IOException("Không thể tạo URI cho tệp.");
                     }
-                    outputStream = resolver.openOutputStream(fileUri); //
-                } else { //
-                    // Đối với các phiên bản cũ hơn, lưu trực tiếp vào thư mục công cộng
-                    File documentsFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "MyOCRTexts"); //
-                    if (!documentsFolder.exists()) { //
-                        documentsFolder.mkdirs(); // Tạo thư mục nếu chưa có
+                    outputStream = resolver.openOutputStream(fileUri);
+                } else {
+                    File documentsFolder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "MyOCRTexts");
+                    if (!documentsFolder.exists()) {
+                        documentsFolder.mkdirs();
                     }
-                    File file = new File(documentsFolder, fileName); //
-                    fileUri = Uri.fromFile(file); //
-                    outputStream = new FileOutputStream(file); //
+                    File file = new File(documentsFolder, fileName);
+                    fileUri = Uri.fromFile(file);
+                    outputStream = new FileOutputStream(file);
                 }
 
-                if (outputStream != null) { //
-                    outputStream.write(textContent.getBytes()); //
-                    outputStream.close(); //
-                    mainHandler.post(() -> Toast.makeText(OCRActivity.this, "Đã lưu văn bản: " + fileName, Toast.LENGTH_LONG).show()); //
-                } else { //
-                    throw new IOException("Không thể mở OutputStream."); //
+                if (outputStream != null) {
+                    outputStream.write(textContent.getBytes());
+                    outputStream.close();
+                    mainHandler.post(() -> Toast.makeText(OCRActivity.this, "Đã lưu văn bản: " + fileName, Toast.LENGTH_LONG).show());
+                } else {
+                    throw new IOException("Không thể mở OutputStream.");
                 }
-            } catch (IOException e) { //
-                Log.e(TAG, "Lỗi khi lưu tệp văn bản: " + e.getMessage(), e); //
-                mainHandler.post(() -> Toast.makeText(OCRActivity.this, "Lỗi khi lưu tệp văn bản: " + e.getMessage(), Toast.LENGTH_LONG).show()); //
-            } finally { //
-                // Đảm bảo đóng OutputStream
-                if (outputStream != null) { //
-                    try { //
-                        outputStream.close(); //
-                    } catch (IOException e) { //
-                        Log.e(TAG, "Lỗi khi đóng OutputStream: " + e.getMessage(), e); //
+            } catch (IOException e) {
+                Log.e(TAG, "Lỗi khi lưu tệp văn bản: " + e.getMessage(), e);
+                mainHandler.post(() -> Toast.makeText(OCRActivity.this, "Lỗi khi lưu tệp văn bản: " + e.getMessage(), Toast.LENGTH_LONG).show());
+            } finally {
+                if (outputStream != null) {
+                    try {
+                        outputStream.close();
+                    } catch (IOException e) {
+                        Log.e(TAG, "Lỗi khi đóng OutputStream: " + e.getMessage(), e);
                     }
                 }
             }
         });
     }
 
-    /**
-     * Yêu cầu quyền WRITE_EXTERNAL_STORAGE (nếu cần) và sau đó tiến hành lưu ảnh đã xử lý OCR.
-     * Đối với Android 10 (API 29) trở lên, sử dụng MediaStore API để lưu trữ.
-     * Đối với Android 9 (API 28) trở xuống, lưu trực tiếp vào thư mục công cộng.
-     *
-     * @param imageBitmap     Bitmap của ảnh cần lưu.
-     * @param commonTimestamp Dấu thời gian chung để đặt tên tệp.
-     */
-    private void saveOcrImageToFile(Bitmap imageBitmap, String commonTimestamp) { //
-        // Tương tự như lưu văn bản, kiểm tra quyền ghi nếu cần
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) //
-                != PackageManager.PERMISSION_GRANTED && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) { //
-            ActivityCompat.requestPermissions(this, //
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, //
+    private void saveOcrImageToFile(Bitmap imageBitmap, String commonTimestamp) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     REQUEST_WRITE_STORAGE); //
         } else { //
             performSaveImageFile(imageBitmap, commonTimestamp); //

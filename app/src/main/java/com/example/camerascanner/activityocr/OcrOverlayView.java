@@ -10,21 +10,27 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
-import android.view.MotionEvent; // Import mới
-import android.view.ScaleGestureDetector; // Import mới
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import com.google.mlkit.vision.text.Text;
 
 public class OcrOverlayView extends View {
 
     private Text ocrTextResult;
+    // scaleFactorX, Y will now scale the ORIGINAL image to fit the view
     private float scaleFactorX = 1f;
     private float scaleFactorY = 1f;
     private float translateX = 0f;
     private float translateY = 0f;
 
+    // Dimensions of the original image (what the user sees)
     private int originalImageWidth;
     private int originalImageHeight;
+
+    // Dimensions of the optimized image (what ML Kit processed)
+    private int optimizedImageWidth;
+    private int optimizedImageHeight;
 
 
     private Paint textPaint;
@@ -70,10 +76,15 @@ public class OcrOverlayView extends View {
         scaleGestureDetector = new ScaleGestureDetector(getContext(), new ScaleListener());
     }
 
-    public void setOcrResult(Text result, int imageWidth, int imageHeight) {
+    /**
+     * Phương thức mới để nhận kết quả OCR và kích thước của cả ảnh gốc và ảnh đã tối ưu.
+     */
+    public void setOcrResult(Text result, int originalWidth, int originalHeight, int optimizedWidth, int optimizedHeight) {
         this.ocrTextResult = result;
-        this.originalImageWidth = imageWidth;
-        this.originalImageHeight = imageHeight;
+        this.originalImageWidth = originalWidth;
+        this.originalImageHeight = originalHeight;
+        this.optimizedImageWidth = optimizedWidth;
+        this.optimizedImageHeight = optimizedHeight;
 
         // Đặt lại zoom về 1f khi có ảnh mới
         this.currentZoomScale = 1f;
@@ -87,7 +98,10 @@ public class OcrOverlayView extends View {
         calculateScaleFactors();
     }
 
-
+    /**
+     * Tính toán lại các hệ số tỷ lệ và dịch chuyển.
+     * Logic này giờ sẽ tính toán dựa trên kích thước của ảnh gốc để khớp với ImageView.
+     */
     private void calculateScaleFactors() {
         if (originalImageWidth == 0 || originalImageHeight == 0 || getWidth() == 0 || getHeight() == 0) {
             scaleFactorX = 1f;
@@ -121,14 +135,9 @@ public class OcrOverlayView extends View {
         scaleFactorX = initialScale * currentZoomScale;
         scaleFactorY = initialScale * currentZoomScale;
 
-        // Cập nhật translateX và translateY dựa trên scale mới (tính toán lại để zoom vào giữa)
-        // Cách đơn giản hóa: Giữ nguyên translation ban đầu và scale từ đó.
-        // Để zoom vào giữa pinch, cần logic phức tạp hơn (xem onScale trong ScaleListener).
+        // Giữ nguyên translation ban đầu và scale từ đó.
         translateX = initialTranslateX;
         translateY = initialTranslateY;
-
-        // Sau khi scale, cần điều chỉnh lại translation để giữ ảnh trong tầm nhìn
-        // (Không bắt buộc phải thực hiện ở đây mà có thể để cho logic Pan xử lý)
     }
 
     @Override
@@ -165,8 +174,6 @@ public class OcrOverlayView extends View {
                     translateY += dy;
 
                     // Giới hạn pan để không kéo ảnh ra ngoài màn hình quá nhiều
-                    // Đây là một cách giới hạn cơ bản, có thể cần phức tạp hơn
-                    // để giới hạn chính xác dựa trên kích thước ảnh và view.
                     translateX = Math.max(getWidth() - originalImageWidth * scaleFactorX, Math.min(0, translateX));
                     translateY = Math.max(getHeight() - originalImageHeight * scaleFactorY, Math.min(0, translateY));
 
@@ -221,7 +228,6 @@ public class OcrOverlayView extends View {
             currentZoomScale = Math.max(MIN_ZOOM_SCALE, Math.min(currentZoomScale, MAX_ZOOM_SCALE));
 
             // Điều chỉnh translation để zoom vào điểm lấy nét (focus point)
-            // Đây là công thức zoom vào điểm lấy nét.
             translateX = focusX - ((focusX - translateX) * (currentZoomScale / previousZoomScale));
             translateY = focusY - ((focusY - translateY) * (currentZoomScale / previousZoomScale));
 
@@ -236,36 +242,54 @@ public class OcrOverlayView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        if (ocrTextResult == null || ocrTextResult.getTextBlocks().isEmpty()) {
+        if (ocrTextResult == null || ocrTextResult.getTextBlocks().isEmpty() ||
+                originalImageWidth == 0 || optimizedImageWidth == 0) {
             return;
         }
 
         canvas.save();
 
-        // Tính toán kích thước chữ cơ sở dựa trên chiều cao tỷ lệ của ảnh
-        // Giả sử một chiều cao font mặc định trong ảnh gốc (ví dụ 20px)
-        // và scale nó theo scaleFactorY. Điều này sẽ giữ kích thước chữ ổn định.
-        final float ORIGINAL_REF_FONT_HEIGHT = 35f; // Chiều cao font tham chiếu trong ảnh gốc (pixel)
-        // Kích thước chữ cũng sẽ bị ảnh hưởng bởi currentZoomScale
-        float baseScaledTextSize = ORIGINAL_REF_FONT_HEIGHT * scaleFactorY;
+        // Tính toán tỷ lệ chuyển đổi từ kích thước ảnh đã tối ưu về kích thước ảnh gốc
+        // Đây là bước quan trọng để sửa lỗi lệch vị trí
+        float scaleToOriginalX = (float) originalImageWidth / optimizedImageWidth;
+        float scaleToOriginalY = (float) originalImageHeight / optimizedImageHeight;
 
-
-        // Đặt giới hạn min/max cho kích thước chữ để đảm bảo dễ đọc và không quá to
-        final float MIN_TEXT_SIZE = 18f; // Kích thước tối thiểu (sp)
-        final float MAX_TEXT_SIZE = 60f; // Kích thước tối đa (sp)
-        baseScaledTextSize = Math.max(MIN_TEXT_SIZE, Math.min(MAX_TEXT_SIZE, baseScaledTextSize));
-
+        // Tỷ lệ chuyển đổi từ kích thước ảnh đã tối ưu về kích thước ảnh gốc
+        final float MIN_TEXT_SIZE = 10f; // Kích thước tối thiểu (sp)
+        final float MAX_TEXT_SIZE = 65f; // Kích thước tối đa (sp)
 
         for (Text.TextBlock block : ocrTextResult.getTextBlocks()) {
             for (Text.Line line : block.getLines()) {
                 for (Text.Element element : line.getElements()) {
                     Rect elementRect = element.getBoundingBox();
                     if (elementRect != null) {
+
+                        // Tính toán kích thước chữ động dựa trên chiều cao của khung bao
+                        // 1. Lấy chiều cao của khung bao từ ảnh tối ưu
+                        float optimizedRectHeight = elementRect.height();
+
+                        // 2. Chuyển đổi chiều cao này về kích thước ảnh gốc
+                        float originalRectHeight = optimizedRectHeight * scaleToOriginalY;
+
+                        // 3. Áp dụng tỷ lệ scale của View để có kích thước chữ cuối cùng
+                        float finalFontSize = originalRectHeight * scaleFactorY;
+
+                        // Giới hạn kích thước chữ để tránh quá lớn hoặc quá nhỏ
+                        finalFontSize = Math.max(MIN_TEXT_SIZE, Math.min(MAX_TEXT_SIZE, finalFontSize));
+
+
+                        // Áp dụng tỷ lệ chuyển đổi từ optimized về original trước
+                        float originalRectLeft = elementRect.left * scaleToOriginalX;
+                        float originalRectTop = elementRect.top * scaleToOriginalY;
+                        float originalRectRight = elementRect.right * scaleToOriginalX;
+                        float originalRectBottom = elementRect.bottom * scaleToOriginalY;
+
+                        // Sau đó áp dụng tỷ lệ và dịch chuyển để khớp với View
                         @SuppressLint("DrawAllocation") RectF drawnRect = new RectF(
-                                elementRect.left * scaleFactorX + translateX,
-                                elementRect.top * scaleFactorY + translateY,
-                                elementRect.right * scaleFactorX + translateX,
-                                elementRect.bottom * scaleFactorY + translateY
+                                originalRectLeft * scaleFactorX + translateX,
+                                originalRectTop * scaleFactorY + translateY,
+                                originalRectRight * scaleFactorX + translateX,
+                                originalRectBottom * scaleFactorY + translateY
                         );
 
                         canvas.save();
@@ -275,12 +299,8 @@ public class OcrOverlayView extends View {
                             canvas.rotate(angle, drawnRect.centerX(), drawnRect.centerY());
                         }
 
-                        // VẼ KHUNG BAO QUANH CHỮ (bỏ comment nếu muốn thấy)
-                        // canvas.drawRect(drawnRect, rectPaint);
-
-
                         // Đặt kích thước chữ
-                        textPaint.setTextSize(baseScaledTextSize);
+                        textPaint.setTextSize(finalFontSize);
 
                         textPaint.setColor(Color.BLACK);
 

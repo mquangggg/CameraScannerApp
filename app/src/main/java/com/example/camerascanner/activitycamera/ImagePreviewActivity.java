@@ -31,13 +31,11 @@ public class ImagePreviewActivity extends AppCompatActivity {
 
     private static final String TAG = "ImagePreviewActivity"; // Thêm TAG cho logging
     private ImageView imageViewPreview;
-    private Button btnRotatePreview,btnSign,btnReTake,btnCrop,btnMakeOcr;
+    private Button btnRotatePreview,btnSign,btnReTake,btnMakeOcr;
     private Button btnConfirmPreview;
     private Uri imageUri;
     private int rotationAngle = 0; // Để theo dõi góc xoay hiện tại
 
-    // Request code cho CropActivity, để biết khi nào CropActivity trả về kết quả
-    private static final int REQUEST_CODE_CROP_IMAGE = 101;
     private static final int REQUEST_SIGNATURE = 102;
 
     @Override
@@ -51,7 +49,6 @@ public class ImagePreviewActivity extends AppCompatActivity {
         btnSign = findViewById(R.id.btnSign);
         btnMakeOcr = findViewById(R.id.btnMakeOcr);
         btnReTake = findViewById(R.id.btnRetake);
-        btnCrop = findViewById(R.id.btnCrop);
 
         String imageUriString = getIntent().getStringExtra("imageUri");
         if (imageUriString != null) {
@@ -70,29 +67,6 @@ public class ImagePreviewActivity extends AppCompatActivity {
             Log.d(TAG, "ImagePreviewActivity: Rotated image to " + rotationAngle + " degrees."); // Log khi xoay ảnh
         });
 
-        btnCrop.setOnClickListener(v -> {
-            Bitmap rotatedBitmap = null;
-            if (imageViewPreview.getDrawable() instanceof BitmapDrawable) {
-                rotatedBitmap = ((BitmapDrawable) imageViewPreview.getDrawable()).getBitmap();
-            }
-
-            if (rotatedBitmap != null) {
-                // Lưu Bitmap đã xoay vào bộ nhớ cache và lấy URI mới
-                Uri tempUri = saveBitmapToCache(rotatedBitmap);
-                if (tempUri != null) {
-                    Intent cropIntent = new Intent(ImagePreviewActivity.this, CropActivity.class);
-                    cropIntent.putExtra("imageUri", tempUri.toString());
-                    Log.d(TAG, "ImagePreviewActivity: Launching CropActivity with TEMPORARY URI: " + tempUri.toString());
-                    startActivityForResult(cropIntent, REQUEST_CODE_CROP_IMAGE);
-                } else {
-                    Toast.makeText(this, "Lỗi khi lưu ảnh đã xoay.", Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, "ImagePreviewActivity: Failed to save rotated bitmap to cache.");
-                }
-            } else {
-                Toast.makeText(this, "Không thể lấy ảnh đã xoay để xử lý.", Toast.LENGTH_SHORT).show();
-                Log.e(TAG, "ImagePreviewActivity: Could not get bitmap from ImageView.");
-            }
-        });
         btnConfirmPreview.setOnClickListener(v->{
             Bitmap rotatedBitmap = ((BitmapDrawable)imageViewPreview.getDrawable()).getBitmap();
             // Phương thức saveBitmapToCache() đã tồn tại trong ImagePreviewActivity.java
@@ -185,29 +159,12 @@ public class ImagePreviewActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == REQUEST_CODE_CROP_IMAGE && resultCode == RESULT_OK) {
-            // ... (Logic xử lý crop đã có) ...
-            if (data != null && data.getData() != null) {
-                Uri croppedImageUri = data.getData();
-                Log.d(TAG, "ImagePreviewActivity: Received cropped image URI: " + croppedImageUri.toString());
-                imageUri = croppedImageUri;
-                loadImageWithRotation();
-            } else {
-                Log.e(TAG, "ImagePreviewActivity: No cropped image URI returned from CropActivity.");
-            }
-        } else if (requestCode == REQUEST_SIGNATURE && resultCode == RESULT_OK) {
-            // Thêm logic để xử lý kết quả từ SignatureActivity
+        if (requestCode == REQUEST_SIGNATURE && resultCode == RESULT_OK) {
             if (data != null) {
-                // Nhận mergedImageUri được gửi từ SignatureActivity
                 Uri mergedImageUri = data.getParcelableExtra("mergedImageUri");
                 if (mergedImageUri != null) {
                     Log.d(TAG, "ImagePreviewActivity: Received merged image URI: " + mergedImageUri.toString());
-
-                    // Cập nhật URI ảnh hiện tại của Activity
                     this.imageUri = mergedImageUri;
-
-                    // Tải lại ảnh trong ImageView với URI mới
                     loadImageWithRotation();
                     Toast.makeText(this, "Ảnh đã được ký và hợp nhất thành công.", Toast.LENGTH_SHORT).show();
                 }

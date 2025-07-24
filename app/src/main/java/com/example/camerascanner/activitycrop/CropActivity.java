@@ -21,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.canhub.cropper.CropImageView;
 import com.example.camerascanner.R;
+import com.example.camerascanner.activitycamera.ImagePreviewActivity;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.TextRecognition;
@@ -37,6 +38,7 @@ import org.opencv.imgproc.Imgproc;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -93,31 +95,27 @@ public class CropActivity extends AppCompatActivity {
 
         // Kiểm tra và lấy URI ảnh từ Intent
         if (getIntent().getExtras() != null && getIntent().getExtras().containsKey("imageUri")) {
-            // Lấy URI dưới dạng String và chuyển đổi nó thành đối tượng Uri
             String imageUriString = getIntent().getStringExtra("imageUri");
             if (imageUriString != null) {
                 imageUriToCrop = Uri.parse(imageUriString);
 
                 if (imageUriToCrop != null) {
-                    // Thiết lập ảnh cho CropImageView (từ thư viện)
+                    // Thiết lập ảnh cho CropImageView
                     cropImageView.setImageUriAsync(imageUriToCrop);
-                    // Tắt hiển thị đường kẻ hướng dẫn mặc định của CropImageView (không dùng để cắt)
                     cropImageView.setGuidelines(CropImageView.Guidelines.OFF);
 
                     try {
-                        // Tải Bitmap gốc từ URI để xử lý nội bộ (ví dụ: chuyển đổi tọa độ, nhận diện văn bản)
-                        originalBitmapLoaded = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUriToCrop);
+                        // Tải Bitmap gốc từ URI
+                        originalBitmapLoaded = getCorrectlyOrientedBitmap(imageUriToCrop);
                         if (originalBitmapLoaded != null) {
-                            // Sử dụng post để đảm bảo các View đã được đo lường và có kích thước
                             customCropView.post(() -> {
-                                // Tính toán ma trận chuyển đổi từ tọa độ ảnh sang tọa độ View
+                                // Tính toán ma trận chuyển đổi
                                 Matrix imageToViewMatrix = getImageToViewMatrix(
                                         originalBitmapLoaded.getWidth(),
-                                        originalBitmapLoaded.getHeight(), // Đã sửa lỗi chính tả: nên là originalBitmapLoaded.getHeight()
+                                        originalBitmapLoaded.getHeight(),
                                         customCropView.getWidth(),
                                         customCropView.getHeight()
                                 );
-                                // Tính toán ma trận chuyển đổi ngược lại (từ View sang ảnh)
                                 Matrix viewToImageMatrix = new Matrix();
                                 imageToViewMatrix.invert(viewToImageMatrix);
 
@@ -129,27 +127,29 @@ public class CropActivity extends AppCompatActivity {
                                 // Thiết lập dữ liệu ảnh và ma trận cho CustomCropView
                                 customCropView.setImageData(originalBitmapLoaded, imageToViewValues, viewToImageValues);
 
-                                // Bắt đầu quá trình nhận diện văn bản để tự động thiết lập vùng cắt ban đầu
-                                processImageForTextDetection(imageUriToCrop);
+                                // Kiểm tra xem có khung phát hiện từ camera không
+                                if (getIntent().hasExtra("detectedQuadrilateral")) {
+                                    // Có khung từ camera - sử dụng khung đó
+                                    setupCropFromDetectedQuadrilateral();
+                                } else {
+                                    // Không có khung từ camera - tự động phát hiện bằng OCR
+                                    processImageForTextDetection(imageUriToCrop);
+                                }
                             });
                         }
                     } catch (IOException e) {
-                        // Ghi log lỗi và hiển thị thông báo cho người dùng
                         Log.e(TAG, getString(R.string.error_loading_original_bitmap) + e.getMessage(), e);
                         Toast.makeText(this, "Lỗi khi tải ảnh gốc để nhận diện văn bản.", Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    // Thông báo và đóng Activity nếu URI không hợp lệ
                     Toast.makeText(this, getString(R.string.no_image_uri_received_for_cropping), Toast.LENGTH_SHORT).show();
                     finish();
                 }
             } else {
-                // Thông báo và đóng Activity nếu không có URI ảnh
                 Toast.makeText(this, getString(R.string.no_image_uri_received_for_cropping), Toast.LENGTH_SHORT).show();
                 finish();
             }
         } else {
-            // Thông báo và đóng Activity nếu không có URI ảnh được truyền
             Toast.makeText(this, getString(R.string.no_image_to_crop), Toast.LENGTH_SHORT).show();
             finish();
         }
@@ -181,10 +181,9 @@ public class CropActivity extends AppCompatActivity {
             Bitmap straightenedBitmap = performPerspectiveTransform(originalBitmapLoaded, transformedPoints);
             if (straightenedBitmap != null) {
                 Uri straightenedUri = saveBitmapToCache(straightenedBitmap);
-                Intent resultIntent = new Intent();
-                resultIntent.setData(straightenedUri); // Đặt URI đã cắt vào Intent
-                setResult(RESULT_OK, resultIntent);   // Đặt kết quả thành công
-                finish();
+                Intent resultIntent = new Intent(CropActivity.this, ImagePreviewActivity.class);
+                resultIntent.putExtra("imageUri",straightenedUri.toString());
+                startActivity(resultIntent);
                 if (straightenedBitmap != originalBitmapLoaded) { // Giải phóng bitmap nếu là bản sao
                     straightenedBitmap.recycle();
                 }
@@ -253,6 +252,43 @@ public class CropActivity extends AppCompatActivity {
         canvas.drawBitmap(sourceBitmap, -minX, -minY, paint);
 
         return resultBitmap;
+    }
+
+    // Thêm method mới để setup crop từ khung đã phát hiện
+    private void setupCropFromDetectedQuadrilateral() {
+        float[] quadPoints = getIntent().getFloatArrayExtra("detectedQuadrilateral");
+        int originalImageWidth = getIntent().getIntExtra("originalImageWidth", 0);
+        int originalImageHeight = getIntent().getIntExtra("originalImageHeight", 0);
+
+        if (quadPoints != null && quadPoints.length == 8 && originalImageWidth > 0 && originalImageHeight > 0) {
+            // Chuyển đổi float[] thành ArrayList<PointF> trong tọa độ bitmap gốc
+            ArrayList<PointF> detectedPointsInOriginalImage = new ArrayList<>();
+            for (int i = 0; i < 4; i++) {
+                float x = quadPoints[i * 2];
+                float y = quadPoints[i * 2 + 1];
+
+                // Scale điểm từ kích thước phát hiện về kích thước bitmap gốc
+                float scaleX = (float) originalBitmapLoaded.getWidth() / originalImageWidth;
+                float scaleY = (float) originalBitmapLoaded.getHeight() / originalImageHeight;
+
+                detectedPointsInOriginalImage.add(new PointF(x * scaleX, y * scaleY));
+            }
+
+            // Chuyển đổi các điểm từ tọa độ bitmap sang tọa độ view và thiết lập
+            customCropView.clearPoints();
+            for (PointF point : detectedPointsInOriginalImage) {
+                PointF viewPoint = transformBitmapPointToViewPoint(point.x, point.y);
+                customCropView.addPoint(viewPoint);
+            }
+            customCropView.invalidate();
+
+            Toast.makeText(this, "Đã thiết lập khung crop từ camera", Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "Đã thiết lập các điểm crop từ khung phát hiện camera.");
+        } else {
+            // Fallback về OCR nếu dữ liệu không hợp lệ
+            Log.w(TAG, "Dữ liệu khung phát hiện không hợp lệ, fallback về OCR");
+            processImageForTextDetection(imageUriToCrop);
+        }
     }
 
     /**
@@ -477,7 +513,7 @@ public class CropActivity extends AppCompatActivity {
         if (originalBitmap == null || cropPoints == null || cropPoints.size() != 4) {
             Log.e(TAG, "Dữ liệu đầu vào không hợp lệ cho biến đổi phối cảnh.");
             return null;
-        }
+         }
 
         Mat originalMat = new Mat();
         // Chuyển đổi Bitmap sang Mat
@@ -553,6 +589,45 @@ public class CropActivity extends AppCompatActivity {
         }
 
         return resultBitmap;
+    }
+    private Bitmap getCorrectlyOrientedBitmap(Uri imageUri) throws IOException {
+        Bitmap originalBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+
+        // Lấy thông tin EXIF để xác định orientation
+        InputStream input = getContentResolver().openInputStream(imageUri);
+        androidx.exifinterface.media.ExifInterface exif = new androidx.exifinterface.media.ExifInterface(input);
+        int orientation = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION,
+                androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL);
+        input.close();
+
+        Matrix matrix = new Matrix();
+        switch (orientation) {
+            case androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_90:
+                matrix.postRotate(90);
+                break;
+            case androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_180:
+                matrix.postRotate(180);
+                break;
+            case androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270:
+                matrix.postRotate(270);
+                break;
+            default:
+                return originalBitmap; // Không cần xoay
+        }
+
+        Bitmap rotatedBitmap = Bitmap.createBitmap(originalBitmap, 0, 0,
+                originalBitmap.getWidth(),
+                originalBitmap.getHeight(),
+                matrix, true);
+
+        if (rotatedBitmap != originalBitmap) {
+            originalBitmap.recycle(); // Giải phóng bitmap gốc
+        }
+
+        Log.d(TAG, "DEBUG_BITMAP: Original size from URI: " + originalBitmap.getWidth() + "x" + originalBitmap.getHeight() +
+                ", Orientation: " + orientation + ", Final size: " + rotatedBitmap.getWidth() + "x" + rotatedBitmap.getHeight());
+
+        return rotatedBitmap;
     }
 
     /**
