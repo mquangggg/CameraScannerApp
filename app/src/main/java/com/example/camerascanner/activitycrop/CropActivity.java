@@ -196,64 +196,6 @@ public class CropActivity extends AppCompatActivity {
 
     }
 
-    /**
-     * Cắt một Bitmap dựa trên một tập hợp 4 điểm được cung cấp.
-     * Các điểm này định nghĩa một vùng hình chữ nhật để cắt từ ảnh nguồn.
-     *
-     * @param sourceBitmap Bitmap nguồn cần cắt.
-     * @param points       Một ArrayList chứa 4 đối tượng PointF, đại diện cho các góc của vùng cắt
-     *                     (thứ tự không quan trọng cho việc xác định min/max X/Y).
-     * @return Bitmap đã cắt, hoặc null nếu sourceBitmap rỗng, số điểm không phải là 4,
-     * hoặc vùng cắt không hợp lệ (chiều rộng/chiều cao <= 0).
-     */
-    private Bitmap cropBitmapByPoints(Bitmap sourceBitmap, ArrayList<PointF> points) {
-        if (sourceBitmap == null || points.size() != 4) return null;
-
-        // Tìm tọa độ nhỏ nhất và lớn nhất của vùng cắt (minX, minY, maxX, maxY)
-        float minX = Float.MAX_VALUE, minY = Float.MAX_VALUE;
-        float maxX = Float.MIN_VALUE, maxY = Float.MIN_VALUE;
-        for (PointF point : points) {
-            minX = Math.min(minX, point.x);
-            minY = Math.min(minY, point.y);
-            maxX = Math.max(maxX, point.x);
-            maxY = Math.max(maxY, point.y);
-        }
-
-        // Đảm bảo tọa độ nằm trong giới hạn của bitmap nguồn
-        minX = Math.max(0f, minX);
-        minY = Math.max(0f, minY);
-        maxX = Math.min((float) sourceBitmap.getWidth(), maxX);
-        maxY = Math.min((float) sourceBitmap.getHeight(), maxY);
-
-        // Tính toán chiều rộng và chiều cao của vùng cắt
-        int width = (int) (maxX - minX);
-        int height = (int) (maxY - minY);
-        if (width <= 0 || height <= 0) return null; // Trả về null nếu vùng cắt không hợp lệ
-
-        // Tạo một Bitmap mới để chứa kết quả đã cắt
-        Bitmap resultBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(resultBitmap); // Tạo Canvas để vẽ lên resultBitmap
-        Paint paint = new Paint();
-        paint.setAntiAlias(true); // Bật khử răng cưa cho nét vẽ mượt mà
-
-        // Tạo một Path (đường dẫn) cho vùng cắt, điều chỉnh tọa độ để phù hợp với Canvas của resultBitmap
-        Path adjustedPath = new Path();
-        adjustedPath.moveTo(points.get(0).x - minX, points.get(0).y - minY);
-        for (int i = 1; i < points.size(); i++) {
-            adjustedPath.lineTo(points.get(i).x - minX, points.get(i).y - minY);
-        }
-        adjustedPath.close(); // Đóng đường dẫn để tạo thành một hình khép kín
-
-        // Vẽ đường dẫn lên Canvas. Bước này chỉ để tạo mask.
-        canvas.drawPath(adjustedPath, paint);
-        // Thiết lập Xfermode để chỉ giữ lại phần ảnh nằm trong Path
-        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
-        // Vẽ bitmap nguồn lên canvas với offset để chỉ phần trong vùng cắt được hiển thị
-        canvas.drawBitmap(sourceBitmap, -minX, -minY, paint);
-
-        return resultBitmap;
-    }
-
     // Thêm method mới để setup crop từ khung đã phát hiện
     private void setupCropFromDetectedQuadrilateral() {
         float[] quadPoints = getIntent().getFloatArrayExtra("detectedQuadrilateral");

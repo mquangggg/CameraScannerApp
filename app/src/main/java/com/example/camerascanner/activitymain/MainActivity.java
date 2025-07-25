@@ -217,9 +217,10 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "Chức năng Tools sẽ sớm ra mắt!", Toast.LENGTH_SHORT).show();
                     return true;
                 } else if (itemID == R.id.nav_me) {
-                    Intent intent = new Intent(MainActivity.this, MeActivity.class);
-                    startActivity(intent);
-                    finish();
+//                    Intent intent = new Intent(MainActivity.this, MeActivity.class);
+//                    startActivity(intent);
+//                    finish();
+                    Toast.makeText(MainActivity.this, "Chức năng Me sẽ sớm ra mắt!", Toast.LENGTH_SHORT).show();
                     return true;
                 }
                 return false;
@@ -531,6 +532,27 @@ public class MainActivity extends AppCompatActivity {
             // Ghi log lỗi nếu không thể phân tích dấu thời gian
             Log.e(TAG, "Lỗi phân tích dấu thời gian: " + timestamp, e);
             return "Ngày không xác định"; // Trả về chuỗi lỗi
+        }
+    }
+
+    /**
+     * Cập nhật danh sách PDF gốc sau khi xóa file
+     * @param deletedFile File PDF đã bị xóa
+     */
+    public void updateOriginalPdfList(File deletedFile) {
+        if (originalPdfFiles != null) {
+            originalPdfFiles.removeIf(file -> file.getAbsolutePath().equals(deletedFile.getAbsolutePath()));
+        }
+    }
+
+    /**
+     * Cập nhật danh sách OCR gốc sau khi xóa cặp OCR
+     * @param deletedItem Cặp OCR đã bị xóa
+     */
+    public void updateOriginalOcrList(OcrPairedItem deletedItem) {
+        if (originalOcrPairedItems != null) {
+            originalOcrPairedItems.removeIf(item ->
+                    item.getTimestamp().equals(deletedItem.getTimestamp()));
         }
     }
 

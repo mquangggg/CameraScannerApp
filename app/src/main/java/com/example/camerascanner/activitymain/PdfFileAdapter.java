@@ -1,5 +1,6 @@
 package com.example.camerascanner.activitymain;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -68,12 +69,14 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
 
         loadPdfThumbnail(file, holder.fileIcon);
 
-        holder.btnOpenFile.setOnClickListener(v -> {
-            openPdfFile(file);
-        });
 
         holder.itemView.setOnClickListener(v -> {
             openPdfFile(file);
+        });
+
+        // Thêm chức năng xóa file PDF
+        holder.btnDeleteFile.setOnClickListener(v -> {
+            showDeleteConfirmationDialog(file, position);
         });
     }
 
@@ -114,6 +117,58 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
             context.startActivity(intent);
         } catch (Exception e) {
             Toast.makeText(context, "Không có ứng dụng nào để mở PDF. " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * Hiển thị dialog xác nhận xóa file PDF
+     * @param file File PDF cần xóa
+     * @param position Vị trí của file trong danh sách
+     */
+    private void showDeleteConfirmationDialog(File file, int position) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle("Xác nhận xóa");
+        builder.setMessage("Bạn có chắc chắn muốn xóa file PDF \"" + file.getName() + "\" không?");
+        builder.setIcon(R.drawable.ic_delete_white);
+
+        builder.setPositiveButton("Xóa", (dialog, which) -> {
+            deletePdfFile(file, position);
+        });
+
+        builder.setNegativeButton("Hủy", (dialog, which) -> {
+            dialog.dismiss();
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    /**
+     * Xóa file PDF khỏi hệ thống và cập nhật danh sách
+     * @param file File PDF cần xóa
+     * @param position Vị trí của file trong danh sách
+     */
+    private void deletePdfFile(File file, int position) {
+        try {
+            if (file.exists() && file.delete()) {
+                // Xóa file thành công, cập nhật danh sách
+                pdfFiles.remove(position);
+                notifyItemRemoved(position);
+                notifyItemRangeChanged(position, pdfFiles.size());
+
+                // Cập nhật danh sách gốc trong MainActivity nếu cần
+                if (context instanceof MainActivity) {
+                    ((MainActivity) context).updateOriginalPdfList(file);
+                }
+
+                Toast.makeText(context, "Đã xóa file PDF thành công!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(context, "Không thể xóa file PDF. File có thể không tồn tại.", Toast.LENGTH_SHORT).show();
+            }
+        } catch (SecurityException e) {
+            Toast.makeText(context, "Không có quyền xóa file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(context, "Lỗi khi xóa file: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -195,10 +250,9 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
         return (int) (dp * context.getResources().getDisplayMetrics().density);
     }
 
-
     public static class PdfFileViewHolder extends RecyclerView.ViewHolder {
         TextView tvFileName, tvFileDate, tvFileSize;
-        ImageView fileIcon, btnOpenFile;
+        ImageView fileIcon, btnDeleteFile;
 
         public PdfFileViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -206,7 +260,7 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
             tvFileDate = itemView.findViewById(R.id.tvFileDate);
             tvFileSize = itemView.findViewById(R.id.tvFileSize);
             fileIcon = itemView.findViewById(R.id.ivPdfIcon);
-            btnOpenFile = itemView.findViewById(R.id.btnOpenFile);
+            btnDeleteFile = itemView.findViewById(R.id.btnDeleteFile);
         }
     }
 }

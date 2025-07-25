@@ -1,5 +1,6 @@
 package com.example.camerascanner.activitymain;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -66,8 +67,11 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
             holder.ivOcrThumbnail.setImageDrawable(null); // Đảm bảo không hiển thị ảnh cũ
         }
 
-        holder.itemView.setOnClickListener(v -> openOcrDetailActivity(item)); // Đã thay đổi
-        holder.btnOpenOcrItem.setOnClickListener(v -> openOcrDetailActivity(item)); // Đã thay đổi
+        holder.itemView.setOnClickListener(v -> openOcrDetailActivity(item));
+        // Thêm chức năng xóa cặp OCR
+        holder.btnDeleteOcrItem.setOnClickListener(v -> {
+            showDeleteConfirmationDialog(item, position);
+        });
     }
 
     @Override
@@ -134,8 +138,90 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
         return new DecimalFormat("#,##0.#").format(size / Math.pow(1024, digitGroups)) + " " + units[digitGroups];
     }
 
+    /**
+     * Hiển thị dialog xác nhận xóa cặp OCR
+     * @param item Cặp OCR cần xóa
+     * @param position Vị trí của cặp OCR trong danh sách
+     */
+    private void showDeleteConfirmationDialog(OcrPairedItem item, int position) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle("Xác nhận xóa");
+        builder.setMessage("Bạn có chắc chắn muốn xóa cặp OCR này không?\n\n" +
+                "Ảnh: " + item.getImageFile().getName() + "\n" +
+                "Văn bản: " + item.getTextFile().getName());
+        builder.setIcon(R.drawable.ic_delete_white);
+
+        builder.setPositiveButton("Xóa", (dialog, which) -> {
+            deleteOcrPair(item, position);
+        });
+
+        builder.setNegativeButton("Hủy", (dialog, which) -> {
+            dialog.dismiss();
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    /**
+     * Xóa cặp OCR (cả ảnh và văn bản) khỏi hệ thống và cập nhật danh sách
+     * @param item Cặp OCR cần xóa
+     * @param position Vị trí của cặp OCR trong danh sách
+     */
+    private void deleteOcrPair(OcrPairedItem item, int position) {
+        boolean imageDeleted = false;
+        boolean textDeleted = false;
+        String errorMessage = "";
+
+        try {
+            // Xóa file ảnh
+            File imageFile = item.getImageFile();
+            if (imageFile != null && imageFile.exists()) {
+                imageDeleted = imageFile.delete();
+                if (!imageDeleted) {
+                    errorMessage += "Không thể xóa file ảnh. ";
+                }
+            } else {
+                imageDeleted = true; // File không tồn tại, coi như đã xóa
+            }
+
+            // Xóa file văn bản
+            File textFile = item.getTextFile();
+            if (textFile != null && textFile.exists()) {
+                textDeleted = textFile.delete();
+                if (!textDeleted) {
+                    errorMessage += "Không thể xóa file văn bản. ";
+                }
+            } else {
+                textDeleted = true; // File không tồn tại, coi như đã xóa
+            }
+
+            // Kiểm tra kết quả xóa
+            if (imageDeleted && textDeleted) {
+                // Xóa thành công, cập nhật danh sách
+                ocrPairedList.remove(position);
+                notifyItemRemoved(position);
+                notifyItemRangeChanged(position, ocrPairedList.size());
+
+                // Cập nhật danh sách gốc trong MainActivity nếu cần
+                if (context instanceof MainActivity) {
+                    ((MainActivity) context).updateOriginalOcrList(item);
+                }
+
+                Toast.makeText(context, "Đã xóa cặp OCR thành công!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(context, "Lỗi khi xóa: " + errorMessage, Toast.LENGTH_LONG).show();
+            }
+
+        } catch (SecurityException e) {
+            Toast.makeText(context, "Không có quyền xóa file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(context, "Lỗi khi xóa cặp OCR: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
     // Phương thức mới để mở OCRDetailActivity
-    private void openOcrDetailActivity(OcrPairedItem item) { // Đã đổi tên
+    private void openOcrDetailActivity(OcrPairedItem item) {
         File imageFile = item.getImageFile();
         File textFile = item.getTextFile();
 
@@ -182,7 +268,7 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
     public static class OcrPairedViewHolder extends RecyclerView.ViewHolder {
         ImageView ivOcrThumbnail;
         TextView tvOcrImageFileName, tvOcrTextFileName, tvOcrDate, tvOcrTotalSize;
-        ImageView btnOpenOcrItem;
+        ImageView btnDeleteOcrItem;
 
         public OcrPairedViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -191,7 +277,7 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
             tvOcrTextFileName = itemView.findViewById(R.id.tvOcrTextFileName);
             tvOcrDate = itemView.findViewById(R.id.tvOcrDate);
             tvOcrTotalSize = itemView.findViewById(R.id.tvOcrTotalSize);
-            btnOpenOcrItem = itemView.findViewById(R.id.btnOpenOcrItem);
+            btnDeleteOcrItem = itemView.findViewById(R.id.btnDeleteOcrItem);
         }
     }
 }

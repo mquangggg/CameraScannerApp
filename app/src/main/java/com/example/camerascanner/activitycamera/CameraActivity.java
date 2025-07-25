@@ -88,8 +88,8 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
     private static final double CANNY_THRESHOLD2 = 120;
     private double dynamicCannyThreshold1 = CANNY_THRESHOLD1;
     private double dynamicCannyThreshold2 = CANNY_THRESHOLD2;
-    private static final double APPROX_POLY_DP_EPSILON_FACTOR = 0.05;
-    private static final double MIN_COSINE_ANGLE = 0.5;
+    private static final double APPROX_POLY_DP_EPSILON_FACTOR = 0.03;
+    private static final double MIN_COSINE_ANGLE = 0.2;
     private static final double MIN_AREA_PERCENTAGE = 0.02;
     private static final double MAX_AREA_PERCENTAGE = 0.90;
 
@@ -247,12 +247,6 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
         });
     }
 
-    private void startImagePreviewActivity(Uri imageUri) {
-        Intent intent = new Intent(CameraActivity.this, ImagePreviewActivity.class);
-        intent.putExtra("imageUri", imageUri.toString());
-        imagePreviewLauncher.launch(intent);
-    }
-
     private void startCamera() {
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(() -> {
@@ -339,7 +333,7 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
                                             double aspectRatio = avgWidth / avgHeight;
                                             Log.d(TAG, "Calculated Aspect Ratio: " + String.format("%.2f", aspectRatio) + " (Min: " + ID_CARD_ASPECT_RATIO_MIN + ", Max: " + ID_CARD_ASPECT_RATIO_MAX + ")");
 
-                                            if (aspectRatio >= ID_CARD_ASPECT_RATIO_MIN && aspectRatio <= ID_CARD_ASPECT_RATIO_MAX) {
+                                            if (aspectRatio >= ID_CARD_ASPECT_RATIO_MIN && aspectRatio <= ID_CARD_ASPECT_RATIO_MAX || aspectRatio >= 1/ID_CARD_ASPECT_RATIO_MAX && aspectRatio <= 1/ID_CARD_ASPECT_RATIO_MIN) {
                                                 consecutiveValidFrames++; // Tăng biến đếm nếu hợp lệ
                                                 Log.d(TAG, "Valid frame. Consecutive: " + consecutiveValidFrames + "/" + REQUIRED_CONSECUTIVE_FRAMES);
 
@@ -502,24 +496,6 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
         startActivity(cropIntent);
     }
 
-    private Bitmap resizeBitmap(Bitmap bitmap, int maxDimension) {
-        int width = bitmap.getWidth();
-        int height = bitmap.getHeight();
-        float ratio = (float) width / height;
-
-        if (width > height) {
-            if (width > maxDimension) {
-                width = maxDimension;
-                height = (int) (width / ratio);
-            }
-        } else {
-            if (height > maxDimension) {
-                height = maxDimension;
-                width = (int) (height * ratio);
-            }
-        }
-        return Bitmap.createScaledBitmap(bitmap, width, height, true);
-    }
 
     private void showCameraPreview() {
         previewView.setVisibility(View.VISIBLE);
@@ -532,50 +508,8 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
             startCamera();
         }
     }
-
-    private void showImageView() {
-        previewView.setVisibility(View.GONE);
-        customOverlayView.setVisibility(View.GONE);
-        imageView.setVisibility(View.VISIBLE);
-        btnTakePhoto.setVisibility(View.GONE);
-        btnSelectImage.setVisibility(View.GONE);
-
-        if (cameraProviderFuture != null && cameraProviderFuture.isDone()) {
-            try {
-                cameraProviderFuture.get().unbindAll();
-            } catch (ExecutionException | InterruptedException e) {
-                Log.e(TAG, "Lỗi khi hủy liên kết các trường hợp sử dụng camera: " + e.getMessage(), e);
-            }
-        }
-    }
     private void openGallery() {
         galleryLauncher.launch("image/*");
-    }
-
-    private Uri saveBitmapToCache(Bitmap bitmap) {
-        String fileName = "temp_processed_image_" + System.currentTimeMillis() + ".jpeg";
-        File cachePath = new File(getCacheDir(), "processed_images");
-        cachePath.mkdirs();
-        File file = new File(cachePath, fileName);
-
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos);
-            fos.flush();
-            return Uri.fromFile(file);
-        } catch (IOException e) {
-            Log.e(TAG, "Lỗi khi lưu bitmap đã xử lý vào cache: " + e.getMessage(), e);
-            return null;
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                } catch (IOException e) {
-                    Log.e(TAG, "Lỗi khi đóng FileOutputStream: " + e.getMessage(), e);
-                }
-            }
-        }
     }
 
     @Override
@@ -592,8 +526,6 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
     }
 
     // --- Các hàm xử lý ảnh OpenCV được copy từ MainActivity ---
-
-    // Thêm import này nếu chưa có
 
     @androidx.annotation.OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)
     private Pair<MatOfPoint, Mat> processImageFrame(ImageProxy imageProxy) {
@@ -662,7 +594,12 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
                     " (rotation: " + rotationDegrees + "°)");
 
             // --- Các bước xử lý ảnh OpenCV ---
-            Imgproc.medianBlur(processedGray, processedGray, 5);
+            // Step 1: Làm mượt chống nhiễu rời rạc
+            Imgproc.medianBlur(processedGray, processedGray, 3);  // Loại bỏ muối tiêu
+
+            // Step 2: Làm mượt Gaussian nhẹ để giảm nhiễu đều
+            Imgproc.GaussianBlur(processedGray, processedGray, new org.opencv.core.Size(3,3), 0);
+
             CLAHE clahe = Imgproc.createCLAHE(2.0, new org.opencv.core.Size(8, 8));
             clahe.apply(processedGray, processedGray);
 

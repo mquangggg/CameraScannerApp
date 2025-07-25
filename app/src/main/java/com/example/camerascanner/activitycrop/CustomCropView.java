@@ -15,7 +15,6 @@ import android.view.View;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
-// import java.util.List; // Không cần import này nữa
 
 public class CustomCropView extends View {
     private Paint paint;
@@ -24,12 +23,12 @@ public class CustomCropView extends View {
     private PointF currentPoint;
     private int currentPointIndex = -1;
     private float touchTolerance = 50f;
+    private final float magnifierRadius = 150f;
 
     private MagnifierView magnifierView;
     private Bitmap currentImageBitmap;
     private float[] imageToViewMatrixValues = new float[9];
     private float[] viewToImageMatrixValues = new float[9];
-    // private List<RectF> textBoundingBoxesInViewCoords; // Đã bỏ biến này
 
     public CustomCropView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -45,7 +44,6 @@ public class CustomCropView extends View {
 
         cropPath = new Path();
         points = new ArrayList<>();
-        // textBoundingBoxesInViewCoords = new ArrayList<>(); // Loại bỏ dòng này
     }
 
     public void setMagnifierView(MagnifierView magnifierView) {
@@ -57,8 +55,6 @@ public class CustomCropView extends View {
         if (imageToViewMatrix != null) System.arraycopy(imageToViewMatrix, 0, this.imageToViewMatrixValues, 0, 9);
         if (viewToImageMatrix != null) System.arraycopy(viewToImageMatrix, 0, this.viewToImageMatrixValues, 0, 9);
     }
-
-    // Đã bỏ setter setTextBoundingBoxes
 
     @Override
     protected void onDraw(Canvas canvas) {
@@ -74,7 +70,7 @@ public class CustomCropView extends View {
 
             Paint pointPaint = new Paint(paint);
             pointPaint.setStyle(Paint.Style.FILL);
-            pointPaint.setColor(0xFF00FFFF);
+            pointPaint.setColor(0xFF00FF00);
             for (PointF point : points) {
                 canvas.drawCircle(point.x, point.y, touchTolerance / 2, pointPaint);
             }
@@ -136,7 +132,7 @@ public class CustomCropView extends View {
     }
 
     private void showMagnifier(float currentTouchX, float currentTouchY, int pointIndex) {
-        if (currentImageBitmap == null || magnifierView == null) return;
+        if (currentImageBitmap == null || magnifierView == null || points.size() != 4) return;
 
         float cropRegionSize = 100;
 
@@ -157,13 +153,13 @@ public class CustomCropView extends View {
         float bitmapSampleY = pointOnBitmap[1];
 
         float scaleFactorImageToView;
-        float ratioBitmap = (float) bitmapWidth / bitmapHeight;
-        float ratioView = (float) viewWidth / viewHeight;
+        float ratioBitmap = bitmapWidth / bitmapHeight;
+        float ratioView = viewWidth / viewHeight;
 
         if (ratioView > ratioBitmap) {
-            scaleFactorImageToView = viewHeight / (float) bitmapHeight;
+            scaleFactorImageToView = viewHeight / bitmapHeight;
         } else {
-            scaleFactorImageToView = viewWidth / (float) bitmapWidth;
+            scaleFactorImageToView = viewWidth / bitmapWidth;
         }
         float sampleSizeOnBitmap = cropRegionSize / scaleFactorImageToView;
 
@@ -179,10 +175,141 @@ public class CustomCropView extends View {
         sampleRect.right = Math.min(bitmapWidth, sampleRect.right);
         sampleRect.bottom = Math.min(bitmapHeight, sampleRect.bottom);
 
-        // Truyền các tham số cần thiết, đã bỏ textRects
+        // Tính toán các đường crop lines trong vùng zoom
+        ArrayList<PointF> cropLinesInZoom = calculateCropLinesInZoomRegion(
+                sampleRect, currentTouchX, currentTouchY, pointIndex, scaleFactorImageToView
+        );
+
+        // Truyền thông tin crop lines vào magnifier
         magnifierView.setMagnifiedRegion(currentImageBitmap, sampleRect,
                 currentTouchX, currentTouchY, getWidth(), getHeight(),
-                pointIndex);
+                pointIndex, cropLinesInZoom);
+    }
+
+    /**
+     * Tính toán các đường crop lines sẽ hiển thị trong vùng zoom
+     */
+    private ArrayList<PointF> calculateCropLinesInZoomRegion(RectF sampleRect,
+                                                             float touchX, float touchY,
+                                                             int currentPointIndex,
+                                                             float scaleFactorImageToView) {
+        ArrayList<PointF> cropLines = new ArrayList<>();
+
+        if (points.size() != 4) return cropLines;
+
+        // Chuyển đổi các điểm crop từ view sang bitmap coordinates
+        Matrix viewToImageMatrix = new Matrix();
+        viewToImageMatrix.setValues(viewToImageMatrixValues);
+
+        PointF[] bitmapPoints = new PointF[4];
+        for (int i = 0; i < 4; i++) {
+            float[] pts = {points.get(i).x, points.get(i).y};
+            viewToImageMatrix.mapPoints(pts);
+            bitmapPoints[i] = new PointF(pts[0], pts[1]);
+        }
+
+        // Tính toán các đường liền kề với điểm hiện tại
+        int prevIndex = (currentPointIndex + 3) % 4; // Điểm trước
+        int nextIndex = (currentPointIndex + 1) % 4; // Điểm sau
+
+        float magnifierSize = magnifierRadius * 2; // Size thực của magnifier
+
+        // Đường từ điểm trước đến điểm hiện tại
+        addLineToMagnifier(bitmapPoints[prevIndex], bitmapPoints[currentPointIndex],
+                sampleRect, magnifierSize, cropLines);
+
+        // Đường từ điểm hiện tại đến điểm sau
+        addLineToMagnifier(bitmapPoints[currentPointIndex], bitmapPoints[nextIndex],
+                sampleRect, magnifierSize, cropLines);
+
+        return cropLines;
+    }
+
+    /**
+     * Thêm một đường thẳng vào danh sách crop lines trong magnifier
+     */
+    private void addLineToMagnifier(PointF p1, PointF p2, RectF sampleRect,
+                                    float magnifierSize, ArrayList<PointF> cropLines) {
+
+        // Tìm các điểm giao của đường thẳng với hình chữ nhật zoom
+        ArrayList<PointF> intersections = getLineRectIntersections(p1, p2, sampleRect);
+
+        if (intersections.size() >= 2) {
+            // Chuyển đổi sang tọa độ magnifier
+            PointF start = convertBitmapPointToMagnifierCoords(intersections.get(0), sampleRect, magnifierSize);
+            PointF end = convertBitmapPointToMagnifierCoords(intersections.get(1), sampleRect, magnifierSize);
+
+            cropLines.add(start);
+            cropLines.add(end);
+        }
+    }
+
+    /**
+     * Tìm giao điểm của đường thẳng với hình chữ nhật
+     */
+    private ArrayList<PointF> getLineRectIntersections(PointF p1, PointF p2, RectF rect) {
+        ArrayList<PointF> intersections = new ArrayList<>();
+
+        // Kiểm tra giao với 4 cạnh của hình chữ nhật
+        // Cạnh trái (x = rect.left)
+        PointF leftIntersection = getLineSegmentIntersection(p1, p2,
+                new PointF(rect.left, rect.top), new PointF(rect.left, rect.bottom));
+        if (leftIntersection != null) intersections.add(leftIntersection);
+
+        // Cạnh phải (x = rect.right)
+        PointF rightIntersection = getLineSegmentIntersection(p1, p2,
+                new PointF(rect.right, rect.top), new PointF(rect.right, rect.bottom));
+        if (rightIntersection != null) intersections.add(rightIntersection);
+
+        // Cạnh trên (y = rect.top)
+        PointF topIntersection = getLineSegmentIntersection(p1, p2,
+                new PointF(rect.left, rect.top), new PointF(rect.right, rect.top));
+        if (topIntersection != null) intersections.add(topIntersection);
+
+        // Cạnh dưới (y = rect.bottom)
+        PointF bottomIntersection = getLineSegmentIntersection(p1, p2,
+                new PointF(rect.left, rect.bottom), new PointF(rect.right, rect.bottom));
+        if (bottomIntersection != null) intersections.add(bottomIntersection);
+
+        // Thêm các điểm nằm trong rect
+        if (rect.contains(p1.x, p1.y)) intersections.add(new PointF(p1.x, p1.y));
+        if (rect.contains(p2.x, p2.y)) intersections.add(new PointF(p2.x, p2.y));
+
+        return intersections;
+    }
+
+    /**
+     * Tìm giao điểm của hai đoạn thẳng
+     */
+    private PointF getLineSegmentIntersection(PointF p1, PointF p2, PointF p3, PointF p4) {
+        float x1 = p1.x, y1 = p1.y;
+        float x2 = p2.x, y2 = p2.y;
+        float x3 = p3.x, y3 = p3.y;
+        float x4 = p4.x, y4 = p4.y;
+
+        float denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+        if (Math.abs(denom) < 1e-6) return null; // Các đường song song
+
+        float t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+        float u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
+
+        if (u >= 0 && u <= 1) { // Giao điểm nằm trên đoạn thẳng p3-p4
+            float intersectionX = x1 + t * (x2 - x1);
+            float intersectionY = y1 + t * (y2 - y1);
+            return new PointF(intersectionX, intersectionY);
+        }
+
+        return null;
+    }
+
+    /**
+     * Chuyển đổi điểm từ bitmap coordinates sang magnifier coordinates
+     */
+    private PointF convertBitmapPointToMagnifierCoords(PointF bitmapPoint, RectF sampleRect, float magnifierSize) {
+        float relativeX = (bitmapPoint.x - sampleRect.left) / sampleRect.width();
+        float relativeY = (bitmapPoint.y - sampleRect.top) / sampleRect.height();
+
+        return new PointF(relativeX * magnifierSize, relativeY * magnifierSize);
     }
 
     public ArrayList<PointF> getCropPoints() {
