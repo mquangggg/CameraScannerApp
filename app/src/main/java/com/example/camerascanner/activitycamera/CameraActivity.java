@@ -689,7 +689,7 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
             Imgproc.medianBlur(processedGray, processedGray, 3);  // Loại bỏ muối tiêu
 
             // Step 2: Làm mượt Gaussian nhẹ để giảm nhiễu đều
-            Imgproc.GaussianBlur(processedGray, processedGray, new org.opencv.core.Size(3,3), 0);
+            Imgproc.GaussianBlur(processedGray, processedGray, new org.opencv.core.Size(7,7), 0);
 
             CLAHE clahe = Imgproc.createCLAHE(2.0, new org.opencv.core.Size(8, 8));
             clahe.apply(processedGray, processedGray);
