@@ -13,21 +13,11 @@ import android.view.View;
 import androidx.annotation.Nullable;
 
 import org.opencv.core.MatOfPoint;
-import org.opencv.core.Point; // Thêm import cho org.opencv.core.Point
-
-import java.util.Arrays; // Thêm import cho Arrays
-
+import org.opencv.core.Point;
 public class CustomOverlayView extends View {
 
     private Paint rectPaint;
     private MatOfPoint currentQuadrilateral; // Thay RectF bằng MatOfPoint
-
-    // Các biến này không còn cần thiết nếu logic scale được xử lý bên ngoài hoặc trong hàm static
-    // private int originalImageWidth;
-    // private int originalImageHeight;
-    // private int imageRotationDegrees;
-    // private int previewViewWidth;
-    // private int previewViewHeight;
 
     private static final String TAG = "CustomOverlayView";
 
