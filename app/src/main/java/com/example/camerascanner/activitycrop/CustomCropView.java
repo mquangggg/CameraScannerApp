@@ -186,9 +186,6 @@ public class CustomCropView extends View {
                 pointIndex, cropLinesInZoom);
     }
 
-    /**
-     * Tính toán các đường crop lines sẽ hiển thị trong vùng zoom
-     */
     private ArrayList<PointF> calculateCropLinesInZoomRegion(RectF sampleRect,
                                                              float touchX, float touchY,
                                                              int currentPointIndex,
@@ -208,19 +205,34 @@ public class CustomCropView extends View {
             bitmapPoints[i] = new PointF(pts[0], pts[1]);
         }
 
+        // Tọa độ của điểm hiện tại trên bitmap (tức là tâm của vùng zoom)
+        PointF currentPointOnBitmap = bitmapPoints[currentPointIndex];
+
         // Tính toán các đường liền kề với điểm hiện tại
         int prevIndex = (currentPointIndex + 3) % 4; // Điểm trước
         int nextIndex = (currentPointIndex + 1) % 4; // Điểm sau
 
         float magnifierSize = magnifierRadius * 2; // Size thực của magnifier
 
-        // Đường từ điểm trước đến điểm hiện tại
-        addLineToMagnifier(bitmapPoints[prevIndex], bitmapPoints[currentPointIndex],
-                sampleRect, magnifierSize, cropLines);
+        // Chỉ vẽ đoạn từ điểm hiện tại đến điểm trước và từ điểm hiện tại đến điểm sau.
+        // Các điểm này đã được căn chỉnh trong không gian của kính lúp.
+        // Bạn cần đảm bảo rằng các điểm này được vẽ sao cho chúng xuất phát từ tâm của kính lúp
+        // và hướng về các phía tương ứng.
 
-        // Đường từ điểm hiện tại đến điểm sau
-        addLineToMagnifier(bitmapPoints[currentPointIndex], bitmapPoints[nextIndex],
-                sampleRect, magnifierSize, cropLines);
+        // Chuyển đổi điểm hiện tại trên bitmap sang tọa độ của kính lúp
+        PointF centerInMagnifierCoords = convertBitmapPointToMagnifierCoords(currentPointOnBitmap, sampleRect, magnifierSize);
+
+        // Chuyển đổi điểm trước và sau sang tọa độ của kính lúp
+        PointF prevInMagnifierCoords = convertBitmapPointToMagnifierCoords(bitmapPoints[prevIndex], sampleRect, magnifierSize);
+        PointF nextInMagnifierCoords = convertBitmapPointToMagnifierCoords(bitmapPoints[nextIndex], sampleRect, magnifierSize);
+
+        // Thêm đường từ điểm hiện tại (tâm) đến điểm trước
+        cropLines.add(centerInMagnifierCoords);
+        cropLines.add(prevInMagnifierCoords);
+
+        // Thêm đường từ điểm hiện tại (tâm) đến điểm sau
+        cropLines.add(centerInMagnifierCoords);
+        cropLines.add(nextInMagnifierCoords);
 
         return cropLines;
     }

@@ -541,7 +541,7 @@ public class OCRActivity extends AppCompatActivity {
 
             String commonTimestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
             saveTextToFile(ocrText, commonTimestamp, "txt");
-            saveOcrImageToFile(currentImageBitmap, commonTimestamp);
+            saveOcrImageToFile(originalImageBitmap, commonTimestamp);
 
             mainHandler.postDelayed(() -> {
                 Intent intent = new Intent(OCRActivity.this, MainActivity.class);

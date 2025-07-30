@@ -67,8 +67,6 @@
                 android:textSize="14sp"
                 android:gravity="top"
                 android:minLines="5"
-                android:focusable="false"
-                android:clickable="false"
                 android:scrollbars="vertical"/>
 
         </LinearLayout>

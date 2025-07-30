@@ -49,17 +49,6 @@ public class MagnifierView extends View {
         setVisibility(GONE);
     }
 
-    /**
-     * Cập nhật hình ảnh và vị trí cho kính lúp.
-     * @param bitmapToMagnify Bitmap chứa vùng ảnh đã cắt và cần phóng đại.
-     * @param sourceRectOnBitmap RectF của vùng ảnh (trên bitmapToMagnify) cần được phóng đại.
-     * @param currentTouchX Tọa độ X của điểm chạm (trên màn hình/CustomCropView).
-     * @param currentTouchY Tọa độ Y của điểm chạm (trên màn hình/CustomCropView).
-     * @param viewWidth Chiều rộng của CustomCropView.
-     * @param viewHeight Chiều cao của CustomCropView.
-     * @param pointIndex Chỉ số của điểm crop đang được kéo (0: TL, 1: TR, 2: BR, 3: BL).
-     * @param cropLinesInZoom Các đường crop lines hiển thị trong zoom.
-     */
     public void setMagnifiedRegion(Bitmap bitmapToMagnify, RectF sourceRectOnBitmap,
                                    float currentTouchX, float currentTouchY,
                                    int viewWidth, int viewHeight, int pointIndex,
@@ -77,32 +66,24 @@ public class MagnifierView extends View {
         }
 
         float size = magnifierRadius * 2;
-        float offset = 80f; // Tăng offset một chút để tránh che tay
-
-        float x;
-        float y;
-
-        // Tính toán vị trí Y dựa trên pointIndex (để không bị ngón tay che)
-        if (pointIndex == 0 || pointIndex == 1) { // Top points
-            y = currentTouchY - size - offset;
-        } else { // Bottom points
-            y = currentTouchY + offset;
-        }
+        float offset = 120f; // Khoảng cách cố định từ điểm chạm lên trên
 
         // Căn giữa theo X với điểm chạm
-        x = currentTouchX - size / 2;
+        float x = currentTouchX - size / 2;
 
-        // Đảm bảo không vượt quá biên của màn hình/view
-        if (x < 0) {
-            x = 0;
-        } else if (x + size > viewWidth) {
-            x = viewWidth - size;
+        // LUÔN hiển thị phía trên điểm chạm với khoảng cách cố định
+        float y = currentTouchY - size - offset;
+
+        // Đảm bảo không vượt quá biên trái/phải của màn hình
+        if (x < 10) {
+            x = 10; // Để lại một chút margin
+        } else if (x + size > viewWidth - 10) {
+            x = viewWidth - size - 10;
         }
 
-        if (y < 0) {
-            y = 0;
-        } else if (y + size > viewHeight) {
-            y = viewHeight - size;
+        // Nếu kính lúp bị đẩy ra ngoài phía trên, đặt ở vị trí cao nhất có thể
+        if (y < 10) {
+            y = 10; // Để lại một chút margin từ đỉnh màn hình
         }
 
         setX(x);
@@ -173,7 +154,7 @@ public class MagnifierView extends View {
         Paint cropLinePaint = new Paint();
         cropLinePaint.setColor(Color.RED); // Đỏ rõ ràng
         cropLinePaint.setStyle(Paint.Style.STROKE);
-        cropLinePaint.setStrokeWidth(4f); // Dày hơn để dễ thấy
+        cropLinePaint.setStrokeWidth(8f); // Dày hơn để dễ thấy
         cropLinePaint.setAntiAlias(true);
 
         // Vẽ các đường crop (mỗi cặp điểm tạo thành 1 đường)
