@@ -4,6 +4,8 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory; // Thêm import này
+
 import android.graphics.pdf.PdfRenderer;
 import android.net.Uri;
 import android.os.Build;
@@ -67,7 +69,7 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
 
         holder.tvFileSize.setText("Kích thước: " + formatFileSize(file.length()));
 
-        loadPdfThumbnail(file, holder.fileIcon);
+        loadThumbnail(file, holder.fileIcon);
 
 
         holder.itemView.setOnClickListener(v -> {
@@ -92,6 +94,8 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
         return new DecimalFormat("#,##0.#").format(size / Math.pow(1024, digitGroups)) + " " + units[digitGroups];
     }
 
+    // Trong PdfFileAdapter.java
+
     private void openPdfFile(File file) {
         Uri fileUri;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -110,13 +114,26 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
         }
 
         Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(fileUri, "application/pdf");
+        String mimeType;
+
+        // Xác định loại MIME dựa trên phần mở rộng của tệp
+        if (file.getName().toLowerCase(Locale.getDefault()).endsWith(".pdf")) {
+            mimeType = "application/pdf";
+        } else if (file.getName().toLowerCase(Locale.getDefault()).endsWith(".jpeg") ||
+                file.getName().toLowerCase(Locale.getDefault()).endsWith(".jpg")) {
+            mimeType = "image/jpeg"; // Đặt loại MIME cho JPEG
+        } else {
+            Toast.makeText(context, "Định dạng file không được hỗ trợ để mở.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        intent.setDataAndType(fileUri, mimeType);
         intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
         try {
             context.startActivity(intent);
         } catch (Exception e) {
-            Toast.makeText(context, "Không có ứng dụng nào để mở PDF. " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(context, "Không có ứng dụng nào để mở file này. " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -175,60 +192,87 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
     /**
      * Tải thumbnail cho file PDF và hiển thị lên ImageView.
      * Sử dụng PdfRenderer (API 21+) để render trang đầu tiên của PDF.
-     * @param pdfFile File PDF cần tạo thumbnail.
+     * @param file File PDF cần tạo thumbnail.
      * @param imageView ImageView để hiển thị thumbnail.
      */
-    private void loadPdfThumbnail(File pdfFile, ImageView imageView) {
+    private void loadThumbnail(File file, ImageView imageView) {
         // Hủy bỏ bất kỳ tác vụ tải thumbnail nào đang chờ xử lý cho ImageView này
         if (imageView.getTag() instanceof Future) {
             ((Future<?>) imageView.getTag()).cancel(true);
         }
 
         // Xóa ảnh cũ để tránh hiển thị ảnh sai trong khi đang tải
-        imageView.setImageDrawable(null);
-
         Future<?> future = thumbnailExecutor.submit(() -> {
             Bitmap thumbnailBitmap = null;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) { // PdfRenderer yêu cầu API 21+
-                ParcelFileDescriptor fileDescriptor = null;
-                PdfRenderer pdfRenderer = null;
-                PdfRenderer.Page page = null;
-                try {
-                    fileDescriptor = ParcelFileDescriptor.open(pdfFile, ParcelFileDescriptor.MODE_READ_ONLY);
-                    pdfRenderer = new PdfRenderer(fileDescriptor);
-                    if (pdfRenderer.getPageCount() > 0) {
-                        page = pdfRenderer.openPage(0); // Render trang đầu tiên
+            String fileName = file.getName().toLowerCase(Locale.getDefault());
 
-                        // Lấy kích thước mong muốn cho thumbnail từ ImageView (48dp x 48dp trong item_file_entry.xml)
-                        int desiredWidth = dpToPx(64);
-                        int desiredHeight = dpToPx(64);
+            if (fileName.endsWith(".pdf")) { // Xử lý PDF
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) { // PdfRenderer yêu cầu API 21+
+                    ParcelFileDescriptor fileDescriptor = null;
+                    PdfRenderer pdfRenderer = null;
+                    PdfRenderer.Page page = null;
+                    try {
+                        fileDescriptor = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY);
+                        pdfRenderer = new PdfRenderer(fileDescriptor);
+                        if (pdfRenderer.getPageCount() > 0) {
+                            page = pdfRenderer.openPage(0); // Render trang đầu tiên
 
-                        // Tạo Bitmap với kích thước phù hợp với ImageView
-                        thumbnailBitmap = Bitmap.createBitmap(desiredWidth, desiredHeight, Bitmap.Config.ARGB_8888);
-                        page.render(thumbnailBitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
-                    } else {
-                        Log.e("PdfFileAdapter", "PDF file has no pages: " + pdfFile.getAbsolutePath());
-                    }
-                } catch (IOException e) {
-                    Log.e("PdfFileAdapter", "Error rendering PDF thumbnail for " + pdfFile.getAbsolutePath() + ": " + e.getMessage(), e);
-                    e.printStackTrace();
-                } finally {
-                    if (page != null) {
-                        page.close();
-                    }
-                    if (pdfRenderer != null) {
-                        pdfRenderer.close();
-                    }
-                    if (fileDescriptor != null) {
-                        try {
-                            fileDescriptor.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                            int desiredWidth = dpToPx(64);
+                            int desiredHeight = dpToPx(64);
+
+                            thumbnailBitmap = Bitmap.createBitmap(desiredWidth, desiredHeight, Bitmap.Config.ARGB_8888);
+                            page.render(thumbnailBitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY);
+                        } else {
+                            Log.e("PdfFileAdapter", "PDF file has no pages: " + file.getAbsolutePath());
+                        }
+                    } catch (IOException e) {
+                        Log.e("PdfFileAdapter", "Error rendering PDF thumbnail for " + file.getAbsolutePath() + ": " + e.getMessage(), e);
+                    } finally {
+                        if (page != null) {
+                            page.close();
+                        }
+                        if (pdfRenderer != null) {
+                            pdfRenderer.close();
+                        }
+                        if (fileDescriptor != null) {
+                            try {
+                                fileDescriptor.close();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
+                } else {
+                    Log.w("PdfFileAdapter", "PdfRenderer not available below API 21. Current API: " + Build.VERSION.SDK_INT);
                 }
-            } else {
-                Log.w("PdfFileAdapter", "PdfRenderer not available below API 21. Current API: " + Build.VERSION.SDK_INT);
+            } else if (fileName.endsWith(".jpeg") || fileName.endsWith(".jpg")) { // Xử lý JPEG
+                try {
+                    // Giải mã hình ảnh JPEG
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inJustDecodeBounds = true; // Chỉ lấy kích thước mà không tải bitmap vào bộ nhớ
+                    BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+
+                    // Tính toán tỷ lệ mẫu để giảm kích thước hình ảnh
+                    int photoWidth = options.outWidth;
+                    int photoHeight = options.outHeight;
+                    int desiredWidth = dpToPx(64);
+                    int desiredHeight = dpToPx(64);
+
+                    int scaleFactor = Math.min(photoWidth / desiredWidth, photoHeight / desiredHeight);
+                    if (scaleFactor <= 0) scaleFactor = 1; // Đảm bảo scaleFactor ít nhất là 1
+
+                    options.inJustDecodeBounds = false; // Bây giờ tải bitmap vào bộ nhớ
+                    options.inSampleSize = scaleFactor;
+                    options.inPreferredConfig = Bitmap.Config.RGB_565; // Cấu hình bitmap hiệu quả hơn
+
+                    thumbnailBitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+                    if (thumbnailBitmap != null) {
+                        // Đảm bảo bitmap có kích thước mong muốn (cắt nếu cần)
+                        thumbnailBitmap = Bitmap.createScaledBitmap(thumbnailBitmap, desiredWidth, desiredHeight, true);
+                    }
+                } catch (Exception e) {
+                    Log.e("PdfFileAdapter", "Error loading JPEG thumbnail for " + file.getAbsolutePath() + ": " + e.getMessage(), e);
+                }
             }
 
             final Bitmap finalThumbnailBitmap = thumbnailBitmap;
@@ -236,9 +280,10 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
                 if (finalThumbnailBitmap != null) {
                     imageView.setImageBitmap(finalThumbnailBitmap);
                 } else {
-                    // Nếu lỗi hoặc không tạo được thumbnail, ImageView sẽ trống.
-                    // Icon mặc định được đặt trong item_file_entry.xml sẽ được hiển thị
-                    imageView.setImageDrawable(null);
+                    // Nếu lỗi hoặc không tạo được thumbnail, hiển thị icon mặc định
+                    // Bạn có thể đặt một icon mặc định ở đây nếu muốn
+                    // imageView.setImageResource(R.drawable.ic_default_file);
+                    imageView.setImageDrawable(null); // Giữ nguyên như cũ nếu bạn muốn icon mặc định từ XML
                 }
             });
         });

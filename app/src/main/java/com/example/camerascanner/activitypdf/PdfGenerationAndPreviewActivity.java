@@ -20,6 +20,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitymain.MainActivity;
+import com.example.camerascanner.activitypdf.Jpeg.JpegGenerator;
+import com.example.camerascanner.activitypdf.pdf.PdfFileManager;
+import com.example.camerascanner.activitypdf.pdf.PdfGenerator;
+import com.example.camerascanner.activitypdf.pdf.PdfPreviewHelper;
+import com.example.camerascanner.activitypdf.pdf.PdfStyle;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,6 +40,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
     private Button btnSavePdf;
     private Button btnDeletePdf;
     private Button btnRegeneratePdf;
+    private Button btnSaveJPEG;
     private TextView tvPdfPreviewStatus;
     private RadioGroup rgPdfStyle;
     private RadioButton rbOriginal;
@@ -52,6 +58,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
     private PdfGenerator pdfGenerator;
     private PdfPreviewHelper pdfPreviewHelper;
     private PdfFileManager pdfFileManager;
+    private JpegGenerator jpegGenerator;
 
     // Background processing
     private ExecutorService executorService;
@@ -76,6 +83,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
         btnSavePdf = findViewById(R.id.btnSavePdf);
         btnDeletePdf = findViewById(R.id.btnDeletePdf);
         btnRegeneratePdf = findViewById(R.id.btnRegeneratePdf);
+        btnSaveJPEG = findViewById(R.id.btnSaveJpeg);
         tvPdfPreviewStatus = findViewById(R.id.tvPdfPreviewStatus);
         rgPdfStyle = findViewById(R.id.rgPdfStyle);
         rbOriginal = findViewById(R.id.rbOriginal);
@@ -92,6 +100,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
         pdfGenerator = new PdfGenerator(this);
         pdfPreviewHelper = new PdfPreviewHelper(this);
         pdfFileManager = new PdfFileManager(this);
+        jpegGenerator = new JpegGenerator(this);
     }
 
     /**
@@ -143,7 +152,6 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
     /**
      * Tạo bitmap trắng đen bất đồng bộ và cache lại
      */
-    // Trong PdfGenerationAndPreviewActivity
     private void createBlackWhiteBitmapAsync() {
         updateStatus("Đang xử lý ảnh trắng đen...");
 
@@ -188,6 +196,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
         btnSavePdf.setOnClickListener(v -> handleSavePdf());
         btnDeletePdf.setOnClickListener(v -> handleDeletePdf());
         btnRegeneratePdf.setOnClickListener(v -> handleRegeneratePdf());
+        btnSaveJPEG.setOnClickListener(v -> handleSaveJpeg());
     }
 
     /**
@@ -312,6 +321,54 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
     }
 
     /**
+     * Xử lý sự kiện lưu JPEG khi nhấn nút Save JPEG.
+     */
+    private void handleSaveJpeg() {
+        if (processedBitmap != null) {
+            DialogHelper.showJpegFileNameDialog(this, this::saveJpegWithFileName);
+        } else {
+            Toast.makeText(this, "Không có ảnh để lưu JPEG.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Lưu JPEG với tên file do người dùng nhập.
+     */
+    private void saveJpegWithFileName(String fileName) {
+        if (PermissionHelper.hasStoragePermission(this)) {
+            performSaveJpeg(fileName);
+        } else {
+            PermissionHelper.requestStoragePermission(this);
+        }
+    }
+
+    /**
+     * Thực hiện lưu JPEG ở background.
+     */
+    private void performSaveJpeg(String fileName) {
+        updateStatus("Đang lưu ảnh JPEG...");
+
+        executorService.execute(() -> {
+            try {
+                Uri jpegUri = jpegGenerator.saveAsJpeg(processedBitmap, fileName);
+
+                mainHandler.post(() -> {
+                    Toast.makeText(this, "Ảnh JPEG đã được lưu thành công: " + fileName, Toast.LENGTH_LONG).show();
+                    updateStatus("Ảnh JPEG đã được lưu: " + fileName);
+                    navigateToMainActivity();
+                });
+
+            } catch (Exception e) {
+                Log.e(TAG, "Lỗi khi lưu JPEG: " + e.getMessage(), e);
+                mainHandler.post(() -> {
+                    Toast.makeText(this, "Lỗi khi lưu JPEG: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    updateStatus("Lỗi khi lưu JPEG: " + e.getMessage());
+                });
+            }
+        });
+    }
+
+    /**
      * Xử lý sự kiện xóa PDF khi nhấn nút Delete.
      */
     private void handleDeletePdf() {
@@ -379,8 +436,8 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
             if (grantResults.length > 0 && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Quyền đã được cấp", Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(this, "Cần quyền để lưu PDF", Toast.LENGTH_LONG).show();
-                updateStatus("Lỗi: Không có quyền lưu PDF");
+                Toast.makeText(this, "Cần quyền để lưu file", Toast.LENGTH_LONG).show();
+                updateStatus("Lỗi: Không có quyền lưu file");
             }
         }
     }

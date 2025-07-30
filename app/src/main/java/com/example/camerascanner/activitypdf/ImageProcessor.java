@@ -21,12 +21,6 @@ public class ImageProcessor {
         ENHANCED        // Cải thiện độ tương phản trước khi chuyển đổi
     }
 
-    /**
-     * Chuyển đổi bitmap sang trắng đen với phương pháp mặc định (Otsu)
-     */
-    public static Bitmap convertToBlackAndWhite(Bitmap original) {
-        return convertToBlackAndWhite(original, ConversionMethod.OTSU);
-    }
 
     /**
      * Chuyển đổi bitmap sang trắng đen với phương pháp được chỉ định

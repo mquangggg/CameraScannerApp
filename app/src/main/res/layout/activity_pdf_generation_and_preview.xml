@@ -93,6 +93,15 @@
             android:background="#3d3d3d"
             android:textColor="@color/white"
             android:layout_marginEnd="8dp"/>
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnSaveJpeg"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Lưu JPEG"
+            android:background="#3d3d3d"
+            android:textColor="@color/white"
+            android:layout_marginEnd="8dp"/>
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnSavePdf"

@@ -381,17 +381,22 @@ public class MainActivity extends AppCompatActivity {
         fileLoadingExecutor.execute(() -> { // Chạy tác vụ trên luồng nền
             List<File> loadedFiles = new ArrayList<>();
             File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-            File pdfsDir = new File(downloadsDir, "MyPDFs"); // Đường dẫn đến thư mục PDF
+            File pdfsDir = new File(downloadsDir, "MyPDFImages"); // Đường dẫn đến thư mục PDF
 
             // Kiểm tra xem thư mục có tồn tại và là một thư mục không
             if (pdfsDir.exists() && pdfsDir.isDirectory()) {
                 // Lọc các tệp có đuôi .pdf
-                File[] files = pdfsDir.listFiles((dir, name) -> name.endsWith(".pdf"));
-                if (files != null) {
-                    // Thêm các tệp đã tìm thấy vào danh sách
-                    for (File file : files) {
-                        loadedFiles.add(file);
-                    }
+                File[] pdfFilesArray = pdfsDir.listFiles((dir, name) -> name.endsWith(".pdf"));
+                if (pdfFilesArray != null) {
+                    // Thêm các tệp PDF đã tìm thấy vào danh sách
+                    Collections.addAll(loadedFiles, pdfFilesArray);
+                }
+
+                // Lọc các tệp có đuôi .jpg hoặc .jpeg
+                File[] imageFilesArray = pdfsDir.listFiles((dir, name) -> name.endsWith(".jpg") || name.endsWith(".jpeg"));
+                if (imageFilesArray != null) {
+                    // Thêm các tệp ảnh đã tìm thấy vào danh sách
+                    Collections.addAll(loadedFiles, imageFilesArray);
                 }
             }
 

@@ -2,5 +2,5 @@
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <external-path name="my_ocr_texts" path="Download/MyOCRTexts/"/>
     <external-path name="my_ocr_images" path="Download/MyOCRImages/"/>
-    <external-path name="my_pdfs" path="Download/MyPDFs/"/>
+    <external-path name="my_pdfs" path="Download/MyPDFImages/"/>
 </paths>
