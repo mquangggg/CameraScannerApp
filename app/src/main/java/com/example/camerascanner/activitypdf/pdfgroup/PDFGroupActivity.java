@@ -11,6 +11,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,6 +51,8 @@ public class PDFGroupActivity extends AppCompatActivity implements
     private RecyclerView recyclerViewImages;
     private View layoutEmptyState;
     private Button btnCancel;
+    private ImageButton btnXepHang;
+    private boolean isGridView = true;
     private Button btnConfirm;
 
     // Data
@@ -78,6 +81,7 @@ public class PDFGroupActivity extends AppCompatActivity implements
         layoutEmptyState = findViewById(R.id.layoutEmptyState);
         btnCancel = findViewById(R.id.btnCancel);
         btnConfirm = findViewById(R.id.btnConfirm);
+        btnXepHang = findViewById(R.id.btnXepHang);
 
         // Khởi tạo các helper
         pdfGenerator = new PdfGenerator(this);
@@ -261,8 +265,61 @@ public class PDFGroupActivity extends AppCompatActivity implements
         if (btnConfirm != null) {
             btnConfirm.setOnClickListener(v -> handleCreatePDF());
         }
+        if (btnXepHang != null) {
+            Log.d(TAG, "btnXepHang found and setting click listener");
+            btnXepHang.setOnClickListener(v -> {
+                Log.d(TAG, "btnXepHang clicked!");
+                toggleLayoutView();
+            });
+        } else {
+            Log.e(TAG, "btnXepHang is null!");
+        }
     }
+    /**
+     * Chuyển đổi giữa grid view (2 cột) và list view (1 cột)
+     */
+    private void toggleLayoutView() {
+        Log.d(TAG, "toggleLayoutView() called");
+        Log.d(TAG, "Current isGridView: " + isGridView);
+        Log.d(TAG, "recyclerViewImages: " + (recyclerViewImages != null ? "exists" : "null"));
 
+        if (recyclerViewImages != null) {
+            RecyclerView.LayoutManager currentLayoutManager = recyclerViewImages.getLayoutManager();
+            Log.d(TAG, "LayoutManager: " + (currentLayoutManager != null ? currentLayoutManager.getClass().getSimpleName() : "null"));
+
+            if (currentLayoutManager instanceof GridLayoutManager) {
+                GridLayoutManager layoutManager = (GridLayoutManager) currentLayoutManager;
+                int currentSpanCount = layoutManager.getSpanCount();
+                Log.d(TAG, "Current span count: " + currentSpanCount);
+
+                if (isGridView) {
+                    // Chuyển sang list view (1 cột)
+                    layoutManager.setSpanCount(1);
+                    isGridView = false;
+                    Log.d(TAG, "Changed to LIST view (1 column)");
+                    Toast.makeText(this, "Chuyển sang chế độ danh sách", Toast.LENGTH_SHORT).show();
+                } else {
+                    // Chuyển sang grid view (2 cột)
+                    layoutManager.setSpanCount(2);
+                    isGridView = true;
+                    Log.d(TAG, "Changed to GRID view (2 columns)");
+                    Toast.makeText(this, "Chuyển sang chế độ lưới", Toast.LENGTH_SHORT).show();
+                }
+
+                // Notify adapter để cập nhật layout
+                if (adapter != null) {
+                    adapter.notifyDataSetChanged();
+                    Log.d(TAG, "Adapter notified");
+                } else {
+                    Log.e(TAG, "Adapter is null!");
+                }
+            } else {
+                Log.e(TAG, "LayoutManager is not GridLayoutManager!");
+            }
+        } else {
+            Log.e(TAG, "recyclerViewImages is null!");
+        }
+    }
     // Cũng cần cập nhật updateUI() để đảm bảo adapter được notify đúng cách
     // Cũng cập nhật updateUI() với logging chi tiết
     private void updateUI() {

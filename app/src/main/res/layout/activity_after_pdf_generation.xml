@@ -36,24 +36,41 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Danh sách ảnh -->
+<FrameLayout
+    android:id="@+id/frameRecycleView"
+    android:layout_width="0dp"
+    android:layout_height="0dp"
+    android:layout_marginTop="10dp"
+    android:background="#cccccc"
+    android:clipToPadding="false"
+    android:padding="8dp"
+    app:layout_constraintBottom_toTopOf="@+id/layoutButtons"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintHorizontal_bias="0.0"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@id/tvTitle"
+    app:layout_constraintVertical_bias="0.0">
 
     <!-- Empty state message -->
+    <ImageButton
+        android:id="@+id/btnXepHang"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="@drawable/ic_home_white"
+        android:layout_gravity="end|bottom"
+        android:layout_margin="10dp"
+        android:elevation="12dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?android:attr/selectableItemBackgroundBorderless" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewImages"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="10dp"
-        android:background="#cccccc"
-        android:clipToPadding="false"
-        android:padding="8dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-        app:layout_constraintBottom_toTopOf="@+id/layoutButtons"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvTitle"
-        app:layout_constraintVertical_bias="0.0"
         app:spanCount="2" />
+</FrameLayout>
 
     <LinearLayout
         android:id="@+id/layoutEmptyState"
@@ -62,8 +79,8 @@
         android:orientation="vertical"
         android:gravity="center"
         android:visibility="gone"
-        app:layout_constraintTop_toTopOf="@id/recyclerViewImages"
-        app:layout_constraintBottom_toBottomOf="@id/recyclerViewImages"
+        app:layout_constraintTop_toTopOf="@id/frameRecycleView"
+        app:layout_constraintBottom_toBottomOf="@id/frameRecycleView"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 

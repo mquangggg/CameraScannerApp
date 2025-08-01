@@ -30,13 +30,13 @@
             android:layout_width="120dp"
             android:layout_height="0dp"
             android:text="Xóa"
+            android:layout_marginStart="45dp"
             android:textColor="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toLeftOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.0"
-            android:background="@drawable/vuongbogoc"
-            tools:layout_editor_absoluteX="45dp" />
+            android:background="@drawable/vuongbogoc"/>
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnYesSign"

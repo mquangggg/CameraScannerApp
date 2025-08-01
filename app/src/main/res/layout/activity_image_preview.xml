@@ -94,20 +94,21 @@
                     android:textAlignment="center"
                     app:iconTint="@android:color/white"
                     android:textColor="@color/white" />
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnConfirmPreview"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Tạo PDF"
-                    android:textSize="7sp"
-                    app:icon="@drawable/ic_pdf"
-                    app:iconGravity="top"
-                    app:iconPadding="4dp"
-                    android:textAlignment="center"
-                    app:iconTint="@android:color/white"
-                    android:textColor="@color/white" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnConfirmPreview"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Tạo PDF"
+            android:textSize="7sp"
+            app:icon="@drawable/ic_pdf"
+            app:backgroundTint="@color/green_accent"
+            app:iconGravity="top"
+            app:iconPadding="4dp"
+            android:textAlignment="center"
+            app:iconTint="@android:color/white"
+            android:textColor="@color/white" />
+
     </LinearLayout>
 
 
