@@ -3,4 +3,7 @@
     <external-path name="my_ocr_texts" path="Download/MyOCRTexts/"/>
     <external-path name="my_ocr_images" path="Download/MyOCRImages/"/>
     <external-path name="my_pdfs" path="Download/MyPDFImages/"/>
+    <cache-path name="processed_images" path="processed_images_temp/" />
+    <cache-path name="images" path="images/" />
+
 </paths>

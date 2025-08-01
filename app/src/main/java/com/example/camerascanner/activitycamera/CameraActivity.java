@@ -23,6 +23,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
@@ -41,6 +42,8 @@ import com.bumptech.glide.Glide;
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitycrop.CropActivity;
 import com.example.camerascanner.activitycamera.AppPermissionHandler;
+import com.example.camerascanner.activitypdf.PdfGenerationAndPreviewActivity;
+import com.example.camerascanner.activitypdf.pdfgroup.PDFGroupActivity;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -124,12 +127,22 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
     private int consecutiveValidFrames = 0; //  Đếm số khung hình liên tiếp hợp lệ
     private static final int REQUIRED_CONSECUTIVE_FRAMES = 10; // Số khung hình liên tiếp cần thiết
 
+    private boolean isFromPdfGroup = false;
+    private int originalRequestCode = -1;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
+
+        // Kiểm tra xem có được gọi từ PDFGroupActivity không
+        Intent intent = getIntent();
+        if (intent != null) {
+            isFromPdfGroup = intent.getBooleanExtra("FROM_PDF_GROUP", false);
+            originalRequestCode = intent.getIntExtra("REQUEST_CODE", -1);
+            Log.d(TAG, "CameraActivity started from PDFGroup: " + isFromPdfGroup + ", requestCode: " + originalRequestCode);
+        }
 
         // Khởi tạo OpenCV
         if (!OpenCVLoader.initLocal()) {
@@ -534,6 +547,17 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
         Intent cropIntent = new Intent(CameraActivity.this, CropActivity.class);
         cropIntent.putExtra("imageUri", imageUri.toString());
 
+        // Truyền thông tin về nguồn gọi
+        if (isFromPdfGroup) {
+            cropIntent.putExtra("FROM_PDF_GROUP", true);
+            cropIntent.putExtra("ORIGINAL_REQUEST_CODE", originalRequestCode);
+        }
+
+        Log.d(TAG, "CameraActivity: isFromPdfGroup=" + isFromPdfGroup + ", requestCode=" + originalRequestCode);
+
+
+
+
         // Nếu có khung phát hiện từ camera, truyền các điểm
         if (detectedQuadrilateral != null && !detectedQuadrilateral.empty()) {
             Point[] points = detectedQuadrilateral.toArray();
@@ -550,7 +574,8 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
             }
         }
 
-        startActivity(cropIntent);
+        startActivityForResult(cropIntent, REQUEST_CODE_IMAGE_PREVIEW);
+
     }
 
 
@@ -835,4 +860,51 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
 
         return new MatOfPoint(rect);
     }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Kiểm tra requestCode để đảm bảo đây là kết quả từ luồng chụp/cắt ảnh
+        if (requestCode == REQUEST_CODE_IMAGE_PREVIEW) {
+            if (resultCode == RESULT_OK && data != null) {
+                // Lấy cờ FROM_PDF_GROUP và URI ảnh từ Intent trả về
+                boolean isFromPdfGroup = data.getBooleanExtra("FROM_PDF_GROUP", false);
+                String imageUriString = data.getStringExtra("processedImageUri");
+
+                if (isFromPdfGroup && imageUriString != null) {
+                    // Nếu cờ là true, chuyển sang PDFGroupActivity
+                    Log.d(TAG, "Nhận được cờ FROM_PDF_GROUP. Chuyển sang PDFGroupActivity.");
+                    // Lấy requestCode ban đầu từ Intent (có thể đã được truyền qua)
+                    int originalRequestCode = data.getIntExtra("ORIGINAL_REQUEST_CODE", -1);
+
+                    Intent resultIntent = new Intent();
+                    resultIntent.putExtra("processedImageUri", imageUriString);
+
+                    // Quan trọng: Phải đặt cờ và request code ban đầu để PDFGroupActivity nhận ra
+                    resultIntent.putExtra("FROM_PDF_GROUP", true);
+                    resultIntent.putExtra("ORIGINAL_REQUEST_CODE", originalRequestCode);
+
+                    // Đặt kết quả và đóng Activity hiện tại
+                    setResult(RESULT_OK, resultIntent);
+                    finish();
+                } else {
+                    // Nếu cờ là false, chuyển sang PdfGenerationAndPreviewActivity
+                    // (hoặc xử lý luồng khác tùy theo logic ứng dụng của bạn)
+                    // Ví dụ:
+                    Log.d(TAG, "Cờ FROM_PDF_GROUP là false. Chuyển sang PdfGenerationAndPreviewActivity.");
+                    Intent previewIntent = new Intent(this, PdfGenerationAndPreviewActivity.class);
+                    previewIntent.putExtra("imageUri", imageUriString);
+                    previewIntent.putExtra("FROM_PDF_GROUP", false);
+                    startActivity(previewIntent);
+                }
+            } else {
+                // Xử lý khi người dùng hủy thao tác
+                Log.d(TAG, "Hoạt động xem trước ảnh đã bị hủy.");
+                // Trả kết quả hủy về Activity cha
+                setResult(RESULT_CANCELED);
+                finish();
+            }
+        }
+    }
+
 }

@@ -32,7 +32,7 @@ public class DialogHelper {
      * @param listener Một instance của OnFileNameSelectedListener để nhận tên file đã chọn
      * sau khi người dùng xác nhận lưu.
      */
-    public static void showFileNameDialog(Activity activity, OnFileNameSelectedListener listener) {
+    public static void showPdfFileNameDialog(Activity activity, OnFileNameSelectedListener listener) {
         // Tạo tên file mặc định dựa trên thời gian hoặc quy tắc khác.
         String defaultFileName = FileNameGenerator.generateDefaultFileName();
 

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/imagePreviewLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#f5f5f5"
+    tools:context=".activitypdf.pdfgroup.PDFGroupActivity">
+
+    <!-- Title hoặc toolbar -->
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Ảnh đã chụp (0)"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_margin="16dp"
+        android:textColor="#000000"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Nút thêm ảnh -->
+    <Button
+        android:id="@+id/btnAddMore"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="+ Thêm ảnh"
+        android:layout_marginEnd="16dp"
+        android:backgroundTint="#4CAF50"
+        android:textColor="@android:color/white"
+        app:layout_constraintTop_toTopOf="@id/tvTitle"
+        app:layout_constraintBottom_toBottomOf="@id/tvTitle"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Danh sách ảnh -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewImages"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:padding="8dp"
+        android:clipToPadding="false"
+        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+        app:spanCount="2"
+        app:layout_constraintTop_toBottomOf="@id/tvTitle"
+        app:layout_constraintBottom_toTopOf="@+id/layoutButtons"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Empty state message -->
+    <LinearLayout
+        android:id="@+id/layoutEmptyState"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="@id/recyclerViewImages"
+        app:layout_constraintBottom_toBottomOf="@id/recyclerViewImages"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@drawable/ic_home_white"
+            android:alpha="0.5"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Chưa có ảnh nào\nNhấn 'Thêm ảnh' để bắt đầu"
+            android:textColor="@android:color/darker_gray"
+            android:textAlignment="center"
+            android:lineSpacingExtra="4dp" />
+
+    </LinearLayout>
+
+    <!-- Container cho các nút -->
+    <LinearLayout
+        android:id="@+id/layoutButtons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="16dp"
+        android:background="@android:color/white"
+        android:elevation="4dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Nút hủy -->
+        <Button
+            android:id="@+id/btnCancel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Hủy"
+            android:backgroundTint="#757575"
+            android:textColor="@android:color/white"
+            android:layout_marginEnd="8dp"
+            style="@style/Widget.AppCompat.Button" />
+
+        <!-- Nút xác nhận tạo PDF -->
+        <Button
+            android:id="@+id/btnConfirm"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Tạo PDF"
+            android:backgroundTint="#2196F3"
+            android:textColor="@android:color/white"
+            android:layout_marginStart="8dp"
+            style="@style/Widget.AppCompat.Button" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

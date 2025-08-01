@@ -34,6 +34,7 @@
         <activity android:name=".activitysignature.ImageSignPreviewActivity" android:exported="false" />
         <activity android:name=".activitycrop.CropActivity" android:exported="false"/>
         <activity android:name=".activitypdf.PdfGenerationAndPreviewActivity" android:exported="false"/>
+        <activity android:name=".activitypdf.pdfgroup.PDFGroupActivity" android:exported="false"/>
         <activity android:name=".activityocr.OCRActivity" android:exported="false"/>
         <activity android:name=".activitymain.OCRDetailActivity" android:exported="false"/>
         <activity android:name=".activitymain.MeActivity" android:exported="false"/>

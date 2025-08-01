@@ -38,6 +38,13 @@ public class ImagePreviewActivity extends AppCompatActivity {
 
     private static final int REQUEST_SIGNATURE = 102;
 
+    // Chúng ta sẽ cần một REQUEST_CODE mới để gọi PdfGenerationAndPreviewActivity
+    private static final int REQUEST_PDF_GENERATION_PREVIEW = 1003;
+
+    private boolean isFromPdfGroup = false;
+    private int originalRequestCode = -1;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,6 +56,13 @@ public class ImagePreviewActivity extends AppCompatActivity {
         btnSign = findViewById(R.id.btnSign);
         btnMakeOcr = findViewById(R.id.btnMakeOcr);
         btnReTake = findViewById(R.id.btnRetake);
+
+        Intent intents = getIntent();
+        if (intents != null) {
+            isFromPdfGroup = intents.getBooleanExtra("FROM_PDF_GROUP", false);
+            originalRequestCode = intents.getIntExtra("ORIGINAL_REQUEST_CODE", -1);
+            Log.d(TAG, "ImagePreviewActivity: isFromPdfGroup=" + isFromPdfGroup + ", requestCode=" + originalRequestCode);
+        }
 
         String imageUriString = getIntent().getStringExtra("imageUri");
         if (imageUriString != null) {
@@ -67,13 +81,31 @@ public class ImagePreviewActivity extends AppCompatActivity {
             Log.d(TAG, "ImagePreviewActivity: Rotated image to " + rotationAngle + " degrees."); // Log khi xoay ảnh
         });
 
-        btnConfirmPreview.setOnClickListener(v->{
-            Bitmap rotatedBitmap = ((BitmapDrawable)imageViewPreview.getDrawable()).getBitmap();
-            // Phương thức saveBitmapToCache() đã tồn tại trong ImagePreviewActivity.java
+        btnConfirmPreview.setOnClickListener(v -> {
+            Bitmap rotatedBitmap = ((BitmapDrawable) imageViewPreview.getDrawable()).getBitmap();
             Uri tempUri = saveBitmapToCache(rotatedBitmap);
-            Intent pdfIntent = new Intent(ImagePreviewActivity.this, PdfGenerationAndPreviewActivity.class);
-            pdfIntent.putExtra("croppedUri", tempUri);
-            startActivity(pdfIntent);
+
+            if (tempUri != null) {
+                Intent pdfIntent = new Intent(ImagePreviewActivity.this, PdfGenerationAndPreviewActivity.class);
+                pdfIntent.putExtra("croppedUri", tempUri.toString()); // Truyền Uri của ảnh đã xử lý
+
+                // RẤT QUAN TRỌNG: Truyền các cờ xác định luồng sang Activity tiếp theo
+                pdfIntent.putExtra("FROM_PDF_GROUP", isFromPdfGroup);
+                pdfIntent.putExtra("ORIGINAL_REQUEST_CODE", originalRequestCode); // Dù có thể không dùng, vẫn nên truyền
+                Log.d(TAG, "ImagePreviewActivity -> PdfGenerationAndPreviewActivity: FROM_PDF_GROUP=" +
+                        isFromPdfGroup + ", originalRequestCode=" + originalRequestCode);
+
+                // Gọi PdfGenerationAndPreviewActivity bằng startActivityForResult
+                // Để nó có thể trả kết quả về ImagePreviewActivity,
+                // và ImagePreviewActivity có thể trả về tiếp cho CropActivity/CameraActivity/PDFGroupActivity
+                startActivityForResult(pdfIntent, REQUEST_PDF_GENERATION_PREVIEW);
+                Log.d(TAG, "ImagePreviewActivity: Confirmed image, starting PdfGenerationAndPreviewActivity.");
+            } else {
+                Toast.makeText(this, "Không thể lưu ảnh đã xử lý.", Toast.LENGTH_SHORT).show();
+                setResult(RESULT_CANCELED); // Đặt kết quả là hủy nếu không lưu được
+                finish();
+                Log.e(TAG, "ImagePreviewActivity: Failed to save bitmap for confirmation.");
+            }
         });
         btnMakeOcr.setOnClickListener(v->{
             if (imageViewPreview.getDrawable() instanceof BitmapDrawable) {
@@ -169,8 +201,32 @@ public class ImagePreviewActivity extends AppCompatActivity {
                     Toast.makeText(this, "Ảnh đã được ký và hợp nhất thành công.", Toast.LENGTH_SHORT).show();
                 }
             }
-        } else if (resultCode == RESULT_CANCELED) {
-            Log.d(TAG, "Activity canceled.");
+        } // Xử lý kết quả trả về từ PdfGenerationAndPreviewActivity
+        else if (requestCode == REQUEST_PDF_GENERATION_PREVIEW) {
+            if (resultCode == RESULT_OK && data != null) {
+                // Đọc lại cờ và extra từ data nhận được
+                // và đặt nó vào một Intent mới để trả về
+                Intent resultIntent = new Intent();
+                resultIntent.putExtra("processedImageUri", data.getStringExtra("processedImageUri"));
+                // **Quan trọng:** Bạn cần đảm bảo cờ FROM_PDF_GROUP được chuyển tiếp
+                // Bạn có thể đọc nó từ Intent ban đầu của ImagePreviewActivity và thêm vào đây
+                boolean isFromPdfGroup = getIntent().getBooleanExtra("FROM_PDF_GROUP", false);
+                if (isFromPdfGroup) {
+                    resultIntent.putExtra("FROM_PDF_GROUP", true);
+                }
+                setResult(RESULT_OK, resultIntent);
+            } else {
+                setResult(resultCode, data);
+            }
+            finish();
+        }
+        else if (resultCode == RESULT_CANCELED) {
+            Log.d(TAG, "ImagePreviewActivity: Activity canceled from requestCode: " + requestCode);
+            // Nếu có Activity nào trong chuỗi này hủy (ví dụ CropActivity hủy),
+            // thì ImagePreviewActivity cũng nên hủy và truyền lại kết quả CANCELED
+            setResult(RESULT_CANCELED);
+            finish();
+
         }
     }
 }

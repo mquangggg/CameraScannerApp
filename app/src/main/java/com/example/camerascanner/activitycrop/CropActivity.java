@@ -50,6 +50,7 @@ import java.util.Arrays;
 public class CropActivity extends AppCompatActivity {
 
     private static final String TAG = "CropActivity"; // Thẻ (tag) dùng để ghi log
+    private static final int REQUEST_CODE_IMAGE_PREVIEW_CROP = 1002; // Hằng số mới cho request code
 
     // Khai báo các thành phần UI
     private CropImageView cropImageView; // CropImageView từ thư viện để hiển thị ảnh
@@ -63,6 +64,10 @@ public class CropActivity extends AppCompatActivity {
     private TextRecognizer textRecognizer;
     // Bitmap của ảnh gốc sau khi được tải từ URI
     private Bitmap originalBitmapLoaded;
+
+    private boolean isFromPdfGroup = false;
+    private int originalRequestCode = -1;
+
 
 
     /**
@@ -92,6 +97,13 @@ public class CropActivity extends AppCompatActivity {
 
         // Thiết lập MagnifierView cho CustomCropView để hiển thị kính lúp khi chạm
         customCropView.setMagnifierView(magnifierView);
+
+        Intent intent = getIntent();
+        if (intent != null) {
+            isFromPdfGroup = intent.getBooleanExtra("FROM_PDF_GROUP", false);
+            originalRequestCode = intent.getIntExtra("ORIGINAL_REQUEST_CODE", -1);
+            Log.d(TAG, "CropActivity: isFromPdfGroup=" + isFromPdfGroup + ", requestCode=" + originalRequestCode);
+        }
 
         // Kiểm tra và lấy URI ảnh từ Intent
         if (getIntent().getExtras() != null && getIntent().getExtras().containsKey("imageUri")) {
@@ -183,7 +195,16 @@ public class CropActivity extends AppCompatActivity {
                 Uri straightenedUri = saveBitmapToCache(straightenedBitmap);
                 Intent resultIntent = new Intent(CropActivity.this, ImagePreviewActivity.class);
                 resultIntent.putExtra("imageUri",straightenedUri.toString());
-                startActivity(resultIntent);
+
+                if (isFromPdfGroup) {
+                    resultIntent.putExtra("FROM_PDF_GROUP", true);
+                    resultIntent.putExtra("ORIGINAL_REQUEST_CODE", originalRequestCode);
+                    Log.d(TAG, "CropActivity -> ImagePreviewActivity: FROM_PDF_GROUP=true, requestCode=" + originalRequestCode);
+                } else {
+                    Log.d(TAG, "CropActivity -> ImagePreviewActivity: FROM_PDF_GROUP=false (single image flow)");
+                }
+                startActivityForResult(resultIntent, REQUEST_CODE_IMAGE_PREVIEW_CROP);
+
                 if (straightenedBitmap != originalBitmapLoaded) { // Giải phóng bitmap nếu là bản sao
                     straightenedBitmap.recycle();
                 }
@@ -193,7 +214,30 @@ public class CropActivity extends AppCompatActivity {
         });
 
         // Thiết lập sự kiện click cho nút "Thực hiện OCR"
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
 
+        if (requestCode == REQUEST_CODE_IMAGE_PREVIEW_CROP) {
+            if (resultCode == RESULT_OK && data != null) {
+                // Chuyển tiếp kết quả về CameraActivity
+                Intent resultIntent = new Intent();
+                resultIntent.putExtra("processedImageUri", data.getStringExtra("processedImageUri"));
+
+                // **Quan trọng:** Lấy cờ từ Intent ban đầu của CropActivity
+                boolean isFromPdfGroup = getIntent().getBooleanExtra("FROM_PDF_GROUP", false);
+                if (isFromPdfGroup) {
+                    resultIntent.putExtra("FROM_PDF_GROUP", true);
+                }
+
+                setResult(RESULT_OK, resultIntent);
+                finish();
+            } else if (resultCode == RESULT_CANCELED) {
+                setResult(RESULT_CANCELED, data);
+                finish();
+            }
+        }
     }
 
     // Thêm method mới để setup crop từ khung đã phát hiện
@@ -599,4 +643,5 @@ public class CropActivity extends AppCompatActivity {
             originalBitmapLoaded = null; // Đặt về null
         }
     }
+
 }

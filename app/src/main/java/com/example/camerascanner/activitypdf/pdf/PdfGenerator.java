@@ -12,10 +12,13 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 
+import androidx.core.content.FileProvider;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.List;
 
 public class PdfGenerator {
     private static final String TAG = "PdfGenerator"; // Tag để sử dụng trong Logcat.
@@ -107,8 +110,8 @@ public class PdfGenerator {
     /**
      * Lưu tài liệu PDF vào bộ nhớ thiết bị.
      * Phương thức này xử lý việc lưu file khác nhau tùy thuộc vào phiên bản Android:
-     * - Android Q (API 29) trở lên: Sử dụng MediaStore để lưu vào thư mục Downloads/MyPDFs.
-     * - Dưới Android Q: Lưu trực tiếp vào thư mục Downloads/MyPDFs trên bộ nhớ ngoài.
+     * - Android Q (API 29) trở lên: Sử dụng MediaStore để lưu vào thư mục Downloads/MyPDFImages.
+     * - Dưới Android Q: Lưu trực tiếp vào thư mục Downloads/MyPDFImages trên bộ nhớ ngoài.
      *
      * @param document Tài liệu PdfDocument cần lưu.
      * @param fileName Tên của file PDF.
@@ -159,6 +162,75 @@ public class PdfGenerator {
             }
         }
     }
+    /**
+     * Tạo PDF multi-page từ danh sách bitmap
+     * @param bitmaps Danh sách bitmap để tạo PDF
+     * @param fileName Tên file PDF (ví dụ: "my_document.pdf")
+     * @return Uri của PDF được tạo
+     * @throws Exception nếu có lỗi trong quá trình tạo PDF
+     */
+    public Uri createMultiPagePdf(List<Bitmap> bitmaps, String fileName) throws Exception {
+        if (bitmaps == null || bitmaps.isEmpty()) {
+            throw new Exception("Danh sách ảnh trống");
+        }
+
+        String pdfFileName = fileName.endsWith(".pdf") ? fileName : fileName + ".pdf";
+
+        try {
+            // Tạo thư mục tùy chỉnh MyPDFImages bên trong thư mục files của ứng dụng
+            // Đường dẫn sẽ là: /Android/data/YOUR_PACKAGE_NAME/files/MyPDFImages/
+            File customDir = new File(context.getExternalFilesDir(null), "MyPDFImages");
+            if (!customDir.exists()) {
+                customDir.mkdirs(); // Tạo thư mục nếu nó chưa tồn tại
+            }
+
+            // Tạo file PDF bên trong thư mục MyPDFImages
+            File pdfFile = new File(customDir, pdfFileName);
+
+            // Tạo PdfDocument
+            PdfDocument pdfDocument = new PdfDocument();
+
+            for (int i = 0; i < bitmaps.size(); i++) {
+                Bitmap bitmap = bitmaps.get(i);
+                if (bitmap == null || bitmap.isRecycled()) {
+                    Log.w(TAG, "Bỏ qua bitmap null hoặc recycled ở vị trí: " + i);
+                    continue;
+                }
+
+                // Tạo page info với kích thước của bitmap
+                PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(bitmap.getWidth(), bitmap.getHeight(), i + 1).create();
+
+                // Bắt đầu một page mới
+                PdfDocument.Page page = pdfDocument.startPage(pageInfo);
+
+                // Vẽ bitmap lên trang
+                Canvas canvas = page.getCanvas();
+                canvas.drawBitmap(bitmap, 0, 0, null);
+
+                // Kết thúc trang
+                pdfDocument.finishPage(page);
+            }
+
+            // Ghi PDF ra file
+            FileOutputStream fos = new FileOutputStream(pdfFile);
+            pdfDocument.writeTo(fos);
+            fos.close();
+
+            // Đóng PdfDocument để giải phóng tài nguyên
+            pdfDocument.close();
+
+            // Trả về Uri của file PDF bằng FileProvider
+            // Đảm bảo bạn đã cấu hình FileProvider trong AndroidManifest.xml và res/xml/file_paths.xml
+            return FileProvider.getUriForFile(context, context.getPackageName() + ".fileprovider", pdfFile);
+
+        } catch (IOException e) {
+            Log.e(TAG, "Lỗi khi tạo PDF: " + e.getMessage(), e);
+            throw new Exception("Không thể tạo file PDF: " + e.getMessage(), e);
+        } catch (Exception e) {
+            Log.e(TAG, "Lỗi không xác định khi tạo PDF: " + e.getMessage(), e);
+            throw e;
+        }
+    }
 
     /**
      * Lưu file PDF vào MediaStore (dành cho Android Q trở lên).
@@ -175,7 +247,7 @@ public class PdfGenerator {
         contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
         // Đặt kiểu MIME của file là PDF.
         contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
-        // Đặt đường dẫn tương đối trong thư mục Downloads, tạo một thư mục con "MyPDFs".
+        // Đặt đường dẫn tương đối trong thư mục Downloads, tạo một thư mục con "MyPDFImages".
         contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH,
                 Environment.DIRECTORY_DOWNLOADS + File.separator + "MyPDFImages");
 
@@ -188,15 +260,15 @@ public class PdfGenerator {
 
     /**
      * Lưu file PDF vào bộ nhớ ngoài công cộng (dành cho Android dưới Q).
-     * Phương thức này tạo một thư mục "MyPDFs" trong thư mục Downloads
+     * Phương thức này tạo một thư mục "MyPDFImages" trong thư mục Downloads
      * và trả về Uri của file PDF trong thư mục đó.
      *
      * @param fileName Tên file PDF.
      * @return Uri của file PDF trên bộ nhớ ngoài.
      */
     private Uri saveToExternalStorage(String fileName) {
-        // Lấy đường dẫn đến thư mục Downloads công cộng và tạo thư mục con "MyPDFs".
-        File pdfDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "MyPDFs");
+        // Lấy đường dẫn đến thư mục Downloads công cộng và tạo thư mục con "MyPDFImages".
+        File pdfDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "MyPDFImages");
         // Kiểm tra nếu thư mục không tồn tại, tạo nó.
         if (!pdfDir.exists()) {
             pdfDir.mkdirs(); // Tạo thư mục và các thư mục cha cần thiết.
