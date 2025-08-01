@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:background="@color/white">
     <TextView
@@ -18,29 +19,36 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="12" />
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1.25"
-        android:orientation="horizontal"
         android:background="#333">
+
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnDeleteSign"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:text="Xóa"/>
-        <Space
-            android:layout_width="wrap_content"
+            android:layout_width="120dp"
             android:layout_height="0dp"
-            android:layout_weight="1"/>
+            android:text="Xóa"
+            android:textColor="@color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.0"
+            android:background="@drawable/vuongbogoc"
+            tools:layout_editor_absoluteX="45dp" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnYesSign"
-            android:layout_width="wrap_content"
+            android:layout_width="120dp"
             android:layout_height="match_parent"
+            android:layout_marginLeft="88dp"
             android:text="Xác nhận"
-            />
+            android:textColor="@color/white"
+            android:background="@drawable/login_background"
+            app:layout_constraintLeft_toRightOf="@+id/btnDeleteSign"
+            tools:layout_editor_absoluteY="0dp" />
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </LinearLayout>

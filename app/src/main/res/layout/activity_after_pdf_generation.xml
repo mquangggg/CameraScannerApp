@@ -5,7 +5,7 @@
     android:id="@+id/imagePreviewLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#f5f5f5"
+    android:background="#3f3f3f"
     tools:context=".activitypdf.pdfgroup.PDFGroupActivity">
 
     <!-- Title hoặc toolbar -->
@@ -17,7 +17,8 @@
         android:textSize="20sp"
         android:textStyle="bold"
         android:layout_margin="16dp"
-        android:textColor="#000000"
+        android:gravity="center"
+        android:textColor="#ffffff"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
@@ -35,20 +36,25 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- Danh sách ảnh -->
+
+    <!-- Empty state message -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewImages"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:padding="8dp"
+        android:layout_marginTop="10dp"
+        android:background="#cccccc"
         android:clipToPadding="false"
+        android:padding="8dp"
         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-        app:spanCount="2"
-        app:layout_constraintTop_toBottomOf="@id/tvTitle"
         app:layout_constraintBottom_toTopOf="@+id/layoutButtons"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/tvTitle"
+        app:layout_constraintVertical_bias="0.0"
+        app:spanCount="2" />
 
-    <!-- Empty state message -->
     <LinearLayout
         android:id="@+id/layoutEmptyState"
         android:layout_width="wrap_content"
@@ -86,32 +92,33 @@
         android:orientation="horizontal"
         android:gravity="center"
         android:padding="16dp"
-        android:background="@android:color/white"
+        android:background="#3f3f3f"
         android:elevation="4dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
         <!-- Nút hủy -->
-        <Button
-            android:id="@+id/btnCancel"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Hủy"
-            android:backgroundTint="#757575"
-            android:textColor="@android:color/white"
-            android:layout_marginEnd="8dp"
-            style="@style/Widget.AppCompat.Button" />
 
         <!-- Nút xác nhận tạo PDF -->
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnCancel"
+            style="@style/Widget.AppCompat.Button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/vuongbogoc"
+            android:text="Hủy"
+            android:textColor="@android:color/white" />
+
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnConfirm"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Tạo PDF"
-            android:backgroundTint="#2196F3"
+            android:background="@drawable/login_background"
             android:textColor="@android:color/white"
             android:layout_marginStart="8dp"
             style="@style/Widget.AppCompat.Button" />

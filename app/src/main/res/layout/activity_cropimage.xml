@@ -61,7 +61,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/cancel"
-            android:background="#3d3d3d"
+            android:background="@drawable/vuongbogoc"
             android:layout_marginEnd="8dp"
             android:textColor="@color/white"/>
 
@@ -71,7 +71,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/crop"
-            android:background="#3d3d3d"
+            android:background="@drawable/vuongbogoc"
             android:layout_marginStart="8dp"
             android:textColor="@color/white"/>
     </LinearLayout>

@@ -80,7 +80,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/delete_and_cancel"
-            android:background="#3d3d3d"
+            android:background="@drawable/vuongbogoc"
             android:textColor="@color/white"
             android:layout_marginEnd="8dp"/>
 
@@ -90,7 +90,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Lưu JPEG"
-            android:background="#3d3d3d"
+            android:background="@drawable/vuongbogoc"
             android:textColor="@color/white"
             android:layout_marginEnd="8dp"/>
 
@@ -100,9 +100,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/save_PDF"
-            android:background="#3d3d3d"
-            android:textColor="@color/white"
-            android:layout_marginStart="8dp"/>
+            android:background="@drawable/login_background"
+            android:textColor="@color/white" />
     </LinearLayout>
 
 </LinearLayout>

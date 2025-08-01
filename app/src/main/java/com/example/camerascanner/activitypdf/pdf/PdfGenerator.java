@@ -118,7 +118,7 @@ public class PdfGenerator {
      * @return Uri của file PDF đã được lưu.
      * @throws IOException Nếu có lỗi khi ghi dữ liệu vào OutputStream hoặc không thể mở OutputStream.
      */
-    private Uri savePdfToStorage(PdfDocument document, String fileName) throws IOException {
+    private Uri  savePdfToStorage(PdfDocument document, String fileName) throws IOException {
         Uri pdfUri;
         OutputStream outputStream = null; // Khởi tạo OutputStream là null để đảm bảo nó được đóng.
 
@@ -178,50 +178,44 @@ public class PdfGenerator {
 
         try {
             // Tạo thư mục tùy chỉnh MyPDFImages bên trong thư mục files của ứng dụng
-            // Đường dẫn sẽ là: /Android/data/YOUR_PACKAGE_NAME/files/MyPDFImages/
-            File customDir = new File(context.getExternalFilesDir(null), "MyPDFImages");
-            if (!customDir.exists()) {
-                customDir.mkdirs(); // Tạo thư mục nếu nó chưa tồn tại
-            }
-
-            // Tạo file PDF bên trong thư mục MyPDFImages
-            File pdfFile = new File(customDir, pdfFileName);
-
             // Tạo PdfDocument
             PdfDocument pdfDocument = new PdfDocument();
 
             for (int i = 0; i < bitmaps.size(); i++) {
+                // ...
                 Bitmap bitmap = bitmaps.get(i);
-                if (bitmap == null || bitmap.isRecycled()) {
-                    Log.w(TAG, "Bỏ qua bitmap null hoặc recycled ở vị trí: " + i);
-                    continue;
+                // ...
+
+                int pageWidth = bitmap.getWidth();
+                int pageHeight = bitmap.getHeight();
+                boolean isLandscape = pageWidth > pageHeight;
+
+                if (isLandscape) {
+                    // Nếu ảnh là ảnh ngang, hoán đổi chiều rộng và chiều cao của trang
+                    pageWidth = bitmap.getHeight();
+                    pageHeight = bitmap.getWidth();
                 }
 
-                // Tạo page info với kích thước của bitmap
-                PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(bitmap.getWidth(), bitmap.getHeight(), i + 1).create();
-
-                // Bắt đầu một page mới
+                PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, i + 1).create();
                 PdfDocument.Page page = pdfDocument.startPage(pageInfo);
-
-                // Vẽ bitmap lên trang
                 Canvas canvas = page.getCanvas();
-                canvas.drawBitmap(bitmap, 0, 0, null);
 
-                // Kết thúc trang
+                if (isLandscape) {
+                    // Xoay canvas 90 độ
+                    canvas.rotate(90, 0, 0);
+                    // Sau khi xoay, bạn cần tịnh tiến canvas để ảnh không bị vẽ ra ngoài
+                    canvas.translate(0, -pageWidth);
+                    // Cần đảm bảo hình ảnh được vẽ đúng cách trên trang đã xoay
+                    canvas.drawBitmap(bitmap, 0, 0, null);
+                } else {
+                    canvas.drawBitmap(bitmap, 0, 0, null);
+                }
+
                 pdfDocument.finishPage(page);
             }
+            Uri pdfUri = savePdfToStorage(pdfDocument, pdfFileName);
 
-            // Ghi PDF ra file
-            FileOutputStream fos = new FileOutputStream(pdfFile);
-            pdfDocument.writeTo(fos);
-            fos.close();
-
-            // Đóng PdfDocument để giải phóng tài nguyên
-            pdfDocument.close();
-
-            // Trả về Uri của file PDF bằng FileProvider
-            // Đảm bảo bạn đã cấu hình FileProvider trong AndroidManifest.xml và res/xml/file_paths.xml
-            return FileProvider.getUriForFile(context, context.getPackageName() + ".fileprovider", pdfFile);
+           return pdfUri;
 
         } catch (IOException e) {
             Log.e(TAG, "Lỗi khi tạo PDF: " + e.getMessage(), e);

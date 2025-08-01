@@ -481,13 +481,6 @@ public class PDFGroupActivity extends AppCompatActivity implements
         Log.d(TAG, "onSaveInstanceState: Saved " + imageUriStrings.size() + " image URIs.");
     }
 
-    // Loại bỏ onRestoreInstanceState() vì logic khôi phục đã được tích hợp vào onCreate()
-    // @Override
-    // protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
-    //     super.onRestoreInstanceState(savedInstanceState);
-    //     // Logic này đã được chuyển lên onCreate()
-    // }
-
     /**
      * Set UI enabled/disabled
      */
