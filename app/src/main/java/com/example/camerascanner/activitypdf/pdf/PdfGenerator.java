@@ -160,7 +160,7 @@ public class PdfGenerator {
                 return PAGE_HEIGHT; // Trả về chiều cao mặc định nếu bitmap không hợp lệ
             }
 
-            final int MARGIN = 20; // Margin cho 4 cạnh
+            final int MARGIN = 0; // Margin cho 4 cạnh
             final int USABLE_PAGE_WIDTH = PAGE_WIDTH - (2 * MARGIN);
 
             int bitmapWidth = bitmap.getWidth();

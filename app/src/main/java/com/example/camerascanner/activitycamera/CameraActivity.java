@@ -73,11 +73,11 @@ import java.util.concurrent.Executors;
 
 public class CameraActivity extends AppCompatActivity implements AppPermissionHandler.PermissionCallbacks{
 
-    private static final String TAG = "CameraActivity"; // Đổi TAG để tránh nhầm lẫn
-    private static final int REQUEST_CODE_IMAGE_PREVIEW = 200;
+    private static final String TAG = "CameraActivity";
+    private static final int REQUEST_CODE_CROP = 200;
 
     private PreviewView previewView;
-    private CustomOverlayView customOverlayView; // Bây giờ sẽ nhận MatOfPoint
+    private CustomOverlayView customOverlayView;
     private ImageView imageView;
     private FloatingActionButton btnTakePhoto;
     private ImageButton btnSelectImage;
@@ -101,35 +101,32 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
     private static final double MIN_AREA_PERCENTAGE = 0.02;
     private static final double MAX_AREA_PERCENTAGE = 0.90;
 
-    private MatOfPoint lastDetectedQuadrilateral = null; // Lưu trữ MatOfPoint cuối cùng được phát hiện
-    private int lastImageProxyWidth = 0; // Kích thước của ImageProxy khi phát hiện được khung
+    private MatOfPoint lastDetectedQuadrilateral = null;
+    private int lastImageProxyWidth = 0;
     private int lastImageProxyHeight = 0;
-    private int lastRotationDegrees = 0; // Độ xoay của ImageProxy khi phát hiện được khung
+    private int lastRotationDegrees = 0;
 
     private long lastDetectionTimestamp = 0L;
-    private static final long QUAD_PERSISTENCE_TIMEOUT_MS = 1500; // 1.5 giây
+    private static final long QUAD_PERSISTENCE_TIMEOUT_MS = 1500;
 
     private int frameCount = 0;
-    private static final int PROCESS_FRAME_INTERVAL = 3; // Xử lý mỗi 3 khung hình
+    private static final int PROCESS_FRAME_INTERVAL = 3;
     private TabLayout tabLayoutCameraModes;
     private Uri selectedImageUri;
     private ActivityResultLauncher<String> galleryLauncher;
-    private ActivityResultLauncher<Intent> imagePreviewLauncher;
 
     // --- Các biến và hằng số mới cho chức năng tự động chụp thẻ ID ---
-
-    private boolean isIdCardMode = false; // Biến cờ để kiểm tra xem có đang ở chế độ thẻ ID không
-    private boolean autoCaptureEnabled = true; // Biến cờ để bật/tắt tự động chụp
+    private boolean isIdCardMode = false;
+    private boolean autoCaptureEnabled = true;
     private long lastAutoCaptureTime = 0L;
-    private static final long AUTO_CAPTURE_COOLDOWN_MS = 3000; // Thời gian chờ 3 giây giữa các lần tự động chụp
-    private static final double ID_CARD_ASPECT_RATIO_MIN = 1.5; // Tỷ lệ khung hình tối thiểu cho thẻ ID (ví dụ: 1.5 - 1.6)
-    private static final double ID_CARD_ASPECT_RATIO_MAX = 1.85; // Tỷ lệ khung hình tối đa cho thẻ ID
-    private int consecutiveValidFrames = 0; //  Đếm số khung hình liên tiếp hợp lệ
-    private static final int REQUIRED_CONSECUTIVE_FRAMES = 10; // Số khung hình liên tiếp cần thiết
+    private static final long AUTO_CAPTURE_COOLDOWN_MS = 3000;
+    private static final double ID_CARD_ASPECT_RATIO_MIN = 1.5;
+    private static final double ID_CARD_ASPECT_RATIO_MAX = 1.85;
+    private int consecutiveValidFrames = 0;
+    private static final int REQUIRED_CONSECUTIVE_FRAMES = 10;
 
+    // Biến để xác định có phải từ PDFGroup không
     private boolean isFromPdfGroup = false;
-    private int originalRequestCode = -1;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,8 +137,7 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
         Intent intent = getIntent();
         if (intent != null) {
             isFromPdfGroup = intent.getBooleanExtra("FROM_PDF_GROUP", false);
-            originalRequestCode = intent.getIntExtra("REQUEST_CODE", -1);
-            Log.d(TAG, "CameraActivity started from PDFGroup: " + isFromPdfGroup + ", requestCode: " + originalRequestCode);
+            Log.d(TAG, "CameraActivity started from PDFGroup: " + isFromPdfGroup);
         }
 
         // Khởi tạo OpenCV
@@ -159,13 +155,9 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
         btnTakePhoto = findViewById(R.id.btnTakePhoto);
         btnSelectImage = findViewById(R.id.btnSelectImage);
 
-        // Điều chỉnh ScaleType của PreviewView nếu cần, ví dụ FIT_CENTER, FIT_XY
-        previewView.setScaleType(PreviewView.ScaleType.FIT_CENTER); // Hoặc PreviewView.ScaleType.FILL_CENTER để lấp đầy
-
+        previewView.setScaleType(PreviewView.ScaleType.FIT_CENTER);
         cameraExecutor = Executors.newSingleThreadExecutor();
-
-        appPermissionHandler = new AppPermissionHandler(this, this); // 'this' là CameraActivity implement PermissionCallbacks
-
+        appPermissionHandler = new AppPermissionHandler(this, this);
 
         if (appPermissionHandler.checkCameraPermission()) {
             startCamera();
@@ -174,7 +166,6 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
         }
 
         initLaunchers();
-
 
         btnTakePhoto.setOnClickListener(v -> takePhoto());
 
@@ -194,15 +185,14 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 int position = tab.getPosition();
-                isIdCardMode = false; // Đặt lại mỗi khi chuyển tab
+                isIdCardMode = false;
                 switch (position) {
                     case 0:
                         Log.d(TAG, "Chế độ: Quét");
-                        // Logic cho chế độ quét
                         break;
                     case 1:
                         Log.d(TAG, "Chế độ: Thẻ ID");
-                        isIdCardMode = true; // Bật cờ cho chế độ thẻ ID
+                        isIdCardMode = true;
                         Toast.makeText(CameraActivity.this, "Đã chuyển sang chế độ Thẻ ID. Tự động chụp nếu phát hiện.", Toast.LENGTH_SHORT).show();
                         break;
                 }
@@ -213,18 +203,14 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
             }
 
             @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-                // Không cần làm gì đặc biệt ở đây
-            }
+            public void onTabUnselected(TabLayout.Tab tab) {}
 
             @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-                // Không cần làm gì đặc biệt ở đây
-            }
+            public void onTabReselected(TabLayout.Tab tab) {}
         });
 
         if (tabLayoutCameraModes.getTabCount() > 0) {
-            tabLayoutCameraModes.selectTab(tabLayoutCameraModes.getTabAt(0)); // Chọn tab mặc định
+            tabLayoutCameraModes.selectTab(tabLayoutCameraModes.getTabAt(0));
         }
     }
 
@@ -263,10 +249,8 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
             if (uri != null && !isDestroyed) {
                 selectedImageUri = uri;
                 Log.d(TAG, "Ảnh được tải từ thư viện, URI gốc: " + selectedImageUri);
-
-                // Chuyển trực tiếp sang CropActivity từ thư viện (không có khung phát hiện)
+                // Chuyển sang CropActivity từ thư viện
                 startCropActivity(selectedImageUri, null);
-
             } else if (!isDestroyed) {
                 Toast.makeText(this, getString(R.string.failed_to_get_image_from_gallery), Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "selectedImageUri rỗng sau khi xử lý kết quả thư viện.");
@@ -274,6 +258,7 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
         });
     }
 
+    // Các phương thức camera giữ nguyên như cũ...
     private void startCamera() {
         if (isDestroyed) {
             Log.w(TAG, "Activity is destroyed, not starting camera");
@@ -312,7 +297,7 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
                 .setResolutionSelector(new ResolutionSelector.Builder()
                         .setResolutionStrategy(new ResolutionStrategy(new Size(640, 480),
                                 ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER))
-                        .build()) // Đặt độ phân giải phân tích
+                        .build())
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
 
@@ -324,45 +309,39 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
 
             Log.d(TAG, "DEBUG_DIM: ImageProxy original dimensions: " + imageProxy.getWidth() + "x" + imageProxy.getHeight() + " Rotation: " + imageProxy.getImageInfo().getRotationDegrees());
 
-            // ĐÃ SỬA: Biến để giữ MatOfPoint và Mat từ processImageFrame
             MatOfPoint newlyDetectedQuadrilateral = null;
-            Mat processedFrameForDimensions = null; // ĐÃ SỬA: Biến để giữ Mat đã xử lý
+            Mat processedFrameForDimensions = null;
 
             try {
                 final MatOfPoint finalQuadrilateralForOverlay;
 
                 if (frameCount % PROCESS_FRAME_INTERVAL == 0) {
-                    // ĐÃ SỬA: Thay đổi cách gọi processImageFrame và nhận Pair
                     Pair<MatOfPoint, Mat> detectionResult = processImageFrame(imageProxy);
-                    newlyDetectedQuadrilateral = detectionResult.first; // <--- Lấy MatOfPoint từ Pair
-                    processedFrameForDimensions = detectionResult.second; // <--- Lấy Mat đã xử lý
+                    newlyDetectedQuadrilateral = detectionResult.first;
+                    processedFrameForDimensions = detectionResult.second;
 
                     Log.d(TAG, "Đã xử lý khung hình đầy đủ. Khung: " + frameCount);
 
-                    if (newlyDetectedQuadrilateral != null && processedFrameForDimensions != null) { // <--- ĐÃ SỬA: Kiểm tra cả Mat
+                    if (newlyDetectedQuadrilateral != null && processedFrameForDimensions != null) {
                         if (lastDetectedQuadrilateral != null) {
                             lastDetectedQuadrilateral.release();
                         }
-                        lastDetectedQuadrilateral = new MatOfPoint(newlyDetectedQuadrilateral.toArray()); // Tạo bản sao
+                        lastDetectedQuadrilateral = new MatOfPoint(newlyDetectedQuadrilateral.toArray());
                         lastDetectionTimestamp = System.currentTimeMillis();
 
-                        // LƯU Ý QUAN TRỌNG: Lưu kích thước của MAT ĐÃ ĐƯỢC XOAY mà OpenCV đã xử lý
-                        lastImageProxyWidth = processedFrameForDimensions.width(); // <--- ĐÃ SỬA
-                        lastImageProxyHeight = processedFrameForDimensions.height(); // <--- ĐÃ SỬA
-                        lastRotationDegrees = imageProxy.getImageInfo().getRotationDegrees(); // Vẫn lấy độ xoay của ImageProxy
+                        lastImageProxyWidth = processedFrameForDimensions.width();
+                        lastImageProxyHeight = processedFrameForDimensions.height();
+                        lastRotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
 
                         finalQuadrilateralForOverlay = newlyDetectedQuadrilateral;
                         Log.d(TAG, "DEBUG_DIM: Processed Mat dimensions (from processedFrameForDimensions): " + processedFrameForDimensions.width() + "x" + processedFrameForDimensions.height());
                         Log.d(TAG, "DEBUG_DIM: Stored lastImageProxyWidth: " + lastImageProxyWidth + " lastImageProxyHeight: " + lastImageProxyHeight);
 
-                        // --- Logic TỰ ĐỘNG CHỤP THẺ ID ---
+                        // Logic tự động chụp thẻ ID
                         if (isIdCardMode && autoCaptureEnabled && !isDestroyed) {
-                            // Trong imageAnalysis.setAnalyzer, bên trong khối if (isIdCardMode && autoCaptureEnabled)
                             long currentTime = System.currentTimeMillis();
-                            // Kiểm tra tỷ lệ khung hình của tứ giác phát hiện
                             Point[] points = newlyDetectedQuadrilateral.toArray();
                             if (points.length == 4) {
-                                // Sắp xếp điểm để tính toán chiều rộng/chiều cao
                                 MatOfPoint sortedPoints = sortPoints(new MatOfPoint(points));
                                 Point[] sortedPts = sortedPoints.toArray();
 
@@ -379,37 +358,37 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
                                     Log.d(TAG, "Calculated Aspect Ratio: " + String.format("%.2f", aspectRatio) + " (Min: " + ID_CARD_ASPECT_RATIO_MIN + ", Max: " + ID_CARD_ASPECT_RATIO_MAX + ")");
 
                                     if (aspectRatio >= ID_CARD_ASPECT_RATIO_MIN && aspectRatio <= ID_CARD_ASPECT_RATIO_MAX || aspectRatio >= 1/ID_CARD_ASPECT_RATIO_MAX && aspectRatio <= 1/ID_CARD_ASPECT_RATIO_MIN) {
-                                        consecutiveValidFrames++; // Tăng biến đếm nếu hợp lệ
+                                        consecutiveValidFrames++;
                                         Log.d(TAG, "Valid frame. Consecutive: " + consecutiveValidFrames + "/" + REQUIRED_CONSECUTIVE_FRAMES);
 
                                         if (consecutiveValidFrames >= REQUIRED_CONSECUTIVE_FRAMES) {
-                                            if (currentTime - lastAutoCaptureTime > AUTO_CAPTURE_COOLDOWN_MS) { // Kiểm tra cooldown ở đây
+                                            if (currentTime - lastAutoCaptureTime > AUTO_CAPTURE_COOLDOWN_MS) {
                                                 Log.d(TAG, "Phát hiện thẻ ID hợp lệ liên tục. Đang tự động chụp...");
                                                 runOnUiThread(() -> {
                                                     if (!isDestroyed) {
                                                         Toast.makeText(CameraActivity.this, "Tự động chụp thẻ ID!", Toast.LENGTH_SHORT).show();
-                                                        takePhoto(); // Kích hoạt chụp ảnh
+                                                        takePhoto();
                                                     }
                                                 });
-                                                lastAutoCaptureTime = currentTime; // Cập nhật thời gian chụp cuối cùng
-                                                consecutiveValidFrames = 0; // Đặt lại biến đếm sau khi chụp
+                                                lastAutoCaptureTime = currentTime;
+                                                consecutiveValidFrames = 0;
                                             }
                                         }
                                     } else {
-                                        consecutiveValidFrames = 0; // Đặt lại biến đếm nếu không hợp lệ
+                                        consecutiveValidFrames = 0;
                                         Log.d(TAG, "Aspect ratio out of range. Resetting consecutive frames.");
                                     }
                                 } else {
-                                    consecutiveValidFrames = 0; // Đặt lại biến đếm nếu avgHeight = 0
+                                    consecutiveValidFrames = 0;
                                     Log.d(TAG, "AvgHeight is zero. Resetting consecutive frames.");
                                 }
                                 sortedPoints.release();
                             } else {
-                                consecutiveValidFrames = 0; // Đặt lại biến đếm nếu không phải tứ giác
+                                consecutiveValidFrames = 0;
                                 Log.d(TAG, "Not a 4-point quadrilateral. Resetting consecutive frames.");
                             }
                         } else {
-                            consecutiveValidFrames = 0; // Đặt lại biến đếm nếu không ở chế độ thẻ ID hoặc tự động chụp tắt
+                            consecutiveValidFrames = 0;
                         }
                     } else {
                         if (lastDetectedQuadrilateral != null && (System.currentTimeMillis() - lastDetectionTimestamp > QUAD_PERSISTENCE_TIMEOUT_MS)) {
@@ -432,25 +411,22 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
                 runOnUiThread(() -> {
                     if (!isDestroyed && customOverlayView != null && previewView != null) {
                         if (finalQuadrilateralForOverlay != null) {
-                            // Kích thước overlay view của bạn đã được tính toán đúng dựa trên effectiveImageWidth/Height
-                            // Đây là kích thước Mat mà các điểm được phát hiện trên đó.
-                            int effectiveImageWidth = lastImageProxyWidth; // <--- ĐÃ SỬA: đã lưu kích thước đúng rồi
-                            int effectiveImageHeight = lastImageProxyHeight; // <--- ĐÃ SỬA: đã lưu kích thước đúng rồi
+                            int effectiveImageWidth = lastImageProxyWidth;
+                            int effectiveImageHeight = lastImageProxyHeight;
 
-                            // Gọi scalePointsToOverlayView từ CustomOverlayView
                             customOverlayView.setQuadrilateral(
                                     CustomOverlayView.scalePointsToOverlayView(
                                             finalQuadrilateralForOverlay,
                                             effectiveImageWidth,
                                             effectiveImageHeight,
-                                            previewView.getWidth(), // Sử dụng kích thước của PreviewView
+                                            previewView.getWidth(),
                                             previewView.getHeight()
                                     )
                             );
                         } else {
-                            customOverlayView.clearBoundingBox(); // Sử dụng clearBoundingBox hiện có
+                            customOverlayView.clearBoundingBox();
                         }
-                        customOverlayView.invalidate(); // Yêu cầu vẽ lại
+                        customOverlayView.invalidate();
                     }
                 });
 
@@ -461,15 +437,14 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
                 if (newlyDetectedQuadrilateral != null) {
                     newlyDetectedQuadrilateral.release();
                 }
-                if (processedFrameForDimensions != null) { // <--- ĐÃ SỬA: Giải phóng Mat được trả về
+                if (processedFrameForDimensions != null) {
                     processedFrameForDimensions.release();
                 }
                 frameCount++;
             }
         });
 
-        // Sửa lỗi NullPointerException ở đây
-        int targetRotation = Surface.ROTATION_0; // Default rotation
+        int targetRotation = Surface.ROTATION_0;
         try {
             Display display = previewView.getDisplay();
             if (display != null) {
@@ -495,9 +470,6 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
         }
     }
 
-
-    // Trong CameraActivity.java
-
     private void takePhoto() {
         if (imageCapture == null || isDestroyed) {
             Log.e(TAG, "ImageCapture chưa được khởi tạo hoặc Activity đã bị destroy.");
@@ -522,7 +494,7 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
                     Toast.makeText(CameraActivity.this, getString(R.string.photo_captured_saved), Toast.LENGTH_SHORT).show();
                     Log.d(TAG, "Ảnh đã chụp và lưu: " + savedUri);
 
-                    // Chuyển trực tiếp sang CropActivity với ảnh gốc và khung đã phát hiện
+                    // LUÔN chuyển sang CropActivity
                     startCropActivity(savedUri, lastDetectedQuadrilateral);
 
                 } else {
@@ -550,19 +522,16 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
         // Truyền thông tin về nguồn gọi
         if (isFromPdfGroup) {
             cropIntent.putExtra("FROM_PDF_GROUP", true);
-            cropIntent.putExtra("ORIGINAL_REQUEST_CODE", originalRequestCode);
+            Log.d(TAG, "Starting CropActivity from PDFGroup flow");
+        } else {
+            cropIntent.putExtra("FROM_PDF_GROUP", false);
+            Log.d(TAG, "Starting CropActivity from single image flow");
         }
-
-        Log.d(TAG, "CameraActivity: isFromPdfGroup=" + isFromPdfGroup + ", requestCode=" + originalRequestCode);
-
-
-
 
         // Nếu có khung phát hiện từ camera, truyền các điểm
         if (detectedQuadrilateral != null && !detectedQuadrilateral.empty()) {
             Point[] points = detectedQuadrilateral.toArray();
             if (points.length == 4) {
-                // Chuyển đổi Point[] thành float[] để truyền qua Intent
                 float[] quadPoints = new float[8]; // 4 điểm x 2 tọa độ (x,y)
                 for (int i = 0; i < 4; i++) {
                     quadPoints[i * 2] = (float) points[i].x;
@@ -574,10 +543,8 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
             }
         }
 
-        startActivityForResult(cropIntent, REQUEST_CODE_IMAGE_PREVIEW);
-
+        startActivityForResult(cropIntent, REQUEST_CODE_CROP);
     }
-
 
     private void showCameraPreview() {
         if (isDestroyed) return;
@@ -599,15 +566,50 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_CODE_CROP) {
+            if (resultCode == RESULT_OK && data != null) {
+                String processedImageUriString = data.getStringExtra("processedImageUri");
+
+                if (processedImageUriString != null) {
+                    if (isFromPdfGroup) {
+                        // Nếu từ PDFGroup, trả kết quả về PDFGroup
+                        Intent resultIntent = new Intent();
+                        resultIntent.putExtra("processedImageUri", processedImageUriString);
+                        setResult(RESULT_OK, resultIntent);
+                        finish();
+                    } else {
+                        // Nếu không từ PDFGroup, chuyển sang PDFGroup
+                        Intent pdfGroupIntent = new Intent(this, PDFGroupActivity.class);
+                        pdfGroupIntent.putExtra("processedImageUri", processedImageUriString);
+                        startActivity(pdfGroupIntent);
+                        finish();
+                    }
+                } else {
+                    Toast.makeText(this, "Không nhận được ảnh đã xử lý", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                // Người dùng hủy crop
+                if (isFromPdfGroup) {
+                    setResult(RESULT_CANCELED);
+                    finish();
+                }
+                // Nếu không từ PDFGroup, tiếp tục ở camera
+            }
+        }
+    }
+
+    @Override
     protected void onDestroy() {
-        isDestroyed = true; // Đặt flag trước khi cleanup
+        isDestroyed = true;
         super.onDestroy();
 
         if (cameraExecutor != null) {
             cameraExecutor.shutdown();
         }
 
-        // Giải phóng MatOfPoint cuối cùng khi Activity bị hủy
         if (lastDetectedQuadrilateral != null) {
             lastDetectedQuadrilateral.release();
             lastDetectedQuadrilateral = null;
@@ -617,7 +619,6 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
     @Override
     protected void onPause() {
         super.onPause();
-        // Tạm dừng camera khi Activity không còn visible
         if (cameraProviderFuture != null) {
             try {
                 ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
@@ -631,14 +632,12 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
     @Override
     protected void onResume() {
         super.onResume();
-        // Khởi động lại camera khi Activity trở lại visible
         if (!isDestroyed && appPermissionHandler.checkCameraPermission()) {
             startCamera();
         }
     }
 
-    // --- Các hàm xử lý ảnh OpenCV  ---
-
+    // Các phương thức OpenCV giữ nguyên...
     @androidx.annotation.OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)
     private Pair<MatOfPoint, Mat> processImageFrame(ImageProxy imageProxy) {
         if (isDestroyed) {
@@ -690,18 +689,16 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
             }
             gray.put(0, 0, data);
 
-            // --- FIX: Xử lý rotation và lưu kích thước đúng ---
-            Mat processedGray = gray; // Giữ reference ban đầu
+            Mat processedGray = gray;
             boolean needsRotation = (rotationDegrees == 90 || rotationDegrees == 270);
 
             if (needsRotation) {
                 Mat rotatedGray = new Mat();
                 Core.transpose(gray, rotatedGray);
                 Core.flip(rotatedGray, rotatedGray, (rotationDegrees == 90) ? 1 : 0);
-                processedGray = rotatedGray; // processedGray bây giờ là ảnh đã xoay
+                processedGray = rotatedGray;
             }
 
-            // Lưu kích thước của ảnh SAU KHI xoay (nếu có)
             int finalProcessedWidth = processedGray.width();
             int finalProcessedHeight = processedGray.height();
 
@@ -709,11 +706,7 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
                     " -> Processed " + finalProcessedWidth + "x" + finalProcessedHeight +
                     " (rotation: " + rotationDegrees + "°)");
 
-            // --- Các bước xử lý ảnh OpenCV ---
-            // Step 1: Làm mượt chống nhiễu rời rạc
-            Imgproc.medianBlur(processedGray, processedGray, 3);  // Loại bỏ muối tiêu
-
-            // Step 2: Làm mượt Gaussian nhẹ để giảm nhiễu đều
+            Imgproc.medianBlur(processedGray, processedGray, 3);
             Imgproc.GaussianBlur(processedGray, processedGray, new org.opencv.core.Size(7,7), 0);
 
             CLAHE clahe = Imgproc.createCLAHE(2.0, new org.opencv.core.Size(8, 8));
@@ -731,15 +724,11 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
             Imgproc.findContours(edges, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
             bestQuadrilateral = findBestQuadrilateral(contours, finalProcessedWidth, finalProcessedHeight);
 
-            // FIX: Clone Mat với kích thước đúng để trả về
             if (bestQuadrilateral != null && !bestQuadrilateral.empty()) {
                 matForDimensionStorage = processedGray.clone();
             }
 
-            // Cleanup: Giải phóng Mat xoay nếu đã tạo
             if (needsRotation && processedGray != gray) {
-                // gray sẽ được giải phóng ở finally block
-                // processedGray (rotatedGray) sẽ được giải phóng ở đây nếu không được clone
                 if (matForDimensionStorage == null) {
                     processedGray.release();
                 }
@@ -763,27 +752,20 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
     }
 
     private void adjustOpenCVParametersForResolution(int frameWidth, int frameHeight) {
-        // Điều chỉnh ngưỡng Canny dựa trên chiều rộng khung hình
-        // Bạn có thể tùy chỉnh các ngưỡng và khoảng độ phân giải này
-        // dựa trên kết quả thử nghiệm trên các thiết bị khác nhau của mình.
-        if (frameWidth <= 480) { // Ví dụ: Cho độ phân giải rất thấp (VD: 480p hoặc thấp hơn)
+        if (frameWidth <= 480) {
             dynamicCannyThreshold1 = 20;
             dynamicCannyThreshold2 = 60;
-        } else if (frameWidth <= 640) { // Ví dụ: Cho độ phân giải 640x480
+        } else if (frameWidth <= 640) {
             dynamicCannyThreshold1 = 30;
             dynamicCannyThreshold2 = 90;
-        } else if (frameWidth <= 1280) { // Ví dụ: Cho độ phân giải 720p hoặc 1024x768
+        } else if (frameWidth <= 1280) {
             dynamicCannyThreshold1 = 40;
             dynamicCannyThreshold2 = 120;
-        } else { // Ví dụ: Cho độ phân giải 1080p trở lên
+        } else {
             dynamicCannyThreshold1 = 50;
             dynamicCannyThreshold2 = 150;
         }
         Log.d(TAG, "Canny thresholds adjusted to: " + dynamicCannyThreshold1 + ", " + dynamicCannyThreshold2 + " for resolution " + frameWidth + "x" + frameHeight);
-
-        // MIN_AREA_PERCENTAGE và MAX_AREA_PERCENTAGE đã là hằng số tỷ lệ phần trăm
-        // và được tính toán động thành minAllowedArea, maxAllowedArea trong findBestQuadrilateral.
-        // Do đó, không cần điều chỉnh trực tiếp ở đây.
     }
 
     private MatOfPoint findBestQuadrilateral(List<MatOfPoint> contours, int imageWidth, int imageHeight) {
@@ -860,53 +842,4 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
 
         return new MatOfPoint(rect);
     }
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        // Kiểm tra requestCode để đảm bảo đây là kết quả từ luồng chụp/cắt ảnh
-        if (requestCode == REQUEST_CODE_IMAGE_PREVIEW) {
-            if (resultCode == RESULT_OK && data != null) {
-                // Lấy cờ FROM_PDF_GROUP và URI ảnh từ Intent trả về
-                boolean isFromPdfGroup = data.getBooleanExtra("FROM_PDF_GROUP", false);
-                String imageUriString = data.getStringExtra("processedImageUri");
-
-                if (isFromPdfGroup && imageUriString != null) {
-                    // Nếu cờ là true, chuyển sang PDFGroupActivity
-                    Log.d(TAG, "Nhận được cờ FROM_PDF_GROUP. Chuyển sang PDFGroupActivity.");
-                    // Lấy requestCode ban đầu từ Intent (có thể đã được truyền qua)
-                    int originalRequestCode = data.getIntExtra("ORIGINAL_REQUEST_CODE", -1);
-
-                    Intent resultIntent = new Intent();
-                    resultIntent.putExtra("processedImageUri", imageUriString);
-
-                    // Quan trọng: Phải đặt cờ và request code ban đầu để PDFGroupActivity nhận ra
-                    resultIntent.putExtra("FROM_PDF_GROUP", true);
-                    resultIntent.putExtra("ORIGINAL_REQUEST_CODE", originalRequestCode);
-
-                    // Đặt kết quả và đóng Activity hiện tại
-                    setResult(RESULT_OK, resultIntent);
-                    finish();
-                } else {
-                    // Nếu cờ là false, chuyển sang PdfGenerationAndPreviewActivity
-                    // (hoặc xử lý luồng khác tùy theo logic ứng dụng của bạn)
-                    // Ví dụ:
-                    Log.d(TAG, "Cờ FROM_PDF_GROUP là false. Chuyển sang PdfGenerationAndPreviewActivity.");
-                    Intent previewIntent = new Intent(this, PdfGenerationAndPreviewActivity.class);
-                    previewIntent.putExtra("imageUri", imageUriString);
-                    previewIntent.putExtra("FROM_PDF_GROUP", false);
-                    startActivity(previewIntent);
-                }
-            } else {
-                // Xử lý khi người dùng hủy thao tác
-                Log.d(TAG, "Hoạt động xem trước ảnh đã bị hủy.");
-                // Trả kết quả hủy về Activity cha
-                if (isFromPdfGroup) {
-                    setResult(RESULT_CANCELED);
-                    finish();
-                }
-            }
-        }
     }
-
-}

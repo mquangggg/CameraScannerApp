@@ -32,22 +32,6 @@
                 android:background="#3f3f3f"
                 android:gravity="center">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnRetake"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Retake"
-                    android:textSize="7sp"
-                    app:icon="@drawable/ic_rephoto"
-                    app:iconGravity="top"
-                    app:iconPadding="4dp"
-                    android:textAlignment="center"
-                    app:iconTint="@android:color/white"
-                    android:textColor="@color/white" />
-
-
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRotate"
@@ -80,28 +64,44 @@
                     app:iconTint="@android:color/white"
                     android:textColor="@color/white" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSign"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Ký Tên"
-                    android:textSize="7sp"
-                    app:icon="@drawable/ic_rephoto"
-                    app:iconGravity="top"
-                    app:iconPadding="4dp"
-                    android:textAlignment="center"
-                    app:iconTint="@android:color/white"
-                    android:textColor="@color/white" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSign"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Ký Tên"
+            android:textAlignment="center"
+            android:textColor="@color/white"
+            android:textSize="7sp"
+            app:icon="@drawable/ic_signature"
+            app:iconGravity="top"
+            app:iconPadding="4dp"
+            app:iconTint="@android:color/white" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGenPDF"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Scan"
+            android:textSize="7sp"
+            app:icon="@drawable/ic_pdf"
+            app:iconGravity="top"
+            app:iconPadding="4dp"
+            android:textAlignment="center"
+            app:iconTint="@android:color/white"
+            android:textColor="@color/white" />
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnConfirmPreview"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Tạo PDF"
+            android:text="DONE"
             android:textSize="7sp"
-            app:icon="@drawable/ic_pdf"
+            app:icon="@drawable/ic_done"
             app:backgroundTint="@color/green_accent"
             app:iconGravity="top"
             app:iconPadding="4dp"

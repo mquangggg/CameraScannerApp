@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitycamera.CameraActivity;
+import com.example.camerascanner.activitycamera.ImagePreviewActivity;
 import com.example.camerascanner.activitymain.MainActivity;
 import com.example.camerascanner.activitypdf.DialogHelper;
 import com.example.camerascanner.activitypdf.PermissionHelper;
@@ -44,6 +45,8 @@ public class PDFGroupActivity extends AppCompatActivity implements
 
     private static final String TAG = "PDFGroupActivity";
     private static final int REQUEST_ADD_IMAGE = 1001;
+    private static final int REQUEST_IMAGE_PREVIEW = 1004;
+
 
     // UI Components
     private TextView tvTitle;
@@ -88,8 +91,6 @@ public class PDFGroupActivity extends AppCompatActivity implements
         executorService = Executors.newSingleThreadExecutor();
         mainHandler = new Handler(Looper.getMainLooper());
 
-        // --- BẮT ĐẦU PHẦN CHỈNH SỬA QUAN TRỌNG ---
-        // --- PHẦN CHỈNH SỬA QUAN TRỌNG NHẤT ---
         if (savedInstanceState != null) {
             // Activity được khôi phục từ trạng thái đã lưu
             imageList = new ArrayList<>(); // Khởi tạo danh sách mới
@@ -379,7 +380,6 @@ public class PDFGroupActivity extends AppCompatActivity implements
     private void handleAddMoreImages() {
         Intent intent = new Intent(PDFGroupActivity.this, CameraActivity.class);
         intent.putExtra("FROM_PDF_GROUP", true);
-        intent.putExtra("REQUEST_CODE", REQUEST_ADD_IMAGE);
         startActivityForResult(intent, REQUEST_ADD_IMAGE);
     }
 
@@ -389,20 +389,11 @@ public class PDFGroupActivity extends AppCompatActivity implements
 
         Log.d(TAG, "=== onActivityResult START ===");
         Log.d(TAG, "requestCode=" + requestCode + ", resultCode=" + resultCode);
-        Log.d(TAG, "Current imageList size BEFORE processing: " + (imageList != null ? imageList.size() : "null"));
-
-        // Log tất cả ảnh hiện tại
-        if (imageList != null) {
-            for (int i = 0; i < imageList.size(); i++) {
-                ImageItem item = imageList.get(i);
-                Log.d(TAG, "BEFORE - Item " + i + ": " + (item != null ? item.getName() + " (valid: " + item.isValid() + ")" : "null"));
-            }
-        }
 
         if (requestCode == REQUEST_ADD_IMAGE) {
             if (resultCode == RESULT_OK && data != null) {
                 String processedImageUriString = data.getStringExtra("processedImageUri");
-                Log.d(TAG, "Received processedImageUri: " + processedImageUriString);
+                Log.d(TAG, "Received processedImageUri from Camera->Crop flow: " + processedImageUriString);
 
                 if (processedImageUriString != null) {
                     Uri newImageUri = Uri.parse(processedImageUriString);
@@ -414,34 +405,27 @@ public class PDFGroupActivity extends AppCompatActivity implements
                         Bitmap newBitmap = null;
                         try {
                             newBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), newImageUri);
-                            Log.d(TAG, "LOADED bitmap - size: " + (newBitmap != null ? newBitmap.getWidth() + "x" + newBitmap.getHeight() : "null"));
 
                             if (newBitmap != null) {
                                 String imageName = "Ảnh " + (imageList.size() + 1);
                                 String uniqueFilePath = newImageUri.toString() + "_" + System.currentTimeMillis();
-                                ImageItem newImageItem = new ImageItem(newBitmap, imageName, uniqueFilePath);
-
-                                Log.d(TAG, "CREATED new ImageItem: " + imageName + " - " + uniqueFilePath);
 
                                 final Bitmap finalNewBitmap = newBitmap;
-                                final ImageItem finalNewImageItem = newImageItem;
 
                                 mainHandler.post(() -> {
                                     try {
-                                        ImageItem newImageItems = new ImageItem(finalNewBitmap, imageName, uniqueFilePath);
+                                        ImageItem newImageItem = new ImageItem(finalNewBitmap, imageName, uniqueFilePath);
 
-                                        // SỬ DỤNG PHƯƠNG THỨC CỦA ADAPTER
                                         if (adapter != null) {
-                                            adapter.addImage(newImageItems);
+                                            adapter.addImage(newImageItem);
                                         } else {
                                             imageList.add(newImageItem);
                                         }
 
-                                        // Cập nhật UI cho các thành phần khác
-                                        updateUIComponents(); // Một phương thức mới chỉ cập nhật các View khác
-
+                                        updateUIComponents();
                                         setUIEnabled(true);
-                                        //
+                                        Toast.makeText(this, "Đã thêm ảnh mới thành công!", Toast.LENGTH_SHORT).show();
+                                        Log.d(TAG, "Successfully added new image. Total images: " + imageList.size());
                                     } catch (Exception e) {
                                         Log.e(TAG, "ERROR in UI thread: " + e.getMessage(), e);
                                         Toast.makeText(this, "Lỗi khi thêm ảnh vào danh sách", Toast.LENGTH_SHORT).show();
@@ -471,8 +455,74 @@ public class PDFGroupActivity extends AppCompatActivity implements
                     Toast.makeText(this, "Không nhận được dữ liệu ảnh.", Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Log.d(TAG, "Activity result cancelled or no data");
+                Log.d(TAG, "Camera activity result cancelled or no data");
                 Toast.makeText(this, "Chưa có ảnh nào được thêm.", Toast.LENGTH_SHORT).show();
+            }
+        }
+        // XỬ LÝ CHO REQUEST_IMAGE_PREVIEW
+        else if (requestCode == REQUEST_IMAGE_PREVIEW) {
+            if (resultCode == RESULT_OK && data != null) {
+                String updatedImageUriString = data.getStringExtra("updatedImageUri");
+                int imagePosition = data.getIntExtra("imagePosition", -1);
+
+                Log.d(TAG, "Received updated image from preview - URI: " + updatedImageUriString + ", position: " + imagePosition);
+
+                if (updatedImageUriString != null && imagePosition >= 0 && imagePosition < imageList.size()) {
+                    Uri updatedImageUri = Uri.parse(updatedImageUriString);
+
+                    Toast.makeText(this, "Đang cập nhật ảnh...", Toast.LENGTH_SHORT).show();
+                    setUIEnabled(false);
+
+                    executorService.execute(() -> {
+                        try {
+                            Bitmap updatedBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), updatedImageUri);
+
+                            if (updatedBitmap != null) {
+                                mainHandler.post(() -> {
+                                    try {
+                                        ImageItem currentItem = imageList.get(imagePosition);
+
+                                        if (currentItem.getBitmap() != null && !currentItem.getBitmap().isRecycled()) {
+                                            currentItem.getBitmap().recycle();
+                                        }
+
+                                        currentItem.setBitmap(updatedBitmap);
+                                        currentItem.setFilePath(updatedImageUri.toString());
+
+                                        if (adapter != null) {
+                                            adapter.notifyItemChanged(imagePosition);
+                                        }
+
+                                        setUIEnabled(true);
+                                        Toast.makeText(this, "Đã cập nhật ảnh thành công!", Toast.LENGTH_SHORT).show();
+
+                                    } catch (Exception e) {
+                                        Log.e(TAG, "Error updating image item: " + e.getMessage(), e);
+                                        Toast.makeText(this, "Lỗi khi cập nhật ảnh", Toast.LENGTH_SHORT).show();
+                                        setUIEnabled(true);
+                                    }
+                                });
+                            } else {
+                                mainHandler.post(() -> {
+                                    Toast.makeText(this, "Không thể tải ảnh đã cập nhật", Toast.LENGTH_SHORT).show();
+                                    setUIEnabled(true);
+                                });
+                            }
+
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error loading updated bitmap: " + e.getMessage(), e);
+                            mainHandler.post(() -> {
+                                Toast.makeText(this, "Lỗi khi tải ảnh đã cập nhật: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                setUIEnabled(true);
+                            });
+                        }
+                    });
+                } else {
+                    Log.w(TAG, "Invalid updated image data or position");
+                    Toast.makeText(this, "Dữ liệu ảnh cập nhật không hợp lệ", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Log.d(TAG, "Image preview cancelled or no changes");
             }
         }
 
@@ -688,9 +738,26 @@ public class PDFGroupActivity extends AppCompatActivity implements
     //region OnImageActionListener implementations
     @Override
     public void onImageClick(int position) {
-        // Xử lý khi click vào ảnh, ví dụ: mở ảnh để xem chi tiết hoặc chỉnh sửa
-        Toast.makeText(this, "Clicked: " + imageList.get(position).getName(), Toast.LENGTH_SHORT).show();
-    }
+        if (position >= 0 && position < imageList.size()) {
+            // Lấy URI của ảnh từ danh sách
+            String imageUriString = imageList.get(position).getFilePath();
+
+            if (imageUriString != null) {
+                // Tạo Intent để mở ImagePreviewActivity
+                Intent previewIntent = new Intent(this, ImagePreviewActivity.class);
+
+                // Gắn URI ảnh, flag và vị trí vào Intent
+                previewIntent.putExtra("imageUri", imageUriString);
+                previewIntent.putExtra("FROM_PDF_GROUP_PREVIEW", true);
+                previewIntent.putExtra("imagePosition", position);
+
+                // Khởi chạy ImagePreviewActivity và chờ kết quả
+                startActivityForResult(previewIntent, REQUEST_IMAGE_PREVIEW);
+
+            } else {
+                Toast.makeText(this, "Không tìm thấy dữ liệu ảnh.", Toast.LENGTH_SHORT).show();
+            }
+        }}
 
     @Override
     public void onImageDelete(int position) {

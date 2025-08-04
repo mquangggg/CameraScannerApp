@@ -38,6 +38,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.camerascanner.R;
+import com.example.camerascanner.activitycamera.ImagePreviewActivity;
 import com.example.camerascanner.activitymain.MainActivity;
 import com.google.android.gms.tasks.Tasks;
 import com.google.mlkit.vision.common.InputImage;
@@ -523,8 +524,6 @@ public class OCRActivity extends AppCompatActivity {
      */
     private void setupEventListeners() {
         btnOCRBack.setOnClickListener(v -> {
-            Intent intent = new Intent(OCRActivity.this, MainActivity.class);
-            startActivity(intent);
             finish();
         });
 
@@ -544,7 +543,7 @@ public class OCRActivity extends AppCompatActivity {
             saveOcrImageToFile(originalImageBitmap, commonTimestamp);
 
             mainHandler.postDelayed(() -> {
-                Intent intent = new Intent(OCRActivity.this, MainActivity.class);
+                Intent intent = new Intent(OCRActivity.this, ImagePreviewActivity.class);
                 startActivity(intent);
                 finish();
             }, 500);

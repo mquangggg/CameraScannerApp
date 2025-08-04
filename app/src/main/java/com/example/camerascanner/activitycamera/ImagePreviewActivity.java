@@ -18,6 +18,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.Rotate; // Import để xoay ảnh với Glide
 import com.bumptech.glide.request.RequestOptions; // Import RequestOptions
 import com.example.camerascanner.R;
+import com.example.camerascanner.activitypdf.pdfgroup.PDFGroupActivity;
 import com.example.camerascanner.activitysignature.SignatureActivity;
 import com.example.camerascanner.activitycrop.CropActivity;
 import com.example.camerascanner.activityocr.OCRActivity;
@@ -31,18 +32,17 @@ public class ImagePreviewActivity extends AppCompatActivity {
 
     private static final String TAG = "ImagePreviewActivity"; // Thêm TAG cho logging
     private ImageView imageViewPreview;
-    private Button btnRotatePreview,btnSign,btnReTake,btnMakeOcr;
+    private Button btnRotatePreview,btnSign,btnGenPDF,btnMakeOcr;
     private Button btnConfirmPreview;
     private Uri imageUri;
     private int rotationAngle = 0; // Để theo dõi góc xoay hiện tại
 
     private static final int REQUEST_SIGNATURE = 102;
+    private static final int REQUEST_PDF_GEN_PREVIEW = 103; // Thêm dòng này
 
-    // Chúng ta sẽ cần một REQUEST_CODE mới để gọi PdfGenerationAndPreviewActivity
-    private static final int REQUEST_PDF_GENERATION_PREVIEW = 1003;
 
-    private boolean isFromPdfGroup = false;
-    private int originalRequestCode = -1;
+    private boolean isFromPdfGroupPreview = false;
+    private int imagePosition = -1;
 
 
     @Override
@@ -55,14 +55,13 @@ public class ImagePreviewActivity extends AppCompatActivity {
         btnConfirmPreview = findViewById(R.id.btnConfirmPreview);
         btnSign = findViewById(R.id.btnSign);
         btnMakeOcr = findViewById(R.id.btnMakeOcr);
-        btnReTake = findViewById(R.id.btnRetake);
+        btnGenPDF = findViewById(R.id.btnGenPDF);
 
         Intent intents = getIntent();
         if (intents != null) {
-            isFromPdfGroup = intents.getBooleanExtra("FROM_PDF_GROUP", false);
-            originalRequestCode = intents.getIntExtra("ORIGINAL_REQUEST_CODE", -1);
-            Log.d(TAG, "ImagePreviewActivity: isFromPdfGroup=" + isFromPdfGroup + ", requestCode=" + originalRequestCode);
-        }
+            isFromPdfGroupPreview = intents.getBooleanExtra("FROM_PDF_GROUP_PREVIEW", false);
+            imagePosition = intents.getIntExtra("imagePosition", -1);
+           }
 
         String imageUriString = getIntent().getStringExtra("imageUri");
         if (imageUriString != null) {
@@ -86,20 +85,13 @@ public class ImagePreviewActivity extends AppCompatActivity {
             Uri tempUri = saveBitmapToCache(rotatedBitmap);
 
             if (tempUri != null) {
-                Intent pdfIntent = new Intent(ImagePreviewActivity.this, PdfGenerationAndPreviewActivity.class);
-                pdfIntent.putExtra("croppedUri", tempUri.toString()); // Truyền Uri của ảnh đã xử lý
-
-                // RẤT QUAN TRỌNG: Truyền các cờ xác định luồng sang Activity tiếp theo
-                pdfIntent.putExtra("FROM_PDF_GROUP", isFromPdfGroup);
-                pdfIntent.putExtra("ORIGINAL_REQUEST_CODE", originalRequestCode); // Dù có thể không dùng, vẫn nên truyền
-                Log.d(TAG, "ImagePreviewActivity -> PdfGenerationAndPreviewActivity: FROM_PDF_GROUP=" +
-                        isFromPdfGroup + ", originalRequestCode=" + originalRequestCode);
-
-                // Gọi PdfGenerationAndPreviewActivity bằng startActivityForResult
-                // Để nó có thể trả kết quả về ImagePreviewActivity,
-                // và ImagePreviewActivity có thể trả về tiếp cho CropActivity/CameraActivity/PDFGroupActivity
-                startActivityForResult(pdfIntent, REQUEST_PDF_GENERATION_PREVIEW);
-                Log.d(TAG, "ImagePreviewActivity: Confirmed image, starting PdfGenerationAndPreviewActivity.");
+                // Trả kết quả về PDFGroupActivity
+                    Intent resultIntent = new Intent();
+                    resultIntent.putExtra("updatedImageUri", tempUri.toString());
+                    resultIntent.putExtra("imagePosition", imagePosition);
+                    setResult(RESULT_OK, resultIntent);
+                    finish();
+                    Log.d(TAG, "ImagePreviewActivity: Returning updated image to PDFGroupActivity at position " + imagePosition);
             } else {
                 Toast.makeText(this, "Không thể lưu ảnh đã xử lý.", Toast.LENGTH_SHORT).show();
                 setResult(RESULT_CANCELED); // Đặt kết quả là hủy nếu không lưu được
@@ -134,7 +126,18 @@ public class ImagePreviewActivity extends AppCompatActivity {
                 Toast.makeText(ImagePreviewActivity.this, "Không có ảnh để xử lý OCR.", Toast.LENGTH_SHORT).show();
             }
         });
-        btnReTake.setOnClickListener(v-> finish());
+        btnGenPDF.setOnClickListener(v-> {
+            Bitmap rotatedBitmap = ((BitmapDrawable)imageViewPreview.getDrawable()).getBitmap();
+            Uri tempUri = saveBitmapToCache(rotatedBitmap);
+
+            if (tempUri != null) {
+                Intent intent = new Intent(this, PdfGenerationAndPreviewActivity.class);
+                intent.putExtra("imageUri", tempUri.toString());
+                startActivityForResult(intent, REQUEST_PDF_GEN_PREVIEW);
+            } else {
+                Toast.makeText(this, "Không thể chuẩn bị ảnh để tạo PDF.", Toast.LENGTH_SHORT).show();
+            }
+        });
         btnSign.setOnClickListener(v->{
             Bitmap rotatedBitmap = ((BitmapDrawable)imageViewPreview.getDrawable()).getBitmap();
             // Phương thức saveBitmapToCache() đã tồn tại trong ImagePreviewActivity.java
@@ -201,33 +204,21 @@ public class ImagePreviewActivity extends AppCompatActivity {
                     Toast.makeText(this, "Ảnh đã được ký và hợp nhất thành công.", Toast.LENGTH_SHORT).show();
                 }
             }
-        } // Xử lý kết quả trả về từ PdfGenerationAndPreviewActivity
-        else if (requestCode == REQUEST_PDF_GENERATION_PREVIEW) {
-            if (resultCode == RESULT_OK && data != null) {
-                // Đọc lại cờ và extra từ data nhận được
-                // và đặt nó vào một Intent mới để trả về
-                Intent resultIntent = new Intent();
-                resultIntent.putExtra("processedImageUri", data.getStringExtra("processedImageUri"));
-                // **Quan trọng:** Bạn cần đảm bảo cờ FROM_PDF_GROUP được chuyển tiếp
-                // Bạn có thể đọc nó từ Intent ban đầu của ImagePreviewActivity và thêm vào đây
-                boolean isFromPdfGroup = getIntent().getBooleanExtra("FROM_PDF_GROUP", false);
-                if (isFromPdfGroup) {
-                    resultIntent.putExtra("FROM_PDF_GROUP", true);
-                    setResult(RESULT_OK, resultIntent);
-                    finish();
-                }
-            } else {}
         }
-        else if (resultCode == RESULT_CANCELED) {
-            Log.d(TAG, "ImagePreviewActivity: Activity canceled from requestCode: " + requestCode);
-            // Nếu có Activity nào trong chuỗi này hủy (ví dụ CropActivity hủy),
-            // thì ImagePreviewActivity cũng nên hủy và truyền lại kết quả CANCELED
-            if (isFromPdfGroup) {
-                setResult(RESULT_CANCELED);
-                finish();
+        // Xử lý kết quả trả về từ PdfGenerationAndPreviewActivity
+        if (requestCode == REQUEST_PDF_GEN_PREVIEW && resultCode == RESULT_OK) {
+            if (data != null && data.hasExtra("processedImageUri")) {
+                String processedImageUriString = data.getStringExtra("processedImageUri");
+                Uri processedImageUri = Uri.parse(processedImageUriString);
+
+                // Cập nhật biến imageUri của ImagePreviewActivity với URI mới
+                this.imageUri = processedImageUri;
+
+                // Tải lại ảnh đã được xử lý vào ImageView
+                loadImageWithRotation();
+                Toast.makeText(this, "Ảnh đã được xử lý và cập nhật thành công.", Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "Received processed image URI from PDF Generation: " + processedImageUri.toString());
             }
-
-
         }
     }
 }

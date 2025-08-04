@@ -75,11 +75,6 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pdf_generation_and_preview);
         Intent intent = getIntent();
-        if (intent != null) {
-            isFromPdfGroup = intent.getBooleanExtra("FROM_PDF_GROUP", false);
-            originalRequestCode = intent.getIntExtra("ORIGINAL_REQUEST_CODE", -1);
-            Log.d(TAG, "PdfGeneratorAndPreviewActivity: isFromPdfGroup=" + isFromPdfGroup + ", requestCode=" + originalRequestCode);
-        }
 
         initializeComponents();
         initializeHelpers();
@@ -219,8 +214,8 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
 
         if (extras != null) {
             // Trường hợp từ ImagePreviewActivity (croppedUri)
-            if (extras.containsKey("croppedUri")) {
-                String uriString = getIntent().getStringExtra("croppedUri"); // <-- Lấy dưới dạng String
+            if (extras.containsKey("imageUri")) {
+                String uriString = getIntent().getStringExtra("imageUri"); // <-- Lấy dưới dạng String
                 if (uriString != null) {
                     imageUri = Uri.parse(uriString); // <-- Phân tích cú pháp thành Uri
                     Log.d(TAG, "Received croppedUri: " + imageUri);
@@ -229,13 +224,6 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                 }
             }
             // Trường hợp khác có thể sử dụng tham số khác
-            else if (extras.containsKey("processedImageUri")) {
-                String uriString = extras.getString("processedImageUri");
-                if (uriString != null) {
-                    imageUri = Uri.parse(uriString);
-                    Log.d(TAG, "Received processedImageUri: " + imageUri);
-                }
-            }
         }
 
         if (imageUri != null) {
@@ -324,43 +312,22 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
             fos.close();
 
             // Bước 2: Lấy Uri từ file tạm thời bằng FileProvider
-            // Đảm bảo FileProvider đã được cấu hình đúng trong AndroidManifest.xml và res/xml/file_paths.xml
             Uri tempImageUri = FileProvider.getUriForFile(this, getPackageName() + ".provider", tempImageFile);
 
-            // Bước 3: Quyết định cách chuyển ảnh đến PDFGroupActivity dựa trên isFromPdfGroup
-            if (isFromPdfGroup) {
-                // LUỒNG: THÊM ẢNH VÀO NHÓM PDF (được gọi từ chuỗi startActivityForResult)
-                // Mục tiêu: Trả lại URI của ảnh đã xử lý về cho Activity đã gọi
-                Log.d(TAG, "Returning result to previous Activity (PDF Group) with Uri: " + tempImageUri.toString());
+            // Bước 3: Trả kết quả về cho Activity đã gọi (ImagePreviewActivity)
+            Log.d(TAG, "Returning result to previous Activity (ImagePreview) with Uri: " + tempImageUri.toString());
 
-                Intent resultIntent = new Intent();
-                resultIntent.putExtra("processedImageUri", tempImageUri.toString());
-                resultIntent.putExtra("pdfStyle", currentPdfStyle.name());
-                if (imageUriToConvert != null) {
-                    resultIntent.putExtra("originalImageUri", imageUriToConvert.toString());
-                }
-                resultIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); // Cấp quyền đọc tạm thời
-
-                setResult(RESULT_OK, resultIntent); // Đặt kết quả là OK
-                finish(); // Đóng PdfGenerationAndPreviewActivity
-
-            } else {
-                // Mục tiêu: Trực tiếp mở PDFGroupActivity và truyền ảnh sang đó
-                Log.d(TAG, "Starting PDFGroupActivity for single image with Uri: " + tempImageUri.toString());
-
-                Intent intentToPdfGroup = new Intent(this, PDFGroupActivity.class);
-                intentToPdfGroup.putExtra("processedImageUri", tempImageUri.toString()); // Chuyển Uri thành String
-                intentToPdfGroup.putExtra("pdfStyle", currentPdfStyle.name());
-                // Cần truyền một cờ để PDFGroupActivity biết đây là ảnh đơn lẻ
-                intentToPdfGroup.putExtra("IS_SINGLE_IMAGE_FLOW", true);
-                if (imageUriToConvert != null) {
-                    intentToPdfGroup.putExtra("originalImageUri", imageUriToConvert.toString());
-                }
-                intentToPdfGroup.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); // Rất quan trọng: Cấp quyền đọc tạm thời
-
-                startActivity(intentToPdfGroup);
-                finish(); // Đóng PdfGenerationAndPreviewActivity
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("processedImageUri", tempImageUri.toString());
+            resultIntent.putExtra("pdfStyle", currentPdfStyle.name());
+            if (imageUriToConvert != null) {
+                resultIntent.putExtra("originalImageUri", imageUriToConvert.toString());
             }
+            resultIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); // Cấp quyền đọc tạm thời
+
+            setResult(RESULT_OK, resultIntent); // Đặt kết quả là OK
+            finish(); // Đóng PdfGenerationAndPreviewActivity
+
         } catch (IOException e) {
             Log.e(TAG, "Lỗi I/O khi lưu ảnh tạm thời: " + e.getMessage(), e);
             Toast.makeText(this, "Lỗi khi lưu ảnh tạm thời: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -475,9 +442,6 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
     public void onBackPressed() {
         // Tạo Intent để quay lại Activity trước đó
         super.onBackPressed();
-        Intent intent = new Intent(this, ImagePreviewActivity.class);
-        startActivity(intent);
-        finish(); // Đóng Activity hiện tại
     }
     /**
      * Giải phóng tài nguyên khi Activity bị hủy.
