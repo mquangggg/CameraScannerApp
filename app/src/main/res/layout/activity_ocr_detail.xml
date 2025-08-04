@@ -16,6 +16,7 @@
         android:textSize="24sp"
         android:textStyle="bold"
         android:padding="16dp"
+        android:background="@color/green_accent"
         android:gravity="center"/>
 
     <ScrollView

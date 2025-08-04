@@ -229,13 +229,14 @@ public class CropActivity extends AppCompatActivity {
                 boolean isFromPdfGroup = getIntent().getBooleanExtra("FROM_PDF_GROUP", false);
                 if (isFromPdfGroup) {
                     resultIntent.putExtra("FROM_PDF_GROUP", true);
+                    setResult(RESULT_OK, resultIntent);
+                    finish();
                 }
-
-                setResult(RESULT_OK, resultIntent);
-                finish();
             } else if (resultCode == RESULT_CANCELED) {
-                setResult(RESULT_CANCELED, data);
-                finish();
+                if (isFromPdfGroup) {
+                    setResult(RESULT_CANCELED, data);
+                    finish();
+                }
             }
         }
     }

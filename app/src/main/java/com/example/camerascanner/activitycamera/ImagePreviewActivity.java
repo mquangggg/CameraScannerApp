@@ -213,19 +213,20 @@ public class ImagePreviewActivity extends AppCompatActivity {
                 boolean isFromPdfGroup = getIntent().getBooleanExtra("FROM_PDF_GROUP", false);
                 if (isFromPdfGroup) {
                     resultIntent.putExtra("FROM_PDF_GROUP", true);
+                    setResult(RESULT_OK, resultIntent);
+                    finish();
                 }
-                setResult(RESULT_OK, resultIntent);
-            } else {
-                setResult(resultCode, data);
-            }
-            finish();
+            } else {}
         }
         else if (resultCode == RESULT_CANCELED) {
             Log.d(TAG, "ImagePreviewActivity: Activity canceled from requestCode: " + requestCode);
             // Nếu có Activity nào trong chuỗi này hủy (ví dụ CropActivity hủy),
             // thì ImagePreviewActivity cũng nên hủy và truyền lại kết quả CANCELED
-            setResult(RESULT_CANCELED);
-            finish();
+            if (isFromPdfGroup) {
+                setResult(RESULT_CANCELED);
+                finish();
+            }
+
 
         }
     }

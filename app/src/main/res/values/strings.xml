@@ -5,7 +5,7 @@
     <string name="first_fragment_label">First Fragment</string>
     <string name="second_fragment_label">Second Fragment</string>
     <string name="next">Next</string>
-    <string name="previous">Previous</string>
+    <string name="previous" translatable="false">Previous</string>
     <!-- Main -->
     <string name="camera_not_ready">Camera chưa sẵn sàng.</string>
     <string name="photo_captured_saved">Ảnh đã chụp và lưu.</string>
@@ -14,7 +14,7 @@
     <string name="failed_to_get_image_from_gallery">Không thể lấy ảnh từ thư viện.</string>
     <string name="please_select_capture_image_first">Vui lòng chọn hoặc chụp ảnh trước!</string>
     <string name="failed_to_load_image_for_rotation">Không thể tải ảnh để xoay.</string>
-    <string name="error_rotating_image">Lỗi khi xoay ảnh!</string>
+    <string name="error_rotating_image" translatable="false">Lỗi khi xoay ảnh!</string>
     <string name="image_rotation_successful">Ảnh đã xoay 90 độ.</string>
     <string name="no_cropped_image_received">Không nhận được ảnh đã cắt từ CropActivity!</string>
     <string name="crop_activity_no_data">Kết quả cắt ảnh từ CropActivity không có dữ liệu.</string>

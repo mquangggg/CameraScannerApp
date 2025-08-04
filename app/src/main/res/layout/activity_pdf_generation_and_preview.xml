@@ -15,7 +15,7 @@
         android:gravity="center"
         android:padding="16dp"
         android:textColor="@android:color/white"
-        android:background="#3f3f3ff3"/>
+        android:background="@color/green_accent"/>
 
     <TextView
         android:id="@+id/tvPdfPreviewStatus"

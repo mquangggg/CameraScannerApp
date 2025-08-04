@@ -38,76 +38,6 @@ public class PdfGenerator {
     }
 
     /**
-     * Tạo một tài liệu PDF từ một đối tượng Bitmap và lưu nó với tên file đã cho.
-     * Phương thức này sẽ tạo một trang PDF, vẽ Bitmap lên trang đó,
-     * sau đó lưu tài liệu PDF vào bộ nhớ thiết bị.
-     *
-     * @param bitmap Đối tượng Bitmap cần chuyển đổi thành PDF. Không được phép là null.
-     * @param fileName Tên của file PDF sẽ được lưu.
-     * @return Uri của file PDF đã được lưu.
-     * @throws IOException Nếu có lỗi xảy ra trong quá trình tạo hoặc lưu file PDF.
-     * @throws IllegalArgumentException Nếu bitmap được cung cấp là null.
-     */
-    public Uri createPdf(Bitmap bitmap, String fileName) throws IOException {
-        // Kiểm tra nếu Bitmap là null, ném ngoại lệ để tránh lỗi.
-        if (bitmap == null) {
-            throw new IllegalArgumentException("Bitmap không thể null");
-        }
-
-        // Khởi tạo một tài liệu PDF mới.
-        PdfDocument document = new PdfDocument();
-        // Định nghĩa thông tin trang PDF (chiều rộng, chiều cao, số trang).
-        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(PAGE_WIDTH, PAGE_HEIGHT, 1).create();
-        // Bắt đầu một trang mới trong tài liệu PDF.
-        PdfDocument.Page page = document.startPage(pageInfo);
-
-        // Lấy đối tượng Canvas của trang để vẽ lên đó.
-        Canvas canvas = page.getCanvas();
-        // Vẽ Bitmap lên Canvas của trang PDF, điều chỉnh kích thước và vị trí.
-        drawBitmapOnCanvas(canvas, bitmap);
-        // Kết thúc trang hiện tại.
-        document.finishPage(page);
-
-        // Lưu tài liệu PDF đã tạo vào bộ nhớ và lấy Uri của file đã lưu.
-        Uri pdfUri = savePdfToStorage(document, fileName);
-        // Đóng tài liệu PDF để giải phóng tài nguyên.
-        document.close();
-
-        // Trả về Uri của file PDF đã lưu.
-        return pdfUri;
-    }
-
-    /**
-     * Vẽ một Bitmap lên Canvas của trang PDF, tự động điều chỉnh kích thước
-     * và căn giữa Bitmap để phù hợp với kích thước trang.
-     *
-     * @param canvas Canvas của trang PDF để vẽ Bitmap lên.
-     * @param bitmap Bitmap cần vẽ.
-     */
-    private void drawBitmapOnCanvas(Canvas canvas, Bitmap bitmap) {
-        // Tính toán tỷ lệ co giãn theo chiều rộng để Bitmap vừa với trang.
-        float scaleX = (float) PAGE_WIDTH / bitmap.getWidth();
-        // Tính toán tỷ lệ co giãn theo chiều cao để Bitmap vừa với trang.
-        float scaleY = (float) PAGE_HEIGHT / bitmap.getHeight();
-        // Chọn tỷ lệ co giãn nhỏ hơn để đảm bảo toàn bộ Bitmap vừa với trang mà không bị cắt.
-        float scale = Math.min(scaleX, scaleY);
-
-        // Tính toán vị trí X để căn giữa Bitmap theo chiều ngang.
-        float left = (PAGE_WIDTH - bitmap.getWidth() * scale) / 2;
-        // Tính toán vị trí Y để căn giữa Bitmap theo chiều dọc.
-        float top = (PAGE_HEIGHT - bitmap.getHeight() * scale) / 2;
-
-        // Vẽ Bitmap lên Canvas.
-        // Tham số thứ hai (null) là Rect nguồn (toàn bộ Bitmap).
-        // Tham số thứ ba là Rect đích, xác định vị trí và kích thước của Bitmap trên Canvas.
-        // Tham số thứ tư (null) là Paint (không cần thiết cho việc vẽ cơ bản).
-        canvas.drawBitmap(bitmap, null,
-                new android.graphics.RectF(left, top, // Góc trên bên trái của Rect đích.
-                        left + bitmap.getWidth() * scale, // Góc dưới bên phải của Rect đích (chiều rộng).
-                        top + bitmap.getHeight() * scale), null); // Góc dưới bên phải của Rect đích (chiều cao).
-    }
-
-    /**
      * Lưu tài liệu PDF vào bộ nhớ thiết bị.
      * Phương thức này xử lý việc lưu file khác nhau tùy thuộc vào phiên bản Android:
      * - Android Q (API 29) trở lên: Sử dụng MediaStore để lưu vào thư mục Downloads/MyPDFImages.
@@ -163,77 +93,184 @@ public class PdfGenerator {
         }
     }
     /**
-     * Tạo PDF multi-page từ danh sách bitmap
+     * Tạo PDF multi-page từ danh sách bitmap - mỗi ảnh một trang
+     * Ảnh được hiển thị theo style danh sách đơn (chiếm toàn bộ chiều rộng)
      * @param bitmaps Danh sách bitmap để tạo PDF
      * @param fileName Tên file PDF (ví dụ: "my_document.pdf")
      * @return Uri của PDF được tạo
      * @throws Exception nếu có lỗi trong quá trình tạo PDF
      */
     public Uri createMultiPagePdf(List<Bitmap> bitmaps, String fileName) throws Exception {
-        if (bitmaps == null || bitmaps.isEmpty()) {
-            throw new Exception("Danh sách ảnh trống");
-        }
-
-        String pdfFileName = fileName.endsWith(".pdf") ? fileName : fileName + ".pdf";
-
-        try {
-            // Tạo thư mục tùy chỉnh MyPDFImages bên trong thư mục files của ứng dụng
-            // Tạo PdfDocument
-            PdfDocument pdfDocument = new PdfDocument();
-
-            for (int i = 0; i < bitmaps.size(); i++) {
-                // ...
-                Bitmap bitmap = bitmaps.get(i);
-                // ...
-
-                int pageWidth = bitmap.getWidth();
-                int pageHeight = bitmap.getHeight();
-                boolean isLandscape = pageWidth > pageHeight;
-
-                if (isLandscape) {
-                    // Nếu ảnh là ảnh ngang, hoán đổi chiều rộng và chiều cao của trang
-                    pageWidth = bitmap.getHeight();
-                    pageHeight = bitmap.getWidth();
-                }
-
-                PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, i + 1).create();
-                PdfDocument.Page page = pdfDocument.startPage(pageInfo);
-                Canvas canvas = page.getCanvas();
-
-                if (isLandscape) {
-                    // Xoay canvas 90 độ
-                    canvas.rotate(90, 0, 0);
-                    // Sau khi xoay, bạn cần tịnh tiến canvas để ảnh không bị vẽ ra ngoài
-                    canvas.translate(0, -pageWidth);
-                    // Cần đảm bảo hình ảnh được vẽ đúng cách trên trang đã xoay
-                    canvas.drawBitmap(bitmap, 0, 0, null);
-                } else {
-                    canvas.drawBitmap(bitmap, 0, 0, null);
-                }
-
-                pdfDocument.finishPage(page);
+                if (bitmaps == null || bitmaps.isEmpty()) {
+                throw new Exception("Danh sách ảnh trống");
             }
-            Uri pdfUri = savePdfToStorage(pdfDocument, pdfFileName);
 
-           return pdfUri;
+            String pdfFileName = fileName.endsWith(".pdf") ? fileName : fileName + ".pdf";
 
-        } catch (IOException e) {
-            Log.e(TAG, "Lỗi khi tạo PDF: " + e.getMessage(), e);
-            throw new Exception("Không thể tạo file PDF: " + e.getMessage(), e);
-        } catch (Exception e) {
-            Log.e(TAG, "Lỗi không xác định khi tạo PDF: " + e.getMessage(), e);
-            throw e;
+            try {
+                // Tạo PdfDocument
+                PdfDocument pdfDocument = new PdfDocument();
+
+                // Tạo từng trang PDF cho mỗi ảnh với kích thước động
+                for (int i = 0; i < bitmaps.size(); i++) {
+                    Bitmap bitmap = bitmaps.get(i);
+                    if (bitmap == null || bitmap.isRecycled()) {
+                        Log.w(TAG, "Bỏ qua bitmap null hoặc đã được recycle tại vị trí: " + i);
+                        continue;
+                    }
+
+                    // Tính toán chiều cao page dựa trên tỷ lệ ảnh
+                    int pageHeight = calculatePageHeight(bitmap);
+
+                    // Tạo trang PDF với kích thước động
+                    PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(PAGE_WIDTH, pageHeight, i + 1).create();
+                    PdfDocument.Page page = pdfDocument.startPage(pageInfo);
+                    Canvas canvas = page.getCanvas();
+
+                    // Vẽ ảnh fill full page
+                    drawBitmapFullPage(canvas, bitmap, pageHeight);
+
+                    pdfDocument.finishPage(page);
+
+                    Log.d(TAG, String.format("Tạo page %d với kích thước %dx%d cho ảnh %dx%d",
+                            i + 1, PAGE_WIDTH, pageHeight, bitmap.getWidth(), bitmap.getHeight()));
+                }
+
+                Uri pdfUri = savePdfToStorage(pdfDocument, pdfFileName);
+                pdfDocument.close();
+
+                return pdfUri;
+
+            } catch (IOException e) {
+                Log.e(TAG, "Lỗi khi tạo PDF: " + e.getMessage(), e);
+                throw new Exception("Không thể tạo file PDF: " + e.getMessage(), e);
+            } catch (Exception e) {
+                Log.e(TAG, "Lỗi không xác định khi tạo PDF: " + e.getMessage(), e);
+                throw e;
+            }
         }
-    }
+
+/**
+ * Tính toán chiều cao page dựa trên tỷ lệ ảnh và chiều rộng page cố định
+ * @param bitmap Bitmap để tính toán
+ * @return Chiều cao page phù hợp
+ */
+        private int calculatePageHeight(Bitmap bitmap) {
+            if (bitmap == null || bitmap.isRecycled()) {
+                return PAGE_HEIGHT; // Trả về chiều cao mặc định nếu bitmap không hợp lệ
+            }
+
+            final int MARGIN = 20; // Margin cho 4 cạnh
+            final int USABLE_PAGE_WIDTH = PAGE_WIDTH - (2 * MARGIN);
+
+            int bitmapWidth = bitmap.getWidth();
+            int bitmapHeight = bitmap.getHeight();
+
+            // Tính tỷ lệ để ảnh vừa với chiều rộng page
+            float scale = (float) USABLE_PAGE_WIDTH / bitmapWidth;
+
+            // Tính chiều cao ảnh sau khi scale
+            int scaledImageHeight = Math.round(bitmapHeight * scale);
+
+            // Chiều cao page = chiều cao ảnh đã scale + margin
+            int calculatedPageHeight = scaledImageHeight + (2 * MARGIN);
+
+            // Đảm bảo chiều cao page không quá nhỏ (tối thiểu 100 point)
+            return Math.max(calculatedPageHeight, 100);
+        }
+
+/**
+ * Vẽ bitmap fill full page với kích thước page đã được tính toán động
+ * @param canvas Canvas của trang PDF
+ * @param bitmap Bitmap cần vẽ
+ * @param pageHeight Chiều cao của page hiện tại
+ */
+        private void drawBitmapFullPage(Canvas canvas, Bitmap bitmap, int pageHeight) {
+            if (bitmap == null || bitmap.isRecycled()) {
+                Log.w(TAG, "Không thể vẽ bitmap null hoặc đã recycle");
+                return;
+            }
+
+            final int MARGIN = 20; // Margin cho 4 cạnh
+
+            // Vẽ ảnh từ margin đến margin, fill full vùng có thể sử dụng
+            android.graphics.RectF destRect = new android.graphics.RectF(
+                    MARGIN,                    // left
+                    MARGIN,                    // top
+                    PAGE_WIDTH - MARGIN,       // right
+                    pageHeight - MARGIN        // bottom
+            );
+
+            // Vẽ bitmap lên canvas với kích thước đã tính toán
+            canvas.drawBitmap(bitmap, null, destRect, null);
+
+            // Vẽ đường viền nhẹ xung quanh ảnh (tùy chọn)
+            android.graphics.Paint borderPaint = new android.graphics.Paint();
+            borderPaint.setColor(0xFFE0E0E0); // Màu xám nhạt
+            borderPaint.setStyle(android.graphics.Paint.Style.STROKE);
+            borderPaint.setStrokeWidth(1);
+            canvas.drawRect(destRect, borderPaint);
+
+            // Log thông tin để debug
+            Log.d(TAG, String.format("Vẽ ảnh %dx%d fill full page %dx%d",
+                    bitmap.getWidth(), bitmap.getHeight(), PAGE_WIDTH, pageHeight));
+        }
 
     /**
-     * Lưu file PDF vào MediaStore (dành cho Android Q trở lên).
-     * Phương thức này tạo một mục mới trong MediaStore cho file PDF
-     * và trả về Uri để ghi dữ liệu vào đó.
+     * Vẽ một Bitmap lên Canvas của trang PDF (phương thức cũ - backup)
+     * Căn giữa ảnh hoàn toàn trên trang
      *
-     * @param fileName Tên file PDF.
-     * @return Uri của mục MediaStore mới tạo, hoặc null nếu không thể tạo.
+     * @param canvas Canvas của trang PDF để vẽ Bitmap lên.
+     * @param bitmap Bitmap cần vẽ.
      */
+    private void drawBitmapOnCanvas(Canvas canvas, Bitmap bitmap) {
+        if (bitmap == null || bitmap.isRecycled()) {
+            Log.w(TAG, "Không thể vẽ bitmap null hoặc đã recycle");
+            return;
+        }
+
+        int bitmapWidth = bitmap.getWidth();
+        int bitmapHeight = bitmap.getHeight();
+
+        // Tính toán tỷ lệ co giãn để ảnh vừa với trang mà không bị méo
+        float scaleX = (float) PAGE_WIDTH / bitmapWidth;
+        float scaleY = (float) PAGE_HEIGHT / bitmapHeight;
+
+        // Chọn tỷ lệ nhỏ hơn để đảm bảo toàn bộ ảnh vừa với trang
+        float scale = Math.min(scaleX, scaleY);
+
+        // Tính toán kích thước mới sau khi scale
+        float scaledWidth = bitmapWidth * scale;
+        float scaledHeight = bitmapHeight * scale;
+
+        // Tính toán vị trí để căn giữa ảnh hoàn toàn
+        float left = (PAGE_WIDTH - scaledWidth) / 2;
+        float top = (PAGE_HEIGHT - scaledHeight) / 2;
+
+        // Tạo RectF đích để vẽ ảnh
+        android.graphics.RectF destRect = new android.graphics.RectF(
+                left,
+                top,
+                left + scaledWidth,
+                top + scaledHeight
+        );
+
+        // Vẽ bitmap lên canvas với kích thước và vị trí đã tính toán
+        canvas.drawBitmap(bitmap, null, destRect, null);
+
+        // Log thông tin để debug (có thể bỏ trong production)
+        Log.d(TAG, String.format("Vẽ ảnh %dx%d -> %.0fx%.0f tại (%.0f, %.0f) với scale %.2f",
+                bitmapWidth, bitmapHeight, scaledWidth, scaledHeight, left, top, scale));
+    }
+
+                /**
+                 * Lưu file PDF vào MediaStore (dành cho Android Q trở lên).
+                 * Phương thức này tạo một mục mới trong MediaStore cho file PDF
+                 * và trả về Uri để ghi dữ liệu vào đó.
+                 *
+                 * @param fileName Tên file PDF.
+                 * @return Uri của mục MediaStore mới tạo, hoặc null nếu không thể tạo.
+                 */
     private Uri saveToMediaStore(String fileName) {
         ContentResolver resolver = context.getContentResolver();
         ContentValues contentValues = new ContentValues();

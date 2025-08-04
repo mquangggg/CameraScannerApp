@@ -6,7 +6,7 @@
 
     <!-- Nền đen -->
     <path
-        android:fillColor="#000000"
+        android:fillColor="@color/green_accent"
         android:pathData="M0,0h960v960h-960z" />
 
     <!-- Mũi tên trắng -->

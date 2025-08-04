@@ -20,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
 import com.example.camerascanner.R;
+import com.example.camerascanner.activitycamera.ImagePreviewActivity;
 import com.example.camerascanner.activitymain.MainActivity;
 import com.example.camerascanner.activitypdf.Jpeg.JpegGenerator;
 import com.example.camerascanner.activitypdf.pdf.PdfFileManager;
@@ -372,102 +373,6 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
             finish();
         }
     }
-    /**
-     * Chuyển sang PDFGroupActivity với ảnh hiện tại
-     */
-    private void navigateToPDFGroupActivity() {
-        try {
-            // Bước 1: Lưu processedBitmap vào thư mục cache tạm thời
-            File cachePath = new File(getCacheDir(), "images");
-            cachePath.mkdirs(); // Tạo thư mục nếu nó chưa tồn tại
-            File tempImageFile = new File(cachePath, "temp_processed_image.png"); // Tên file tạm thời
-
-            FileOutputStream fos = new FileOutputStream(tempImageFile);
-            processedBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos); // Nén và lưu Bitmap
-            fos.close();
-
-            // Bước 2: Lấy Uri từ file tạm thời bằng FileProvider
-            // Đảm bảo FileProvider đã được cấu hình đúng trong AndroidManifest.xml và res/xml/file_paths.xml
-            Uri tempImageUri = FileProvider.getUriForFile(this, getPackageName() + ".provider", tempImageFile);
-
-            // ===== PHẦN MỚI: Kiểm tra nguồn gọi =====
-            if (isFromPdfGroup) {
-                // Nếu được gọi từ PDFGroupActivity, trả kết quả về thay vì tạo mới
-                Log.d(TAG, "Returning result to PDFGroupActivity with Uri: " + tempImageUri.toString());
-
-                Intent resultIntent = new Intent();
-                resultIntent.putExtra("processedImageUri", tempImageUri.toString());
-                resultIntent.putExtra("pdfStyle", currentPdfStyle.name());
-                if (imageUriToConvert != null) {
-                    resultIntent.putExtra("originalImageUri", imageUriToConvert.toString());
-                }
-
-                // Cấp quyền đọc tạm thời
-                resultIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                setResult(RESULT_OK, resultIntent);
-                finish();
-                return; // Quan trọng: return để không thực hiện code bên dưới
-            }
-
-            // Bước 3: Tạo Intent và truyền Uri thay vì byte array
-            Intent intent = new Intent(this, PDFGroupActivity.class);
-            intent.putExtra("processedImageUri", tempImageUri.toString()); // Chuyển Uri thành String
-            intent.putExtra("pdfStyle", currentPdfStyle.name());
-            if (imageUriToConvert != null) {
-                intent.putExtra("originalImageUri", imageUriToConvert.toString());
-            }
-
-            // Rất quan trọng: Cấp quyền đọc tạm thời cho Activity đích
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-            startActivity(intent);
-
-        } catch (IOException e) {
-            Log.e(TAG, "Lỗi I/O khi lưu ảnh tạm thời: " + e.getMessage(), e);
-            Toast.makeText(this, "Lỗi khi lưu ảnh tạm thời: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Log.e(TAG, "Lỗi khi chuyển sang PDFGroupActivity: " + e.getMessage(), e);
-            Toast.makeText(this, "Lỗi khi chuyển tiếp: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    /**
-     * Lưu PDF với tên file do người dùng nhập.
-     */
-    private void savePdfWithFileName(String fileName) {
-        if (PermissionHelper.hasStoragePermission(this)) {
-            performSavePdf(fileName);
-        } else {
-            PermissionHelper.requestStoragePermission(this);
-        }
-    }
-
-    /**
-     * Thực hiện lưu PDF ở background.
-     */
-    private void performSavePdf(String fileName) {
-        updateStatus(getString(R.string.status_generating_pdf));
-
-        executorService.execute(() -> {
-            try {
-                finalPdfUri = pdfGenerator.createPdf(processedBitmap, fileName);
-
-                mainHandler.post(() -> {
-                    Toast.makeText(this, "PDF đã được tạo thành công: " + fileName, Toast.LENGTH_LONG).show();
-                    updateStatus("PDF đã được lưu: " + fileName);
-                    navigateToMainActivity();
-                });
-
-            } catch (Exception e) {
-                Log.e(TAG, "Lỗi khi tạo PDF: " + e.getMessage(), e);
-                mainHandler.post(() -> {
-                    Toast.makeText(this, "Lỗi khi tạo PDF: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    updateStatus("Lỗi khi tạo PDF: " + e.getMessage());
-                });
-            }
-        });
-    }
 
     /**
      * Xử lý sự kiện lưu JPEG khi nhấn nút Save JPEG.
@@ -566,7 +471,14 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
             }
         }
     }
-
+    @Override
+    public void onBackPressed() {
+        // Tạo Intent để quay lại Activity trước đó
+        super.onBackPressed();
+        Intent intent = new Intent(this, ImagePreviewActivity.class);
+        startActivity(intent);
+        finish(); // Đóng Activity hiện tại
+    }
     /**
      * Giải phóng tài nguyên khi Activity bị hủy.
      */

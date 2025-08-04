@@ -15,13 +15,14 @@
         android:paddingStart="15dp"
         android:paddingEnd="15dp"
         android:paddingTop="10dp"
+        android:background="@color/green_accent"
         android:paddingBottom="10dp">
         <ImageButton
             android:id="@+id/btnOCRBack"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
+            android:background="@color/green_accent"
             android:src="@drawable/ic_back"
             android:padding="8dp"
             android:contentDescription="Quay lại"/>

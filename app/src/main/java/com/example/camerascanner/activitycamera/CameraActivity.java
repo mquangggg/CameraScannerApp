@@ -901,8 +901,10 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
                 // Xử lý khi người dùng hủy thao tác
                 Log.d(TAG, "Hoạt động xem trước ảnh đã bị hủy.");
                 // Trả kết quả hủy về Activity cha
-                setResult(RESULT_CANCELED);
-                finish();
+                if (isFromPdfGroup) {
+                    setResult(RESULT_CANCELED);
+                    finish();
+                }
             }
         }
     }
