@@ -69,7 +69,7 @@ public class ImagePreviewActivity extends AppCompatActivity {
             Log.d(TAG, "ImagePreviewActivity: Received URI: " + imageUri.toString()); // Log khi nhận URI
             loadImageWithRotation();
         } else {
-            Toast.makeText(this, "Không có ảnh để xem trước.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.no_image), Toast.LENGTH_SHORT).show();
             Log.e(TAG, "ImagePreviewActivity: No image URI received."); // Log lỗi nếu không nhận được URI
             finish();
         }
@@ -93,7 +93,7 @@ public class ImagePreviewActivity extends AppCompatActivity {
                     finish();
                     Log.d(TAG, "ImagePreviewActivity: Returning updated image to PDFGroupActivity at position " + imagePosition);
             } else {
-                Toast.makeText(this, "Không thể lưu ảnh đã xử lý.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.failed_to_save_image), Toast.LENGTH_SHORT).show();
                 setResult(RESULT_CANCELED); // Đặt kết quả là hủy nếu không lưu được
                 finish();
                 Log.e(TAG, "ImagePreviewActivity: Failed to save bitmap for confirmation.");
@@ -120,10 +120,10 @@ public class ImagePreviewActivity extends AppCompatActivity {
                     startActivity(intent);
                 } else {
                     // Xử lý lỗi nếu không lưu được ảnh tạm thời
-                    Toast.makeText(ImagePreviewActivity.this, "Không thể chuẩn bị ảnh cho OCR.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ImagePreviewActivity.this, getString(R.string.no_image_to_ocr), Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(ImagePreviewActivity.this, "Không có ảnh để xử lý OCR.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ImagePreviewActivity.this, getString(R.string.no_image), Toast.LENGTH_SHORT).show();
             }
         });
         btnGenPDF.setOnClickListener(v-> {
@@ -135,7 +135,7 @@ public class ImagePreviewActivity extends AppCompatActivity {
                 intent.putExtra("imageUri", tempUri.toString());
                 startActivityForResult(intent, REQUEST_PDF_GEN_PREVIEW);
             } else {
-                Toast.makeText(this, "Không thể chuẩn bị ảnh để tạo PDF.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.no_image_to_pdf), Toast.LENGTH_SHORT).show();
             }
         });
         btnSign.setOnClickListener(v->{
@@ -201,7 +201,7 @@ public class ImagePreviewActivity extends AppCompatActivity {
                     Log.d(TAG, "ImagePreviewActivity: Received merged image URI: " + mergedImageUri.toString());
                     this.imageUri = mergedImageUri;
                     loadImageWithRotation();
-                    Toast.makeText(this, "Ảnh đã được ký và hợp nhất thành công.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.image_sign), Toast.LENGTH_SHORT).show();
                 }
             }
         }
@@ -216,7 +216,7 @@ public class ImagePreviewActivity extends AppCompatActivity {
 
                 // Tải lại ảnh đã được xử lý vào ImageView
                 loadImageWithRotation();
-                Toast.makeText(this, "Ảnh đã được xử lý và cập nhật thành công.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.image_pdf_success), Toast.LENGTH_SHORT).show();
                 Log.d(TAG, "Received processed image URI from PDF Generation: " + processedImageUri.toString());
             }
         }

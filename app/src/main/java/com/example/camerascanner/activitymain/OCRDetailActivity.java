@@ -75,7 +75,7 @@ public class OCRDetailActivity extends AppCompatActivity {
             loadOcrContent(imageUri, textUri);
         } else {
             // Thông báo lỗi và đóng Activity nếu một trong hai URI bị thiếu
-            Toast.makeText(this, "Không thể tải chi tiết OCR: URI bị thiếu.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.error_load_ocr_uri_missing), Toast.LENGTH_SHORT).show();
             finish(); // Đóng Activity
         }
 
@@ -97,7 +97,7 @@ public class OCRDetailActivity extends AppCompatActivity {
         // Thực thi tác vụ tải trên luồng nền do ExecutorService quản lý
         executorService.execute(() -> {
             Bitmap imageBitmap = null; // Biến để lưu Bitmap của ảnh
-            String textContent = "Không thể tải văn bản."; // Biến để lưu nội dung văn bản, với giá trị mặc định lỗi
+            String textContent = getString(R.string.error_load_text); // Biến để lưu nội dung văn bản, với giá trị mặc định lỗi
 
             // 1. Tải ảnh từ URI
             try (InputStream is = getContentResolver().openInputStream(imageUri)) {
@@ -132,7 +132,7 @@ public class OCRDetailActivity extends AppCompatActivity {
                 if (finalImageBitmap != null) {
                     ivDetailImage.setImageBitmap(finalImageBitmap); // Hiển thị ảnh
                 } else {
-                    Toast.makeText(OCRDetailActivity.this, "Không thể hiển thị ảnh.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(OCRDetailActivity.this, getString(R.string.error_display_image), Toast.LENGTH_SHORT).show();
                 }
                 etDetailText.setText(finalTextContent); // Hiển thị văn bản
             });
@@ -147,7 +147,7 @@ public class OCRDetailActivity extends AppCompatActivity {
         // Lấy văn bản từ EditText và loại bỏ khoảng trắng thừa ở đầu/cuối
         String textToCopy = etDetailText.getText().toString().trim();
         if (textToCopy.isEmpty()) {
-            Toast.makeText(this, "Không có văn bản để sao chép", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.no_text_to_copy), Toast.LENGTH_LONG).show();
             return; // Thoát nếu không có văn bản
         }
 
@@ -157,9 +157,9 @@ public class OCRDetailActivity extends AppCompatActivity {
         ClipData clip = ClipData.newPlainText("Văn bản OCR", textToCopy);
         if (clipboard != null) {
             clipboard.setPrimaryClip(clip); // Đặt ClipData vào clipboard
-            Toast.makeText(this, "Đã sao chép văn bản vào bộ nhớ tạm!", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.text_copied_to_clipboard), Toast.LENGTH_LONG).show();
         } else {
-            Toast.makeText(this, "Không thể sao chép văn bản!", Toast.LENGTH_LONG).show();
+            Toast.makeText(this,getString(R.string.error_copy_text) , Toast.LENGTH_LONG).show();
         }
     }
 

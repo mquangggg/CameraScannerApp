@@ -125,7 +125,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
     private void setupRadioGroupListener() {
         rgPdfStyle.setOnCheckedChangeListener((group, checkedId) -> {
             if (croppedBitmap == null) {
-                Toast.makeText(this, "Không có ảnh để áp dụng kiểu.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.no_image), Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -135,7 +135,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                     processedBitmap = croppedBitmap;
                     currentPdfStyle = PdfStyle.ORIGINAL;
                     updatePreview();
-                    Toast.makeText(this, "Chế độ Gốc được chọn", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.original_mode_selected), Toast.LENGTH_SHORT).show();
                 }
             } else if (checkedId == R.id.rbBlackWhite) {
                 // Chỉ thay đổi nếu đang không ở chế độ Black & White
@@ -147,7 +147,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                         processedBitmap = blackWhiteBitmap;
                         currentPdfStyle = PdfStyle.BLACK_WHITE;
                         updatePreview();
-                        Toast.makeText(this, "Chế độ Trắng đen được chọn", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.bw_mode_selected), Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -158,7 +158,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
      * Tạo bitmap trắng đen bất đồng bộ và cache lại
      */
     private void createBlackWhiteBitmapAsync() {
-        updateStatus("Đang xử lý ảnh trắng đen...");
+        updateStatus(getString(R.string.processing_bw_image));
 
         executorService.execute(() -> {
             try {
@@ -176,10 +176,10 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                         processedBitmap = blackWhiteBitmap;
                         currentPdfStyle = PdfStyle.BLACK_WHITE;
                         updatePreview();
-                        updateStatus("Ảnh trắng đen đã sẵn sàng.");
-                        Toast.makeText(this, "Chế độ Trắng đen được chọn", Toast.LENGTH_SHORT).show();
+                        updateStatus(getString(R.string.bw_image_ready));
+                        Toast.makeText(this, getString(R.string.bw_mode_selected), Toast.LENGTH_SHORT).show();
                     } else {
-                        Toast.makeText(this, "Lỗi khi tạo ảnh trắng đen", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.error_creating_bw_image), Toast.LENGTH_SHORT).show();
                         rbOriginal.setChecked(true);
                     }
                 });
@@ -250,7 +250,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                         processedBitmap = croppedBitmap;
 
                         updatePreview();
-                        updateStatus("Ảnh đã sẵn sàng để tạo PDF.");
+                        updateStatus(getString(R.string.image_ready_for_pdf));
                     } else {
                         handleError("Không thể tải ảnh: Bitmap rỗng.");
                     }
@@ -269,7 +269,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
     private void updatePreview() {
         if (processedBitmap != null) {
             ivPdfPreview.setImageBitmap(processedBitmap);
-            updateStatus("Đã cập nhật bản xem trước.");
+            updateStatus(getString(R.string.preview_updated));
         }
     }
 
@@ -330,12 +330,10 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
 
         } catch (IOException e) {
             Log.e(TAG, "Lỗi I/O khi lưu ảnh tạm thời: " + e.getMessage(), e);
-            Toast.makeText(this, "Lỗi khi lưu ảnh tạm thời: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            setResult(RESULT_CANCELED); // Báo lỗi nếu lưu ảnh tạm thất bại
+              setResult(RESULT_CANCELED); // Báo lỗi nếu lưu ảnh tạm thất bại
             finish();
         } catch (Exception e) {
             Log.e(TAG, "Lỗi khi xử lý hoặc chuyển tiếp ảnh: " + e.getMessage(), e);
-            Toast.makeText(this, "Lỗi xử lý ảnh: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             setResult(RESULT_CANCELED); // Báo lỗi nếu có lỗi khác
             finish();
         }
@@ -348,7 +346,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
         if (processedBitmap != null) {
             DialogHelper.showJpegFileNameDialog(this, this::saveJpegWithFileName);
         } else {
-            Toast.makeText(this, "Không có ảnh để lưu JPEG.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.no_image_to_save_jpeg), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -374,8 +372,8 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                 Uri jpegUri = jpegGenerator.saveAsJpeg(processedBitmap, fileName);
 
                 mainHandler.post(() -> {
-                    Toast.makeText(this, "Ảnh JPEG đã được lưu thành công: " + fileName, Toast.LENGTH_LONG).show();
-                    updateStatus("Ảnh JPEG đã được lưu: " + fileName);
+                    Toast.makeText(this, getString(R.string.jpeg_saved_success) + fileName, Toast.LENGTH_LONG).show();
+                    updateStatus(getString(R.string.jpeg_saved_success) + fileName);
                     navigateToMainActivity();
                 });
 
@@ -431,9 +429,9 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
 
         if (requestCode == PermissionHelper.PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Quyền đã được cấp", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.permission_granted), Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(this, "Cần quyền để lưu file", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getString(R.string.permission_required_save_file), Toast.LENGTH_LONG).show();
                 updateStatus("Lỗi: Không có quyền lưu file");
             }
         }

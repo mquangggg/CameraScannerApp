@@ -12,7 +12,7 @@
         android:id="@+id/textViewCameraTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Camera Scanner"
+        android:text="@string/camera_scanner"
         android:gravity="center"
         android:textSize="24sp"
         android:textStyle="bold"
@@ -82,11 +82,11 @@
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Scan" />
+            android:text="@string/scan_camera" />
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Thẻ ID" />
+            android:text="@string/id_card" />
     </com.google.android.material.tabs.TabLayout>
 
 

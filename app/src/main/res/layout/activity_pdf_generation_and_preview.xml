@@ -42,7 +42,7 @@
             android:id="@+id/rbOriginal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Gốc"
+            android:text="@string/original"
             android:checked="true"
             android:layout_marginEnd="16dp"
             android:textColor="@color/white"/>
@@ -51,7 +51,7 @@
             android:id="@+id/rbBlackWhite"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Trắng đen"
+            android:text="@string/black_and_white"
             android:textColor="@color/white"/>
     </RadioGroup>
 
@@ -89,7 +89,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Lưu JPEG"
+            android:text="@string/save_JPG"
             android:background="@drawable/vuongbogoc"
             android:textColor="@color/white"
             android:layout_marginEnd="8dp"/>

@@ -5,6 +5,10 @@
     <string name="second_fragment_label">Second Fragment</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
+
+    <!-- Main -->
+
+    <!-- Activity -->
     <string name="camera_not_ready">Camera is not ready.</string>
     <string name="photo_captured_saved">Photo captured and saved.</string>
     <string name="failed_to_load_captured_image">Failed to load captured image.</string>
@@ -20,12 +24,38 @@
     <string name="crop_failed">Image cropping failed.</string>
     <string name="permission_denied_function_unavailable">%1$s denied. The app cannot perform this function.</string>
     <string name="back_to_camera_mode">Return to camera mode.</string>
+    <string name="PDF_recent">PDF recents</string>
+    <string name="OCR_recent">OCR recents</string>
+    <string name="tools">The Tools feature is coming soon!</string>
+    <string name="me">The Me feature is coming soon!</string>
+    <string name="camera_permission_is_required_to_use_the_scanner">Camera permission is required to use the scanner</string>
+    <string name="storage_permission_granted">Storage permission granted!</string>
+    <string name="storage_permission_granted_dinied">The app requires storage permission to display files.</string>
 
+
+    <!-- Layout -->
     <string name="take_photo">Take Photo</string>
     <string name="gallery">Gallery</string>
-    <string name="rotate">Rotate Image</string>
+    <string name="rotate">Rotate</string>
     <string name="confirm">Confirm</string>
+    <string name="find_recent">Search files</string>
+    <string name="scan">Scan now!</string>
+    <string name="recents">Recents</string>
+    <string name="home_main">Home</string>
+    <string name="tools_main">Tools</string>
+    <string name="me_main">Me</string>
 
+    <!-- CameraActivity -->
+    <!-- Activity -->
+    <string name="no_image">Failed to receive image</string>
+    <!-- layout -->
+    <string name="camera_scanner">Camera Scan</string>
+    <string name="scan_camera">Normal</string>
+    <string name="id_card">ID Card</string>
+
+
+    <!-- CropActivity -->
+    <!-- Activity -->
     <string name="error_loading_original_bitmap">Error loading original Bitmap: %1$s</string>
     <string name="error_loading_original_image_for_text_detection">Error loading original image for text detection.</string>
     <string name="no_image_uri_received_for_cropping">No image URI received for cropping!</string>
@@ -36,6 +66,9 @@
     <string name="error_text_recognition_failed">Could not automatically recognize text.</string>
     <string name="error_creating_input_image_for_text_detection">Error processing image for text detection.</string>
     <string name="text_area_auto_detected">Text area automatically detected.</string>
+    <string name="camera_crop">Camera crop frame set.</string>
+
+    <!-- layout -->
 
     <string name="edit_image">Edit Image</string>
     <string name="cancel">Cancel</string>
@@ -68,9 +101,86 @@
     <string name="error_deleting_pdf">Error deleting PDF: %1$s</string>
     <string name="pdf_generation_successful_confirm">PDF generated successfully. Please confirm.</string>
     <string name="error_creating_pdf">Error creating PDF: %1$s</string>
+    <string name="permission_granted">Permission granted</string>
+    <string name="permission_required_save_file">Permission required to save file</string>
+    <string name="jpeg_saved_success">JPEG image saved successfully: %1$s</string>
+    <string name="no_image_to_save_jpeg">No image to save as JPEG.</string>
+    <string name="preview_updated">Preview updated.</string>
+    <string name="image_ready_for_pdf">Image is ready to create PDF.</string>
+    <string name="bw_image_ready">Black and white image is ready.</string>
+    <string name="bw_mode_selected">Black and White mode selected</string>
+    <string name="error_creating_bw_image">Failed to create black and white image</string>
+    <string name="processing_bw_image">Processing black and white image...</string>
+    <string name="original_mode_selected">Original mode selected</string>
 
+    <!-- layout -->
+    <string name="save_JPG">Save JPG</string>
     <string name="status_generating_and_loading_pdf_preview">Generating and loading PDF preview...</string>
-    <string name="delete_and_cancel">Delete &amp; Cancel</string>
+    <string name="delete_and_cancel">Cancel</string>
     <string name="save_PDF">Save PDF</string>
     <string name="preview_PDF">Preview PDF</string>
+    <string name="original">Original</string>
+    <string name="black_and_white">BW</string>
+
+
+    <!-- CameraActivity -->
+    <!-- Activity -->
+    <string name="id_mode_activated_auto_capture">Switched to ID card mode. Auto-capture on detection.</string>
+    <!-- layout -->
+
+    <!-- ImagePreviewActivity -->
+    <!-- Activity -->
+    <string name="no_image_to_pdf">Failed to prepare image for PDF creation</string>
+    <string name="no_image_to_ocr">Failed to prepare image for OCR creation</string>
+    <string name="image_sign">Image signed</string>
+    <string name="image_pdf_success">Image processed and updated successfully</string>
+
+    <!-- layout -->
+    <string name="your_image">Your Image</string>
+    <string name="sign_image">Signature</string>
+    <string name="scan_image">Scan</string>
+    <string name="done_image">DONE</string>
+
+
+    <!-- OCRActivity -->
+    <!-- Activity -->
+    <string name="save_ocr_text">No text OCR to save!</string>
+    <string name="save_ocr_image">No image OCR to save!</string>
+    <string name="no_text_found_in_image">No text found in the image.</string>
+    <string name="ocr_word_count">Identified %1$d words</string>
+
+    <!-- layout -->
+    <string name="ocr_result">OCR Results</string>
+    <string name="copy_ocr">Copy Text</string>
+    <string name="save_ocr">Save Image and Text</string>
+
+
+    <!-- ImageSignPreviewActivity -->
+    <!-- Activity -->
+    <string name="error_merging_images_missing_elements">Failed to merge images. Missing original image or signature.</string>
+    <!-- layout -->
+    <string name="edit_signature">Edit signature</string>
+
+
+    <!-- OCRDetailActivity -->
+
+    <!-- Activity -->
+    <string name="text_copied_to_clipboard">Text copied to clipboard!</string>
+    <string name="error_copy_text">Cannot copy text!</string>
+    <string name="no_text_to_copy">No text to copy</string>
+    <string name="error_display_image">Cannot display image.</string>
+    <string name="error_load_text">Cannot load text.</string>
+    <string name="error_load_ocr_uri_missing">Cannot load OCR details: URI is missing.</string>
+    <!-- layout -->
+    <string name="extracted_text">Extracted text:</string>
+    <string name="original_image">Original image:</string>
+    <string name="ocr_details">OCR Details</string>
+
+    <!-- SignatureActivity -->
+
+    <!-- Activity -->
+    <!-- layout -->
+    <string name="sign_here">Sign here</string>
+    <string name="delete_sign">Reset</string>
+
 </resources>

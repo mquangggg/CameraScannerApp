@@ -82,7 +82,7 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
             if (imageUri != null && signatureUri != null && signatureBitmap != null) {
                 mergeImagesAndFinish(); // Hợp nhất ảnh và kết thúc Activity
             } else {
-                Toast.makeText(this, "Không thể hợp nhất ảnh. Thiếu ảnh gốc hoặc chữ ký.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.error_merging_images_missing_elements), Toast.LENGTH_SHORT).show();
                 finish(); // Kết thúc Activity nếu thiếu dữ liệu
             }
         });

@@ -19,7 +19,7 @@
         android:background="@drawable/rounded_background"
         android:drawableStart="@drawable/ic_tools_white"
         android:drawablePadding="8dp"
-        android:hint="Tìm kiếm tệp"
+        android:hint="@string/find_recent"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:textColor="@color/black"
@@ -38,7 +38,7 @@
         android:layout_marginEnd="16dp"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
-        android:text="Scan to PDF or OCR Text Now!"
+        android:text="@string/scan"
         android:padding="20dp"
         app:layout_constraintBottom_toTopOf="@+id/tvHeaderTitle"
         android:background="@drawable/login_background"
@@ -50,7 +50,7 @@
         android:id="@+id/tvHeaderTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Recents"
+        android:text="@string/recents"
         android:textColor="@android:color/white"
         android:textSize="24sp"
         android:textStyle="bold"
@@ -81,12 +81,12 @@
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="PDF gần đây" />
+            android:text="@string/PDF_recent" />
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="OCR gần đây" />
+            android:text="@string/OCR_recent" />
     </com.google.android.material.tabs.TabLayout>
 
 

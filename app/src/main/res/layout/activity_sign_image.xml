@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:text="Chỉnh sửa chữ kí"
+        android:text="@string/edit_signature"
         android:gravity="center"
         android:textColor="@color/white"
         android:background="@color/green_accent"/>

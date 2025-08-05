@@ -408,13 +408,15 @@ public class PDFGroupActivity extends AppCompatActivity implements
 
                             if (newBitmap != null) {
                                 String imageName = "Ảnh " + (imageList.size() + 1);
-                                String uniqueFilePath = newImageUri.toString() + "_" + System.currentTimeMillis();
+                                // FIX: Chỉ sử dụng URI gốc, không nối thêm timestamp
+                                String actualFilePath = newImageUri.toString();
 
                                 final Bitmap finalNewBitmap = newBitmap;
 
                                 mainHandler.post(() -> {
                                     try {
-                                        ImageItem newImageItem = new ImageItem(finalNewBitmap, imageName, uniqueFilePath);
+                                        // FIX: Sử dụng actualFilePath thay vì uniqueFilePath
+                                        ImageItem newImageItem = new ImageItem(finalNewBitmap, imageName, actualFilePath);
 
                                         if (adapter != null) {
                                             adapter.addImage(newImageItem);
@@ -482,10 +484,12 @@ public class PDFGroupActivity extends AppCompatActivity implements
                                     try {
                                         ImageItem currentItem = imageList.get(imagePosition);
 
+                                        // Recycle bitmap cũ
                                         if (currentItem.getBitmap() != null && !currentItem.getBitmap().isRecycled()) {
                                             currentItem.getBitmap().recycle();
                                         }
 
+                                        // Cập nhật với bitmap và filePath mới
                                         currentItem.setBitmap(updatedBitmap);
                                         currentItem.setFilePath(updatedImageUri.toString());
 
@@ -495,6 +499,7 @@ public class PDFGroupActivity extends AppCompatActivity implements
 
                                         setUIEnabled(true);
                                         Toast.makeText(this, "Đã cập nhật ảnh thành công!", Toast.LENGTH_SHORT).show();
+                                        Log.d(TAG, "Updated image at position " + imagePosition + " with new URI: " + updatedImageUri.toString());
 
                                     } catch (Exception e) {
                                         Log.e(TAG, "Error updating image item: " + e.getMessage(), e);
@@ -790,6 +795,12 @@ public class PDFGroupActivity extends AppCompatActivity implements
         }
     }
     //endregion
+
+    @Override
+    public void onBackPressed(){
+        super.onBackPressed();
+
+    }
 
     @Override
     protected void onDestroy() {

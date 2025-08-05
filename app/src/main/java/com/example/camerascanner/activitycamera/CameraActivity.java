@@ -193,7 +193,7 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
                     case 1:
                         Log.d(TAG, "Chế độ: Thẻ ID");
                         isIdCardMode = true;
-                        Toast.makeText(CameraActivity.this, "Đã chuyển sang chế độ Thẻ ID. Tự động chụp nếu phát hiện.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(CameraActivity.this, getString(R.string.id_mode_activated_auto_capture), Toast.LENGTH_SHORT).show();
                         break;
                 }
                 if (customOverlayView != null) {
@@ -588,7 +588,7 @@ public class CameraActivity extends AppCompatActivity implements AppPermissionHa
                         finish();
                     }
                 } else {
-                    Toast.makeText(this, "Không nhận được ảnh đã xử lý", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.no_image), Toast.LENGTH_SHORT).show();
                 }
             } else {
                 // Người dùng hủy crop

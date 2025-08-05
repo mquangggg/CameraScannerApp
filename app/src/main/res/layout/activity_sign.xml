@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:text="Kí tên ở đây"
+        android:text="@string/sign_here"
         android:gravity="center"
         android:textColor="@color/white"
         android:background="@color/green_accent"/>
@@ -29,7 +29,7 @@
             android:id="@+id/btnDeleteSign"
             android:layout_width="120dp"
             android:layout_height="0dp"
-            android:text="Xóa"
+            android:text="@string/delete_sign"
             android:layout_marginStart="45dp"
             android:textColor="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -43,11 +43,11 @@
             android:layout_width="120dp"
             android:layout_height="match_parent"
             android:layout_marginLeft="88dp"
-            android:text="Xác nhận"
-            android:textColor="@color/white"
             android:background="@drawable/login_background"
-            app:layout_constraintLeft_toRightOf="@+id/btnDeleteSign"
-            tools:layout_editor_absoluteY="0dp" />
+            android:text="@string/confirm"
+            android:textColor="@color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toRightOf="@+id/btnDeleteSign" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

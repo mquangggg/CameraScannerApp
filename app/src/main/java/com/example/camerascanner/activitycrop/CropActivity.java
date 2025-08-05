@@ -49,7 +49,7 @@ public class CropActivity extends AppCompatActivity {
     // Khai báo các thành phần UI
     private CropImageView cropImageView;
     private CustomCropView customCropView;
-    private Button btnHuyCrop, btnYesCrop, btnMakeOCR;
+    private Button btnHuyCrop, btnYesCrop;
     private MagnifierView magnifierView;
 
     // URI của ảnh đầu vào cần cắt
@@ -133,7 +133,7 @@ public class CropActivity extends AppCompatActivity {
                         }
                     } catch (IOException e) {
                         Log.e(TAG, getString(R.string.error_loading_original_bitmap) + e.getMessage(), e);
-                        Toast.makeText(this, "Lỗi khi tải ảnh gốc để nhận diện văn bản.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.error_loading_original_image_for_text_detection), Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     Toast.makeText(this, getString(R.string.no_image_uri_received_for_cropping), Toast.LENGTH_SHORT).show();
@@ -182,7 +182,7 @@ public class CropActivity extends AppCompatActivity {
                     setResult(RESULT_OK, resultIntent);
                     finish();
                 } else {
-                    Toast.makeText(this, "Lỗi khi lưu ảnh đã cắt", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.failed_to_save_image), Toast.LENGTH_SHORT).show();
                 }
 
                 if (straightenedBitmap != originalBitmapLoaded) {
@@ -222,7 +222,7 @@ public class CropActivity extends AppCompatActivity {
             }
             customCropView.invalidate();
 
-            Toast.makeText(this, "Đã thiết lập khung crop từ camera", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.camera_crop), Toast.LENGTH_SHORT).show();
             Log.d(TAG, "Đã thiết lập các điểm crop từ khung phát hiện camera.");
         } else {
             // Fallback về OCR nếu dữ liệu không hợp lệ

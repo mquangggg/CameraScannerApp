@@ -7,6 +7,8 @@
     <string name="next">Next</string>
     <string name="previous" translatable="false">Previous</string>
     <!-- Main -->
+
+        <!-- Activity -->
     <string name="camera_not_ready">Camera chưa sẵn sàng.</string>
     <string name="photo_captured_saved">Ảnh đã chụp và lưu.</string>
     <string name="failed_to_load_captured_image">Không thể tải ảnh đã chụp.</string>
@@ -22,16 +24,40 @@
     <string name="crop_failed">Cắt ảnh không thành công.</string>
     <string name="permission_denied_function_unavailable">%1$s bị từ chối. Ứng dụng không thể thực hiện chức năng này.</string>
     <string name="back_to_camera_mode">Quay lại chế độ chụp ảnh.</string>
+    <string name="PDF_recent">PDF gần đây</string>
+    <string name="OCR_recent">OCR gần đây</string>
+    <string name="tools">Chức năng Tools sẽ sớm ra mắt!</string>
+    <string name="me">Chức năng me sẽ sớm ra mắt!</string>
+    <string name="camera_permission_is_required_to_use_the_scanner">Cần quyền camera để sử dụng máy quét.</string>
+    <string name="storage_permission_granted">Đã cấp quyền lưu trữ.</string>
+    <string name="storage_permission_granted_dinied">Ứng dụng cần quyền lưu trữ để hiển thị tệp.</string>
 
+
+
+
+    <!-- Layout -->
     <string name="take_photo">Chụp ảnh</string>
     <string name="gallery">Thư viện</string>
-    <string name="rotate">Xoay ảnh</string>
+    <string name="rotate">Xoay</string>
     <string name="confirm">Xác nhận</string>
+    <string name="find_recent">Tìm kiếm tệp</string>
+    <string name="scan">Quét ngay bây giờ</string>
+    <string name="recents">Gần đây</string>
+    <string name="home_main">Trang chủ</string>
+    <string name="tools_main">Công cụ</string>
+    <string name="me_main">Tôi</string>
 
+    <!-- CameraActivity -->
+    <!-- Activity -->
+    <string name="no_image">Không nhận được ảnh </string>
+    <!-- layout -->
+    <string name="camera_scanner">Quét bằng máy ảnh</string>
+    <string name="scan_camera">Thường</string>
+    <string name="id_card">Thẻ ID</string>
 
 
     <!-- CropActivity -->
-
+    <!-- Activity -->
     <string name="error_loading_original_bitmap">Lỗi khi tải Bitmap gốc: %1$s</string>
     <string name="error_loading_original_image_for_text_detection">Lỗi khi tải ảnh gốc để nhận diện văn bản.</string>
     <string name="no_image_uri_received_for_cropping">Không nhận được URI ảnh để cắt!</string>
@@ -42,8 +68,9 @@
     <string name="error_text_recognition_failed">Không thể nhận dạng văn bản tự động.</string>
     <string name="error_creating_input_image_for_text_detection">Lỗi xử lý ảnh cho nhận diện văn bản.</string>
     <string name="text_area_auto_detected">Đã tự động phát hiện vùng văn bản.</string>
+    <string name="camera_crop">Đã thiết lập khung crop từ camera</string>
 
-
+    <!-- layout -->
     <string name="edit_image">Chỉnh sửa ảnh</string>
     <string name="cancel">Hủy</string>
     <string name="crop">Cắt</string>
@@ -80,12 +107,86 @@
     <string name="error_deleting_pdf">Lỗi khi xóa PDF: %1$s</string>
     <string name="pdf_generation_successful_confirm">Đã tạo PDF thành công. Vui lòng xác nhận.</string>
     <string name="error_creating_pdf">Lỗi khi tạo PDF: %1$s</string>
+    <string name="permission_granted">Quyền đã được cấp</string>
+    <string name="permission_required_save_file">Cần quyền để lưu file</string>
+    <string name="jpeg_saved_success">Ảnh JPEG đã được lưu thành công: %1$s</string>
+    <string name="no_image_to_save_jpeg">Không có ảnh để lưu JPEG.</string>
+    <string name="preview_updated">Đã cập nhật bản xem trước.</string>
+    <string name="image_ready_for_pdf">Ảnh đã sẵn sàng để tạo PDF.</string>
+    <string name="bw_image_ready">Ảnh trắng đen đã sẵn sàng.</string>
+    <string name="bw_mode_selected">Chế độ Trắng đen được chọn</string>
+    <string name="error_creating_bw_image">Lỗi khi tạo ảnh trắng đen</string>
+    <string name="processing_bw_image">Đang xử lý ảnh trắng đen...</string>
+    <string name="original_mode_selected">Chế độ gốc được chọn</string>
 
+    <!-- layout -->
 
+    <string name="save_JPG">Lưu JPG</string>
     <string name="status_generating_and_loading_pdf_preview">Đang tạo và tải PDF xem trước...</string>
-    <string name="delete_and_cancel">Xóa &amp; Hủy</string>
+    <string name="delete_and_cancel">Hủy</string>
     <string name="save_PDF">Lưu PDF</string>
     <string name="preview_PDF">Xem trước PDF</string>
+    <string name="original">Gốc</string>
+    <string name="black_and_white">Trắng đen</string>
 
+    <!-- CameraActivity -->
+    <!-- Activity -->
+    <string name="id_mode_activated_auto_capture">Đã chuyển sang chế độ Thẻ ID. Tự động chụp nếu phát hiện.</string>
+     <!-- layout -->
+
+    <!-- ImagePreviewActivity -->
+    <!-- Activity -->
+    <string name="no_image_to_pdf">Không thể chuẩn bị ảnh để tạo PDF.</string>
+    <string name="no_image_to_ocr">Không thể chuẩn bị ảnh để tạo OCR.</string>
+    <string name="image_sign">Ảnh đã được ký thành công.</string>
+    <string name="image_pdf_success">Ảnh đã được xử lý và cập nhật thành công.</string>
+    <!-- layout -->
+    <string name="your_image">Ảnh của bạn</string>
+    <string name="sign_image">Kí tên</string>
+    <string name="scan_image">Quét</string>
+    <string name="done_image">OK</string>
+
+
+
+    <!-- OCRActivity -->
+    <!-- Activity -->
+    <string name="save_ocr_text">Không có văn bản ocr để lưu!</string>
+    <string name="save_ocr_image">Không có ảnh ocr để lưu!</string>
+    <string name="no_text_found_in_image">Không tìm thấy văn bản nào trong ảnh.</string>
+    <string name="ocr_word_count">Đã nhận diện được %1$d từ</string>
+
+    <!-- layout -->
+    <string name="ocr_result">Kết quả nhận diện chữ viết</string>
+    <string name="copy_ocr">Sao chép văn bản</string>
+    <string name="save_ocr">Lưu ảnh và văn bản</string>
+
+
+    <!-- ImageSignPreviewActivity -->
+    <!-- Activity -->
+    <string name="error_merging_images_missing_elements">Không thể hợp nhất ảnh. Thiếu ảnh gốc hoặc chữ ký.</string>
+    <!-- layout -->
+    <string name="edit_signature">Chỉnh sửa chữ kí</string>
+
+
+    <!-- OCRDetailActivity -->
+
+    <!-- Activity -->
+    <string name="text_copied_to_clipboard">Đã sao chép văn bản vào bộ nhớ tạm!</string>
+    <string name="error_copy_text">Không thể sao chép văn bản!</string>
+    <string name="no_text_to_copy">Không có văn bản để sao chép</string>
+    <string name="error_display_image">Không thể hiển thị ảnh.</string>
+    <string name="error_load_text">Không thể tải văn bản.</string>
+    <string name="error_load_ocr_uri_missing">Không thể tải chi tiết OCR: URI bị thiếu.</string>
+    <!-- layout -->
+    <string name="extracted_text">Văn bản trích xuất:</string>
+    <string name="original_image">Ảnh gốc:</string>
+    <string name="ocr_details">Chi tiết OCR</string>
+
+    <!-- SignatureActivity -->
+
+    <!-- Activity -->
+    <!-- layout -->
+    <string name="sign_here">Kí tên ở đây</string>
+    <string name="delete_sign">Xóa</string>
 
 </resources>

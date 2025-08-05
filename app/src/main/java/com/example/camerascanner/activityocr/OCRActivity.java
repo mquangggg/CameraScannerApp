@@ -135,7 +135,7 @@ public class OCRActivity extends AppCompatActivity {
             imageUriToProcess = Uri.parse(imageUriString);
             loadAndProcessImage();
         } else {
-            Toast.makeText(this, "Không nhận được ảnh để xử lý OCR.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.error_no_image_to_process), Toast.LENGTH_SHORT).show();
             finish();
         }
     }
@@ -477,10 +477,13 @@ public class OCRActivity extends AppCompatActivity {
                 if (finalFullOcrText.startsWith("Lỗi:")) {
                     Toast.makeText(OCRActivity.this, finalFullOcrText, Toast.LENGTH_LONG).show();
                 } else if (finalFullOcrText.isEmpty()) {
-                    Toast.makeText(OCRActivity.this, "Không tìm thấy văn bản nào trong ảnh.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(OCRActivity.this, getString(R.string.no_text_found_in_image), Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(OCRActivity.this, "Đã nhận diện được " +
-                            finalFullOcrText.split("\\s+").length + " từ", Toast.LENGTH_SHORT).show();
+                    int wordCount = finalFullOcrText.split("\\s+").length;
+
+                    Toast.makeText(OCRActivity.this,
+                            getString(R.string.ocr_word_count, wordCount),
+                            Toast.LENGTH_SHORT).show();
                 }
             });
         });

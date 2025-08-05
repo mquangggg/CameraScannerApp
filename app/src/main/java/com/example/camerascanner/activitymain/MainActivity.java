@@ -2,6 +2,7 @@
 package com.example.camerascanner.activitymain;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -126,10 +127,10 @@ public class MainActivity extends AppCompatActivity {
                 etSearch.setText("");
                 if (tab.getText() != null) {
                     // Kiểm tra tên tab để xác định loại dữ liệu cần hiển thị
-                    if (tab.getText().equals("PDF gần đây")) { // So sánh với tên tab trong XML
+                    if (tab.getText().equals(getString(R.string.PDF_recent))) { // So sánh với tên tab trong XML
                         recyclerView.setAdapter(pdfAdapter);
                         loadPdfFiles(); // Tải lại danh sách PDF
-                    } else if (tab.getText().equals("OCR gần đây")) { // So sánh với tên tab trong XML
+                    } else if (tab.getText().equals(getString(R.string.OCR_recent))) { // So sánh với tên tab trong XML
                         recyclerView.setAdapter(ocrAdapter);
                         loadOcrPairedItems(); // Tải lại danh sách các cặp OCR
                     }
@@ -155,9 +156,9 @@ public class MainActivity extends AppCompatActivity {
                 etSearch.setText("");
 
                 if (tab.getText() != null) {
-                    if (tab.getText().equals("PDF gần đây")) {
+                    if (tab.getText().equals(getString(R.string.PDF_recent))) {
                         loadPdfFiles();
-                    } else if (tab.getText().equals("OCR gần đây")) {
+                    } else if (tab.getText().equals(getString(R.string.OCR_recent))) {
                         loadOcrPairedItems();
                     }
                 }
@@ -214,13 +215,13 @@ public class MainActivity extends AppCompatActivity {
                 if (itemID == R.id.nav_home) {
                     return true;
                 } else if (itemID == R.id.nav_tools) {
-                    Toast.makeText(MainActivity.this, "Chức năng Tools sẽ sớm ra mắt!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, getString(R.string.tools), Toast.LENGTH_SHORT).show();
                     return true;
                 } else if (itemID == R.id.nav_me) {
 //                    Intent intent = new Intent(MainActivity.this, MeActivity.class);
 //                    startActivity(intent);
 //                    finish();
-                    Toast.makeText(MainActivity.this, "Chức năng Me sẽ sớm ra mắt!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, getString(R.string.me), Toast.LENGTH_SHORT).show();
                     return true;
                 }
                 return false;
@@ -354,12 +355,12 @@ public class MainActivity extends AppCompatActivity {
                 fabScan.performClick();
             } else {
                 // Thông báo nếu quyền Camera bị từ chối
-                Toast.makeText(this, "Cần quyền camera để sử dụng máy quét.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.camera_permission_is_required_to_use_the_scanner), Toast.LENGTH_SHORT).show();
             }
         } else if (requestCode == REQUEST_STORAGE_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Nếu quyền lưu trữ được cấp, thông báo và tải lại dữ liệu cho tab hiện tại
-                Toast.makeText(this, "Đã cấp quyền lưu trữ.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.storage_permission_granted), Toast.LENGTH_SHORT).show();
                 if (tabLayout.getSelectedTabPosition() == 0) {
                     loadPdfFiles();
                 } else if (tabLayout.getSelectedTabPosition() == 1) {
@@ -367,7 +368,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             } else {
                 // Thông báo nếu quyền lưu trữ bị từ chối
-                Toast.makeText(this, "Ứng dụng cần quyền lưu trữ để hiển thị tệp.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.storage_permission_granted_dinied), Toast.LENGTH_SHORT).show();
             }
         }
     }
