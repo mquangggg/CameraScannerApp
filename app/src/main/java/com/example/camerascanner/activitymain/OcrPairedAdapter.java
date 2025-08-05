@@ -56,8 +56,8 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
 
         holder.tvOcrImageFileName.setText(item.getImageFile().getName());
         holder.tvOcrTextFileName.setText(item.getTextFile().getName());
-        holder.tvOcrDate.setText("Ngày: " + item.getFormattedDate());
-        holder.tvOcrTotalSize.setText("Kích thước: " + formatFileSize(item.getTotalSize()));
+        holder.tvOcrDate.setText(context.getString(R.string.day_create) + item.getFormattedDate());
+        holder.tvOcrTotalSize.setText(context.getString(R.string.size) + formatFileSize(item.getTotalSize()));
 
         // Tải thumbnail ảnh trong nền
         if (item.getImageFile() != null && item.getImageFile().exists()) {
@@ -145,17 +145,16 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
      */
     private void showDeleteConfirmationDialog(OcrPairedItem item, int position) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle("Xác nhận xóa");
-        builder.setMessage("Bạn có chắc chắn muốn xóa cặp OCR này không?\n\n" +
-                "Ảnh: " + item.getImageFile().getName() + "\n" +
-                "Văn bản: " + item.getTextFile().getName());
-        builder.setIcon(R.drawable.ic_delete_white);
+        builder.setTitle(context.getString(R.string.confirm_delete));
+        builder.setMessage(context.getString(R.string.confirm_delete_ocr_pair,
+                item.getImageFile().getName(),
+                item.getTextFile().getName()));  builder.setIcon(R.drawable.ic_delete_white);
 
-        builder.setPositiveButton("Xóa", (dialog, which) -> {
+        builder.setPositiveButton(context.getText(R.string.delete), (dialog, which) -> {
             deleteOcrPair(item, position);
         });
 
-        builder.setNegativeButton("Hủy", (dialog, which) -> {
+        builder.setNegativeButton(context.getText(R.string.cancel), (dialog, which) -> {
             dialog.dismiss();
         });
 
@@ -179,7 +178,7 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
             if (imageFile != null && imageFile.exists()) {
                 imageDeleted = imageFile.delete();
                 if (!imageDeleted) {
-                    errorMessage += "Không thể xóa file ảnh. ";
+                    errorMessage += context.getString(R.string.error_delete_image_file);
                 }
             } else {
                 imageDeleted = true; // File không tồn tại, coi như đã xóa
@@ -190,7 +189,7 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
             if (textFile != null && textFile.exists()) {
                 textDeleted = textFile.delete();
                 if (!textDeleted) {
-                    errorMessage += "Không thể xóa file văn bản. ";
+                    errorMessage += context.getString(R.string.error_delete_text_file);
                 }
             } else {
                 textDeleted = true; // File không tồn tại, coi như đã xóa
@@ -208,15 +207,15 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
                     ((MainActivity) context).updateOriginalOcrList(item);
                 }
 
-                Toast.makeText(context, "Đã xóa cặp OCR thành công!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, context.getString(R.string.ocr_pair_delete_success), Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(context, "Lỗi khi xóa: " + errorMessage, Toast.LENGTH_LONG).show();
+                Toast.makeText(context, context.getString(R.string.error_deleting_file) + errorMessage, Toast.LENGTH_LONG).show();
             }
 
         } catch (SecurityException e) {
-            Toast.makeText(context, "Không có quyền xóa file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(context, context.getString(R.string.error_delete_permission_denied) + e.getMessage(), Toast.LENGTH_LONG).show();
         } catch (Exception e) {
-            Toast.makeText(context, "Lỗi khi xóa cặp OCR: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(context, context.getString(R.string.error_deleting_ocr_pair)+ e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -226,11 +225,11 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
         File textFile = item.getTextFile();
 
         if (imageFile == null || !imageFile.exists()) {
-            Toast.makeText(context, "Ảnh OCR không tìm thấy.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, context.getString(R.string.ocr_image_not_found), Toast.LENGTH_SHORT).show();
             return;
         }
         if (textFile == null || !textFile.exists()) {
-            Toast.makeText(context, "Văn bản OCR không tìm thấy.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, context.getString(R.string.ocr_text_not_found), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -249,7 +248,7 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
                     textFile
             );
         } catch (IllegalArgumentException e) {
-            Toast.makeText(context, "Không thể lấy Uri cho tệp: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(context, context.getString(R.string.error_get_uri_for_file) + e.getMessage(), Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -261,7 +260,7 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
         try {
             context.startActivity(intent);
         } catch (Exception e) {
-            Toast.makeText(context, "Không thể mở chi tiết OCR: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(context, context.getString(R.string.error_open_ocr_details) + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 

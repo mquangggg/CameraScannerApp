@@ -65,9 +65,9 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
         holder.tvFileName.setText(file.getName());
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
-        holder.tvFileDate.setText("Ngày: " + sdf.format(new Date(file.lastModified())));
+        holder.tvFileDate.setText(context.getString(R.string.day_create) + sdf.format(new Date(file.lastModified())));
 
-        holder.tvFileSize.setText("Kích thước: " + formatFileSize(file.length()));
+        holder.tvFileSize.setText(context.getString(R.string.size) + formatFileSize(file.length()));
 
         loadThumbnail(file, holder.fileIcon);
 
@@ -123,7 +123,7 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
                 file.getName().toLowerCase(Locale.getDefault()).endsWith(".jpg")) {
             mimeType = "image/jpeg"; // Đặt loại MIME cho JPEG
         } else {
-            Toast.makeText(context, "Định dạng file không được hỗ trợ để mở.", Toast.LENGTH_LONG).show();
+            Toast.makeText(context, context.getString(R.string.error_unsupported_file_format), Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -133,7 +133,7 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
         try {
             context.startActivity(intent);
         } catch (Exception e) {
-            Toast.makeText(context, "Không có ứng dụng nào để mở file này. " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(context,context.getString(R.string.error_no_app_to_open_file) + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -144,15 +144,14 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
      */
     private void showDeleteConfirmationDialog(File file, int position) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle("Xác nhận xóa");
-        builder.setMessage("Bạn có chắc chắn muốn xóa file PDF \"" + file.getName() + "\" không?");
-        builder.setIcon(R.drawable.ic_delete_white);
+        builder.setTitle(context.getString(R.string.confirm_delete));
+        builder.setMessage(context.getString(R.string.confirm_delete_pdf, file.getName()));builder.setIcon(R.drawable.ic_delete_white);
 
-        builder.setPositiveButton("Xóa", (dialog, which) -> {
+        builder.setPositiveButton(context.getString(R.string.delete), (dialog, which) -> {
             deletePdfFile(file, position);
         });
 
-        builder.setNegativeButton("Hủy", (dialog, which) -> {
+        builder.setNegativeButton(context.getString(R.string.cancel), (dialog, which) -> {
             dialog.dismiss();
         });
 
@@ -178,14 +177,14 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
                     ((MainActivity) context).updateOriginalPdfList(file);
                 }
 
-                Toast.makeText(context, "Đã xóa file PDF thành công!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, context.getString(R.string.pdf_delete_success), Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(context, "Không thể xóa file PDF. File có thể không tồn tại.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, context.getString(R.string.error_delete_pdf_not_found), Toast.LENGTH_SHORT).show();
             }
         } catch (SecurityException e) {
-            Toast.makeText(context, "Không có quyền xóa file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(context, context.getString(R.string. error_delete_permission_denied) + e.getMessage(), Toast.LENGTH_LONG).show();
         } catch (Exception e) {
-            Toast.makeText(context, "Lỗi khi xóa file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(context, context.getString(R.string.error_deleting_file) + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 

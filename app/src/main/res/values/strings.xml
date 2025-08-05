@@ -189,4 +189,66 @@
     <string name="sign_here">Kí tên ở đây</string>
     <string name="delete_sign">Xóa</string>
 
+    <!-- PDF Group Activity -->
+    <string name="captured_images_title">Ảnh đã chụp (%d)</string>
+    <string name="image_name_format">Ảnh %d</string>
+    <string name="loading_image">Đang tải ảnh…</string>
+    <string name="cannot_load_processed_image">Không thể tải ảnh đã xử lý.</string>
+    <string name="adding_new_image">Đang thêm ảnh mới…</string>
+    <string name="image_added_successfully">Đã thêm ảnh mới</string>
+    <string name="error_adding_image">Lỗi khi thêm ảnh</string>
+    <string name="cannot_load_new_image">Không thể tải ảnh mới</string>
+    <string name="error_loading_image">Lỗi khi tải ảnh</string>
+    <string name="updating_image">Đang cập nhật ảnh…</string>
+    <string name="image_updated_successfully">Đã cập nhật ảnh</string>
+    <string name="error_updating_image">Lỗi khi cập nhật ảnh</string>
+    <string name="cannot_load_updated_image">Không thể tải ảnh đã cập nhật</string>
+    <string name="no_image_data_found">Không tìm thấy dữ liệu ảnh</string>
+    <string name="image_deleted">Đã xóa %s</string>
+    <string name="images_reordered">Đã sắp xếp lại ảnh</string>
+    <string name="no_images_for_pdf">Không có ảnh để tạo PDF</string>
+    <string name="creating_pdf">Đang tạo PDF…</string>
+    <string name="pdf_created_successfully">PDF đã được tạo thành công</string>
+
+    <string name="no_valid_images_for_pdf">Không có ảnh hợp lệ để tạo PDF</string>
+    <string name="switch_to_list_view">Chuyển sang chế độ danh sách</string>
+    <string name="switch_to_grid_view">Chuyển sang chế độ lưới</string>
+
+    <!-- Layout -->
+    <string name="error">Lỗi</string>
+    <string name="success">Thành công</string>
+    <string name="loading">Đang tải</string>
+    <string name="delete">Xóa</string>
+    <string name="add_more">Thêm Ảnh</string>
+
+    <!-- DialogHelper-->
+    <string name="save_pdf_title">Lưu PDF</string>
+    <string name="save_jpeg_title">Lưu JPEG</string>
+    <string name="enter_pdf_filename">Nhập tên cho tệp PDF:</string>
+    <string name="enter_jpeg_filename">Nhập tên cho tệp JPEG:</string>
+    <string name="save">Lưu</string>
+
+    <!--PDFFileAdapter-->
+    <string name="day_create">Ngày: %1$s</string>
+    <string name="size">Kích thước: %1$s</string>
+    <string name="error_unsupported_file_format">Định dạng file không được hỗ trợ để mở.</string>
+    <string name="error_no_app_to_open_file">Không có ứng dụng nào để mở file này.</string>
+    <string name="confirm_delete">Xác nhận xóa</string>
+    <string name="confirm_delete_pdf">Bạn có chắc chắn muốn xóa file PDF \"%1$s\" không ?</string>
+    <string name="pdf_delete_success">Đã xóa file PDF thành công!</string>
+    <string name="error_delete_pdf_not_found">Không thể xóa file PDF. File có thể không tồn tại.</string>
+    <string name="error_delete_permission_denied">Không có quyền xóa file: %1$s</string>
+    <string name="error_deleting_file">Lỗi khi xóa file: %1$s</string>
+
+    <!--OCRPairAdapter-->
+    <string name="confirm_delete_ocr_pair">Bạn có chắc chắn muốn xóa cặp OCR này không ?\n\nẢnh: %1$s\nVăn bản: %2$s</string>
+    <string name="error_delete_image_file">Không thể xóa file ảnh.</string>
+    <string name="error_delete_text_file">Không thể xóa file văn bản.</string>
+    <string name="ocr_pair_delete_success">Đã xóa cặp OCR thành công!</string>
+    <string name="error_deleting_ocr_pair">Lỗi khi xóa cặp OCR: %1$s</string>
+    <string name="ocr_image_not_found">Ảnh OCR không tìm thấy.</string>
+    <string name="ocr_text_not_found">Văn bản OCR không tìm thấy.</string>
+    <string name="error_get_uri_for_file">Không thể lấy Uri cho tệp: %1$s</string>
+    <string name="error_open_ocr_details">Không thể mở chi tiết OCR: %1$s</string>
+
 </resources>

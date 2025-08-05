@@ -183,4 +183,66 @@
     <string name="sign_here">Sign here</string>
     <string name="delete_sign">Reset</string>
 
+
+    <!-- PDF Group Activity -->
+    <string name="captured_images_title">Captured Images (%d)</string>
+    <string name="image_name_format">Image %d</string>
+    <string name="loading_image">Loading image…</string>
+    <string name="cannot_load_processed_image">Cannot load processed image.</string>
+    <string name="adding_new_image">Adding new image…</string>
+    <string name="image_added_successfully">New image added</string>
+    <string name="error_adding_image">Error adding image</string>
+    <string name="cannot_load_new_image">Cannot load new image</string>
+    <string name="error_loading_image">Error loading image</string>
+    <string name="updating_image">Updating image…</string>
+    <string name="image_updated_successfully">Image updated</string>
+    <string name="error_updating_image">Error updating image</string>
+    <string name="cannot_load_updated_image">Cannot load updated image</string>
+    <string name="no_image_data_found">No image data found</string>
+    <string name="image_deleted">Deleted %s</string>
+    <string name="images_reordered">Images reordered</string>
+    <string name="no_images_for_pdf">No images to create PDF</string>
+    <string name="creating_pdf">Creating PDF…</string>
+    <string name="pdf_created_successfully">PDF created successfully</string>
+    <string name="no_valid_images_for_pdf">No valid images to create PDF</string>
+    <string name="switch_to_list_view">Switched to list view</string>
+    <string name="switch_to_grid_view">Switched to grid view</string>
+
+    <!-- layout -->
+    <string name="error">Error</string>
+    <string name="success">Success</string>
+    <string name="loading">Loading</string>
+    <string name="delete">Delete</string>
+    <string name="add_more">Add More</string>
+
+    <!-- DialogHelper-->
+    <string name="save_pdf_title">Save PDF</string>
+    <string name="save_jpeg_title">Save JPEG</string>
+    <string name="enter_pdf_filename">Enter name for PDF file:</string>
+    <string name="enter_jpeg_filename">Enter name for JPEG file:</string>
+    <string name="save">Save</string>
+
+    <!--PDFFileAdapter-->
+    <string name="day_create">Date: </string>
+    <string name="size">Size: </string>
+    <string name="error_unsupported_file_format">File format not supported for opening.</string>
+    <string name="error_no_app_to_open_file">No app available to open this file.</string>
+    <string name="confirm_delete">Confirm delete</string>
+    <string name="confirm_delete_pdf">Are you sure you want to delete the PDF file \"%1$s\"?</string>
+    <string name="pdf_delete_success">PDF file deleted successfully!</string>
+    <string name="error_delete_pdf_not_found">Cannot delete PDF file. The file may not exist.</string>
+    <string name="error_delete_permission_denied">No permission to delete file: %1$s</string>
+    <string name="error_deleting_file">Error while deleting file: %1$s</string>
+    <string name="error_get_uri_for_file">Cannot get Uri for file: %1$s</string>
+    <string name="error_open_ocr_details">Cannot open OCR details: %1$s</string>
+
+    <!--OCRPairAdapter-->
+    <string name="confirm_delete_ocr_pair">Are you sure you want to delete this OCR pair?\n\nImage: %1$s\nText: %2$s</string>
+    <string name="error_delete_image_file">Cannot delete image file.</string>
+    <string name="error_delete_text_file">Cannot delete text file.</string>
+    <string name="ocr_pair_delete_success">OCR pair deleted successfully!</string>
+    <string name="error_deleting_ocr_pair">Error deleting OCR pair: %1$s</string>
+    <string name="ocr_image_not_found">OCR image not found.</string>
+    <string name="ocr_text_not_found">OCR text not found.</string>
+
 </resources>

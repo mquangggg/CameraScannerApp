@@ -13,7 +13,7 @@
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Ảnh đã chụp (0)"
+        android:text="@string/captured_images_title"
         android:textSize="20sp"
         android:textStyle="bold"
         android:layout_margin="16dp"
@@ -27,7 +27,7 @@
         android:id="@+id/btnAddMore"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="+ Thêm ảnh"
+        android:text="@string/add_more"
         android:layout_marginEnd="16dp"
         android:backgroundTint="#4CAF50"
         android:textColor="@android:color/white"
@@ -126,7 +126,7 @@
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
             android:background="@drawable/vuongbogoc"
-            android:text="Hủy"
+            android:text="@string/cancel"
             android:textColor="@android:color/white" />
 
         <androidx.appcompat.widget.AppCompatButton
@@ -134,7 +134,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Tạo PDF"
+            android:text="@string/confirm"
             android:background="@drawable/login_background"
             android:textColor="@android:color/white"
             android:layout_marginStart="8dp"

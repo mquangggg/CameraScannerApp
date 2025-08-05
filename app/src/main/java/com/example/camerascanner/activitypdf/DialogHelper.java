@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.widget.EditText;
 import androidx.appcompat.app.AlertDialog;
 
+import com.example.camerascanner.R;
 import com.example.camerascanner.activitypdf.Jpeg.JpegFileNameGenerator;
 import com.example.camerascanner.activitypdf.pdf.FileNameGenerator;
 
@@ -45,18 +46,19 @@ public class DialogHelper {
 
         // Xây dựng và hiển thị AlertDialog.
         new AlertDialog.Builder(activity)
-                .setTitle("Lưu PDF") // Đặt tiêu đề cho dialog.
-                .setMessage("Nhập tên cho tệp PDF:") // Đặt thông báo hướng dẫn cho người dùng.
+                .setTitle(activity.getString(R.string.save_pdf_title)) // Đặt tiêu đề cho dialog.
+                .setMessage(activity.getString(R.string.enter_pdf_filename)) // Đặt thông báo hướng dẫn cho người dùng.
                 .setView(input) // Đặt EditText vào trong dialog để người dùng nhập liệu.
-                .setPositiveButton("Lưu", (dialog, which) -> {
+                .setPositiveButton(activity.getString(R.string.save), (dialog, which) -> {
                     // Xử lý khi người dùng nhấn nút "Lưu".
                     String fileName = input.getText().toString().trim(); // Lấy tên file đã nhập và loại bỏ khoảng trắng thừa.
                     fileName = FileNameGenerator.ensurePdfExtension(fileName); // Đảm bảo tên file có đuôi ".pdf".
                     listener.onFileNameSelected(fileName); // Gọi callback để trả về tên file đã chọn.
                 })
-                .setNegativeButton("Hủy", (dialog, which) -> dialog.cancel()) // Xử lý khi người dùng nhấn nút "Hủy", đóng dialog.
+                .setNegativeButton(activity.getString(R.string.cancel), (dialog, which) -> dialog.cancel()) // Xử lý khi người dùng nhấn nút "Hủy", đóng dialog.
                 .show(); // Hiển thị dialog.
     }
+
     public static void showJpegFileNameDialog(Activity activity, OnFileNameSelectedListener listener) {
         // Tạo tên file mặc định dựa trên thời gian hoặc quy tắc khác.
         String defaultFileName = JpegFileNameGenerator.generateDefaultFileName();
@@ -70,16 +72,16 @@ public class DialogHelper {
 
         // Xây dựng và hiển thị AlertDialog.
         new AlertDialog.Builder(activity)
-                .setTitle("Lưu JPEG") // Đặt tiêu đề cho dialog.
-                .setMessage("Nhập tên cho tệp JPEG:") // Đặt thông báo hướng dẫn cho người dùng.
+                .setTitle(activity.getString(R.string.save_jpeg_title)) // Đặt tiêu đề cho dialog.
+                .setMessage(activity.getString(R.string.enter_jpeg_filename)) // Đặt thông báo hướng dẫn cho người dùng.
                 .setView(input) // Đặt EditText vào trong dialog để người dùng nhập liệu.
-                .setPositiveButton("Lưu", (dialog, which) -> {
+                .setPositiveButton(activity.getString(R.string.save), (dialog, which) -> {
                     // Xử lý khi người dùng nhấn nút "Lưu".
                     String fileName = input.getText().toString().trim(); // Lấy tên file đã nhập và loại bỏ khoảng trắng thừa.
                     fileName = JpegFileNameGenerator.ensureJpegExtension(fileName); // Đảm bảo tên file có đuôi ".jpg".
                     listener.onFileNameSelected(fileName); // Gọi callback để trả về tên file đã chọn.
                 })
-                .setNegativeButton("Hủy", (dialog, which) -> dialog.cancel()) // Xử lý khi người dùng nhấn nút "Hủy", đóng dialog.
+                .setNegativeButton(activity.getString(R.string.cancel), (dialog, which) -> dialog.cancel()) // Xử lý khi người dùng nhấn nút "Hủy", đóng dialog.
                 .show(); // Hiển thị dialog.
     }
 }
