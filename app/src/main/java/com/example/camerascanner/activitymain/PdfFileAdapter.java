@@ -10,11 +10,15 @@ import android.graphics.pdf.PdfRenderer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -76,6 +80,15 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
             openPdfFile(file);
         });
 
+        holder.btnShareFile.setOnClickListener(v -> {
+            shareFile(file);
+        });
+        // Thêm chức năng sửa tên file
+        holder.btnEditFileName.setOnClickListener(v -> {
+            showEditFileNameDialog(file, position);
+        });
+
+
         // Thêm chức năng xóa file PDF
         holder.btnDeleteFile.setOnClickListener(v -> {
             showDeleteConfirmationDialog(file, position);
@@ -136,6 +149,188 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
             Toast.makeText(context,context.getString(R.string.error_no_app_to_open_file) + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
+    /**
+            * Chia sẻ file PDF hoặc hình ảnh
+     * @param file File cần chia sẻ
+     */
+    private void shareFile(File file) {
+        if (!file.exists()) {
+            Toast.makeText(context, "File không tồn tại", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        try {
+            Uri fileUri;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                fileUri = FileProvider.getUriForFile(
+                        context,
+                        context.getApplicationContext().getPackageName() + ".provider",
+                        file
+                );
+            } else {
+                fileUri = Uri.fromFile(file);
+            }
+
+            String mimeType;
+            String fileName = file.getName().toLowerCase(Locale.getDefault());
+
+            if (fileName.endsWith(".pdf")) {
+                mimeType = "application/pdf";
+            } else if (fileName.endsWith(".jpeg") || fileName.endsWith(".jpg")) {
+                mimeType = "image/jpeg";
+            } else {
+                mimeType = "*/*"; // Fallback cho các file khác
+            }
+
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType(mimeType);
+            shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Chia sẻ file: " + file.getName());
+            shareIntent.putExtra(Intent.EXTRA_TEXT, "Chia sẻ file từ Camera Scanner");
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            Intent chooserIntent = Intent.createChooser(shareIntent, "Chia sẻ file qua");
+            context.startActivity(chooserIntent);
+
+        } catch (Exception e) {
+            Toast.makeText(context, "Không thể chia sẻ file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e("PdfFileAdapter", "Error sharing file", e);
+        }
+    }
+
+    /**
+     * Hiển thị dialog để sửa tên file
+     * @param file File cần sửa tên
+     * @param position Vị trí của file trong danh sách
+     */
+    private void showEditFileNameDialog(File file, int position) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(context.getString(R.string.edit_file_name));
+
+        // Tạo EditText
+        final EditText editText = new EditText(context);
+        editText.setInputType(InputType.TYPE_CLASS_TEXT);
+
+        // Lấy tên file hiện tại (không bao gồm phần mở rộng)
+        String currentName = file.getName();
+        String nameWithoutExtension = currentName.contains(".") ?
+                currentName.substring(0, currentName.lastIndexOf(".")) : currentName;
+        String extension = currentName.contains(".") ?
+                currentName.substring(currentName.lastIndexOf(".")) : "";
+
+        editText.setText(nameWithoutExtension);
+        editText.setSelection(nameWithoutExtension.length()); // Đặt cursor ở cuối
+
+        // Thêm margin cho EditText
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(50, 20, 50, 20);
+        editText.setLayoutParams(params);
+
+        builder.setView(editText);
+        builder.setIcon(R.drawable.ic_edit_white);
+
+        builder.setPositiveButton(context.getString(R.string.save), (dialog, which) -> {
+            String newName = editText.getText().toString().trim();
+            if (!newName.isEmpty()) {
+                renameFile(file, newName + extension, position);
+            } else {
+                Toast.makeText(context, context.getString(R.string.error_empty_file_name), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton(context.getString(R.string.cancel), (dialog, which) -> {
+            dialog.dismiss();
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Hiển thị bàn phím tự động
+        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+    }
+
+    /**
+     * Đổi tên file
+     * @param oldFile File cần đổi tên
+     * @param newFileName Tên file mới
+     * @param position Vị trí trong danh sách
+     */
+    private void renameFile(File oldFile, String newFileName, int position) {
+        try {
+            // Kiểm tra tên file hợp lệ
+            if (!isValidFileName(newFileName)) {
+                Toast.makeText(context, context.getString(R.string.error_invalid_file_name), Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            File parentDir = oldFile.getParentFile();
+            if (parentDir == null) {
+                Toast.makeText(context, context.getString(R.string.error_parent_directory_not_found), Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            File newFile = new File(parentDir, newFileName);
+
+            // Kiểm tra xem file mới đã tồn tại chưa
+            if (newFile.exists()) {
+                Toast.makeText(context, context.getString(R.string.error_file_already_exists), Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Đổi tên file
+            boolean renamed = oldFile.renameTo(newFile);
+
+            if (renamed) {
+                // Cập nhật danh sách
+                pdfFiles.set(position, newFile);
+                notifyItemChanged(position);
+
+                // Cập nhật danh sách gốc trong MainActivity nếu cần
+                if (context instanceof MainActivity) {
+                    ((MainActivity) context).updateFileInOriginalList(oldFile, newFile);
+                }
+
+                Toast.makeText(context, context.getString(R.string.file_renamed_success), Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(context, context.getString(R.string.error_rename_file_failed), Toast.LENGTH_SHORT).show();
+            }
+
+        } catch (SecurityException e) {
+            Toast.makeText(context, context.getString(R.string.error_rename_permission_denied) + e.getMessage(), Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(context, context.getString(R.string.error_renaming_file) + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * Kiểm tra tên file có hợp lệ không
+     * @param fileName Tên file cần kiểm tra
+     * @return true nếu hợp lệ, false nếu không
+     */
+    private boolean isValidFileName(String fileName) {
+        if (fileName == null || fileName.trim().isEmpty()) {
+            return false;
+        }
+
+        // Kiểm tra các ký tự không hợp lệ trong tên file
+        String invalidChars = "\\/:*?\"<>|";
+        for (char c : invalidChars.toCharArray()) {
+            if (fileName.contains(String.valueOf(c))) {
+                return false;
+            }
+        }
+
+        // Kiểm tra độ dài tên file (Windows có giới hạn 255 ký tự)
+        if (fileName.length() > 200) {
+            return false;
+        }
+
+        return true;
+    }
+
 
     /**
      * Hiển thị dialog xác nhận xóa file PDF
@@ -296,7 +491,7 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
 
     public static class PdfFileViewHolder extends RecyclerView.ViewHolder {
         TextView tvFileName, tvFileDate, tvFileSize;
-        ImageView fileIcon, btnDeleteFile;
+        ImageView fileIcon, btnDeleteFile,btnShareFile,btnEditFileName;
 
         public PdfFileViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -304,6 +499,8 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
             tvFileDate = itemView.findViewById(R.id.tvFileDate);
             tvFileSize = itemView.findViewById(R.id.tvFileSize);
             fileIcon = itemView.findViewById(R.id.ivPdfIcon);
+            btnShareFile = itemView.findViewById(R.id.btnShareFile);
+            btnEditFileName = itemView.findViewById(R.id.btnEditFileName);
             btnDeleteFile = itemView.findViewById(R.id.btnDeleteFile);
         }
     }

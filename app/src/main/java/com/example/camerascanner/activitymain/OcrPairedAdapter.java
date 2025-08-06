@@ -6,10 +6,15 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,6 +26,7 @@ import com.example.camerascanner.R;
 
 import java.io.File;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -68,6 +74,13 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
         }
 
         holder.itemView.setOnClickListener(v -> openOcrDetailActivity(item));
+        holder.btnShareOcrItem.setOnClickListener(v->{
+            shareOcrPair(item);
+        });
+        // Thêm chức năng sửa tên file OCR
+        holder.btnEditOcrItem.setOnClickListener(v -> {
+            showEditOcrFileNamesDialog(item, position);
+        });
         // Thêm chức năng xóa cặp OCR
         holder.btnDeleteOcrItem.setOnClickListener(v -> {
             showDeleteConfirmationDialog(item, position);
@@ -160,6 +173,236 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
 
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+    /**
+     * Chia sẻ cặp OCR (ảnh và văn bản)
+     * @param item Cặp OCR cần chia sẻ
+     */
+    private void shareOcrPair(OcrPairedItem item) {
+        File imageFile = item.getImageFile();
+        File textFile = item.getTextFile();
+
+        if (!imageFile.exists() || !textFile.exists()) {
+            Toast.makeText(context, "Một hoặc cả hai file không tồn tại", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        try {
+            // Tạo URI cho cả hai file
+            Uri imageUri = FileProvider.getUriForFile(
+                    context,
+                    context.getApplicationContext().getPackageName() + ".provider",
+                    imageFile
+            );
+            Uri textUri = FileProvider.getUriForFile(
+                    context,
+                    context.getApplicationContext().getPackageName() + ".provider",
+                    textFile
+            );
+
+            // Tạo danh sách URI để chia sẻ nhiều file
+            ArrayList<Uri> uris = new ArrayList<>();
+            uris.add(imageUri);
+            uris.add(textUri);
+
+            Intent shareIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
+            shareIntent.setType("*/*"); // Cho phép chia sẻ nhiều loại file
+            shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Chia sẻ OCR: " + imageFile.getName());
+            shareIntent.putExtra(Intent.EXTRA_TEXT, "Chia sẻ cặp OCR từ Camera Scanner\n" +
+                    "Ảnh: " + imageFile.getName() + "\n" +
+                    "Văn bản: " + textFile.getName());
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            Intent chooserIntent = Intent.createChooser(shareIntent, "Chia sẻ cặp OCR qua");
+            context.startActivity(chooserIntent);
+
+        } catch (Exception e) {
+            Toast.makeText(context, "Không thể chia sẻ cặp OCR: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e("OcrPairedAdapter", "Error sharing OCR pair", e);
+        }
+    }
+    /**
+     * Hiển thị dialog để sửa tên cả 2 file OCR
+     * @param item Cặp OCR cần sửa tên
+     * @param position Vị trí trong danh sách
+     */
+    private void showEditOcrFileNamesDialog(OcrPairedItem item, int position) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setTitle(context.getString(R.string.edit_ocr_file_names));
+
+        // Tạo layout cho 2 EditText
+        LinearLayout layout = new LinearLayout(context);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(50, 20, 50, 20);
+
+        // EditText cho file ảnh
+        TextView tvImageLabel = new TextView(context);
+        tvImageLabel.setText(context.getString(R.string.image_file_name));
+        tvImageLabel.setTextSize(16);
+        tvImageLabel.setPadding(0, 0, 0, 10);
+        layout.addView(tvImageLabel);
+
+        final EditText editImageName = new EditText(context);
+        editImageName.setInputType(InputType.TYPE_CLASS_TEXT);
+        String imageName = item.getImageFile().getName();
+        String imageNameWithoutExt = imageName.contains(".") ?
+                imageName.substring(0, imageName.lastIndexOf(".")) : imageName;
+        editImageName.setText(imageNameWithoutExt);
+        editImageName.setSelection(imageNameWithoutExt.length());
+        layout.addView(editImageName);
+
+        // Khoảng cách
+        View spacer = new View(context);
+        spacer.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, 30));
+        layout.addView(spacer);
+
+        // EditText cho file text
+        TextView tvTextLabel = new TextView(context);
+        tvTextLabel.setText(context.getString(R.string.text_file_name));
+        tvTextLabel.setTextSize(16);
+        tvTextLabel.setPadding(0, 0, 0, 10);
+        layout.addView(tvTextLabel);
+
+        final EditText editTextName = new EditText(context);
+        editTextName.setInputType(InputType.TYPE_CLASS_TEXT);
+        String textName = item.getTextFile().getName();
+        String textNameWithoutExt = textName.contains(".") ?
+                textName.substring(0, textName.lastIndexOf(".")) : textName;
+        editTextName.setText(textNameWithoutExt);
+        editTextName.setSelection(textNameWithoutExt.length());
+        layout.addView(editTextName);
+
+        builder.setView(layout);
+        builder.setIcon(R.drawable.ic_edit_white);
+
+        builder.setPositiveButton(context.getString(R.string.save), (dialog, which) -> {
+            String newImageName = editImageName.getText().toString().trim();
+            String newTextName = editTextName.getText().toString().trim();
+
+            if (!newImageName.isEmpty() && !newTextName.isEmpty()) {
+                renameOcrPair(item, newImageName, newTextName, position);
+            } else {
+                Toast.makeText(context, context.getString(R.string.error_empty_file_name), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton(context.getString(R.string.cancel), (dialog, which) -> {
+            dialog.dismiss();
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Hiển thị bàn phím tự động
+        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+    }
+
+    /**
+     * Đổi tên cặp file OCR
+     * @param item Cặp OCR cần đổi tên
+     * @param newImageName Tên mới cho file ảnh
+     * @param newTextName Tên mới cho file text
+     * @param position Vị trí trong danh sách
+     */
+    private void renameOcrPair(OcrPairedItem item, String newImageName, String newTextName, int position) {
+        try {
+            File imageFile = item.getImageFile();
+            File textFile = item.getTextFile();
+
+            // Lấy extension của các file
+            String imageExt = getFileExtension(imageFile.getName());
+            String textExt = getFileExtension(textFile.getName());
+
+            String fullNewImageName = newImageName + imageExt;
+            String fullNewTextName = newTextName + textExt;
+
+            // Kiểm tra tên file hợp lệ
+            if (!isValidFileName(fullNewImageName) || !isValidFileName(fullNewTextName)) {
+                Toast.makeText(context, context.getString(R.string.error_invalid_file_name), Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Tạo file mới
+            File newImageFile = new File(imageFile.getParent(), fullNewImageName);
+            File newTextFile = new File(textFile.getParent(), fullNewTextName);
+
+            // Kiểm tra file đã tồn tại
+            if (newImageFile.exists() || newTextFile.exists()) {
+                Toast.makeText(context, context.getString(R.string.error_file_already_exists), Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Đổi tên cả 2 file
+            boolean imageRenamed = imageFile.renameTo(newImageFile);
+            boolean textRenamed = textFile.renameTo(newTextFile);
+
+            if (imageRenamed && textRenamed) {
+                // Tạo OcrPairedItem mới với file đã đổi tên, giữ nguyên timestamp gốc
+                OcrPairedItem newItem = item.createRenamedItem(newImageFile, newTextFile);
+                ocrPairedList.set(position, newItem);
+                notifyItemChanged(position);
+
+                // Cập nhật danh sách gốc trong MainActivity nếu cần
+                if (context instanceof MainActivity) {
+                    ((MainActivity) context).updateOcrItemInOriginalList(item, newItem);
+                }
+
+                Toast.makeText(context, context.getString(R.string.ocr_files_renamed_success), Toast.LENGTH_SHORT).show();
+            } else {
+                // Nếu chỉ đổi tên được 1 file, cần rollback
+                if (imageRenamed && !textRenamed) {
+                    newImageFile.renameTo(imageFile); // Rollback
+                } else if (!imageRenamed && textRenamed) {
+                    newTextFile.renameTo(textFile); // Rollback
+                }
+                Toast.makeText(context, context.getString(R.string.error_rename_file_failed), Toast.LENGTH_SHORT).show();
+            }
+
+        } catch (SecurityException e) {
+            Toast.makeText(context, context.getString(R.string.error_rename_permission_denied) + e.getMessage(), Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(context, context.getString(R.string.error_renaming_file) + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * Lấy phần mở rộng của file
+     * @param fileName Tên file
+     * @return Phần mở rộng (bao gồm dấu chấm)
+     */
+    private String getFileExtension(String fileName) {
+        if (fileName.contains(".")) {
+            return fileName.substring(fileName.lastIndexOf("."));
+        }
+        return "";
+    }
+
+    /**
+     * Kiểm tra tên file có hợp lệ không
+     * @param fileName Tên file cần kiểm tra
+     * @return true nếu hợp lệ, false nếu không
+     */
+    private boolean isValidFileName(String fileName) {
+        if (fileName == null || fileName.trim().isEmpty()) {
+            return false;
+        }
+
+        // Kiểm tra các ký tự không hợp lệ trong tên file
+        String invalidChars = "\\/:*?\"<>|";
+        for (char c : invalidChars.toCharArray()) {
+            if (fileName.contains(String.valueOf(c))) {
+                return false;
+            }
+        }
+
+        // Kiểm tra độ dài tên file
+        if (fileName.length() > 200) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -267,7 +510,7 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
     public static class OcrPairedViewHolder extends RecyclerView.ViewHolder {
         ImageView ivOcrThumbnail;
         TextView tvOcrImageFileName, tvOcrTextFileName, tvOcrDate, tvOcrTotalSize;
-        ImageView btnDeleteOcrItem;
+        ImageView btnDeleteOcrItem,btnShareOcrItem,btnEditOcrItem;
 
         public OcrPairedViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -277,6 +520,8 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
             tvOcrDate = itemView.findViewById(R.id.tvOcrDate);
             tvOcrTotalSize = itemView.findViewById(R.id.tvOcrTotalSize);
             btnDeleteOcrItem = itemView.findViewById(R.id.btnDeleteOcrItem);
+            btnShareOcrItem = itemView.findViewById(R.id.btnShareOcrItem);
+            btnEditOcrItem = itemView.findViewById(R.id.btnEditOcrItem);
         }
     }
 }

@@ -7,7 +7,7 @@
 
     <!-- Nền trắng bao quanh -->
     <path
-        android:fillColor="@android:color/black"
+        android:fillColor="@color/black"
         android:pathData="M0,0h24v24h-24z"/>
 
     <!-- Icon màu đen -->

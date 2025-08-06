@@ -236,6 +236,21 @@
     <string name="error_get_uri_for_file">Cannot get Uri for file: %1$s</string>
     <string name="error_open_ocr_details">Cannot open OCR details: %1$s</string>
 
+    <!-- Edit file functionality -->
+    <string name="edit_file_name">Sửa tên file</string>
+    <string name="edit_ocr_file_names">Sửa tên file OCR</string>
+    <string name="image_file_name">Tên file ảnh:</string>
+    <string name="text_file_name">Tên file văn bản:</string>
+    <string name="error_empty_file_name">Tên file không được để trống</string>
+    <string name="error_invalid_file_name">Tên file không hợp lệ. Không được chứa ký tự: \\ / : * ? \" &lt; &gt; |</string>
+    <string name="error_file_already_exists">File với tên này đã tồn tại</string>
+    <string name="error_parent_directory_not_found">Không tìm thấy thư mục cha</string>
+    <string name="file_renamed_success">Đổi tên file thành công</string>
+    <string name="ocr_files_renamed_success">Đổi tên file OCR thành công</string>
+    <string name="error_rename_file_failed">Không thể đổi tên file</string>
+    <string name="error_rename_permission_denied">Không có quyền đổi tên file: </string>
+    <string name="error_renaming_file">Lỗi khi đổi tên file: </string>
+
     <!--OCRPairAdapter-->
     <string name="confirm_delete_ocr_pair">Are you sure you want to delete this OCR pair?\n\nImage: %1$s\nText: %2$s</string>
     <string name="error_delete_image_file">Cannot delete image file.</string>

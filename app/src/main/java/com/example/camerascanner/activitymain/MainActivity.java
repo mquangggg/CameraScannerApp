@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -26,8 +27,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitycamera.CameraActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationBarView;
+import com.google.android.material.resources.MaterialAttributes;
 import com.google.android.material.tabs.TabLayout;
 
 import java.io.File;
@@ -64,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     private List<File> originalPdfFiles;
     private List<OcrPairedItem> originalOcrPairedItems;
     private Button btnPdfAndOcr;
+    private MaterialButton btnBlackWhite;
     private FloatingActionButton fabScan; // Nút Floating Action Button để bắt đầu quét
 
     // Khai báo Adapters và danh sách dữ liệu
@@ -85,6 +89,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
 
         // Ánh xạ các View từ layout XML
@@ -95,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
         tabLayout = findViewById(R.id.tabLayout);
         fabScan = findViewById(R.id.btnStartCamera);
         btnPdfAndOcr = findViewById(R.id.btnPdfAndOcr);
+        btnBlackWhite = findViewById(R.id.btnBlackWhite);
 
         // Khởi tạo ExecutorService với một luồng duy nhất để tải tệp trong nền
         fileLoadingExecutor = Executors.newSingleThreadExecutor();
@@ -178,6 +184,15 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             } else {
                 requestCameraPermission(); // Yêu cầu quyền nếu chưa được cấp
+            }
+        });
+
+        btnBlackWhite.setOnClickListener(v -> {
+            int mode = AppCompatDelegate.getDefaultNightMode();
+            if (mode == AppCompatDelegate.MODE_NIGHT_YES) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO); // Chuyển sang Light Mode
+            } else {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES); // Chuyển sang Dark Mode
             }
         });
         btnPdfAndOcr.setOnClickListener(v -> {
@@ -305,6 +320,49 @@ public class MainActivity extends AppCompatActivity {
     private void requestCameraPermission() {
         // Yêu cầu quyền CAMERA. Kết quả sẽ được trả về trong onRequestPermissionsResult.
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
+    }
+    /**
+     * Cập nhật file trong danh sách gốc khi có thay đổi tên
+     * @param oldFile File cũ
+     * @param newFile File mới sau khi đổi tên
+     */
+    public void updateFileInOriginalList(File oldFile, File newFile) {
+        // Cập nhật trong danh sách PDF gốc
+        for (int i = 0; i < originalPdfFiles.size(); i++) {
+            if (originalPdfFiles.get(i).getAbsolutePath().equals(oldFile.getAbsolutePath())) {
+                originalPdfFiles.set(i, newFile);
+                break;
+            }
+        }
+    }
+
+    /**
+     * Cập nhật item OCR trong danh sách gốc khi có thay đổi tên
+     * @param oldItem Item OCR cũ
+     * @param newItem Item OCR mới sau khi đổi tên
+     */
+    public void updateOcrItemInOriginalList(OcrPairedItem oldItem, OcrPairedItem newItem) {
+        // Cập nhật trong danh sách OCR gốc
+        for (int i = 0; i < originalOcrPairedItems.size(); i++) {
+            OcrPairedItem item = originalOcrPairedItems.get(i);
+            if (item.equals(oldItem)) {
+                originalOcrPairedItems.set(i, newItem);
+                break;
+            }
+        }
+
+        // Nếu không tìm thấy bằng equals, tìm bằng đường dẫn file (fallback)
+        boolean found = false;
+        for (int i = 0; i < originalOcrPairedItems.size() && !found; i++) {
+            OcrPairedItem item = originalOcrPairedItems.get(i);
+            if (item.getImageFile() != null && oldItem.getImageFile() != null &&
+                    item.getTextFile() != null && oldItem.getTextFile() != null &&
+                    item.getImageFile().getAbsolutePath().equals(oldItem.getImageFile().getAbsolutePath()) &&
+                    item.getTextFile().getAbsolutePath().equals(oldItem.getTextFile().getAbsolutePath())) {
+                originalOcrPairedItems.set(i, newItem);
+                found = true;
+            }
+        }
     }
 
     /**

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="green_accent">#81C784</color> <!-- Xanh lá nhạt hơn để nổi trên nền tối -->
+    <color name="black">#FFFFFF</color> <!-- Đen → Trắng -->
+    <color name="white">#000000</color> <!-- Trắng → Đen -->
+    <color name="blue_word_icon">#90CAF9</color> <!-- Xanh dương nhạt -->
+    <color name="grey_text_icon">#BDBDBD</color> <!-- Xám sáng hơn để nổi -->
+
+</resources>
