@@ -25,7 +25,7 @@
         android:layout_weight="1.25"
         android:orientation="horizontal"
         android:gravity="center"
-        android:background="#333">
+        android:background="@color/main">
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnDeleteSign"

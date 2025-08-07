@@ -189,10 +189,10 @@ public class MainActivity extends AppCompatActivity {
 
         btnBlackWhite.setOnClickListener(v -> {
             int mode = AppCompatDelegate.getDefaultNightMode();
-            if (mode == AppCompatDelegate.MODE_NIGHT_YES) {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO); // Chuyển sang Light Mode
+            if (mode == AppCompatDelegate.MODE_NIGHT_NO) {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES); // Chuyển sang Light Mode
             } else {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES); // Chuyển sang Dark Mode
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO); // Chuyển sang Dark Mode
             }
         });
         btnPdfAndOcr.setOnClickListener(v -> {

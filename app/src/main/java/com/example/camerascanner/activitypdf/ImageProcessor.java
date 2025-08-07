@@ -112,7 +112,7 @@ public class ImageProcessor {
         if (windowSize < 3) windowSize = 3;
         if (windowSize % 2 == 0) windowSize++;
         int halfWindow = windowSize / 2;
-        int T = 15; // Tùy chọn: giá trị hằng số để điều chỉnh độ sáng cục bộ
+        int T = 7; // Tùy chọn: giá trị hằng số để điều chỉnh độ sáng cục bộ
 
         // Bước 2: Áp dụng ngưỡng thích ứng đã tối ưu
         for (int y = 0; y < height; y++) {

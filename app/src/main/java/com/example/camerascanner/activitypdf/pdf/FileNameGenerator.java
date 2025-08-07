@@ -17,7 +17,7 @@ public class FileNameGenerator {
         // Lấy thời gian hiện tại.
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
         // Kết hợp tiền tố "ScannedPdf_", timestamp và đuôi ".pdf" để tạo tên file.
-        return "ScannedPdf_" + timestamp + ".pdf";
+        return "Scan_Pdf_" + timestamp + ".pdf";
     }
 
     /**

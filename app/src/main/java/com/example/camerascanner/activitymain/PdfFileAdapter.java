@@ -155,7 +155,7 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
      */
     private void shareFile(File file) {
         if (!file.exists()) {
-            Toast.makeText(context, "File không tồn tại", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, context.getString(R.string.error_file_not_found), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -185,15 +185,15 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
             Intent shareIntent = new Intent(Intent.ACTION_SEND);
             shareIntent.setType(mimeType);
             shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
-            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Chia sẻ file: " + file.getName());
-            shareIntent.putExtra(Intent.EXTRA_TEXT, "Chia sẻ file từ Camera Scanner");
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.share_file) + file.getName());
+            shareIntent.putExtra(Intent.EXTRA_TEXT, context.getString(R.string.share_file_from_camera_scanner));
             shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
             Intent chooserIntent = Intent.createChooser(shareIntent, "Chia sẻ file qua");
             context.startActivity(chooserIntent);
 
         } catch (Exception e) {
-            Toast.makeText(context, "Không thể chia sẻ file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(context, context.getString(R.string.error_cannot_share_file) + e.getMessage(), Toast.LENGTH_LONG).show();
             Log.e("PdfFileAdapter", "Error sharing file", e);
         }
     }

@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#333">
+    android:background="@color/black">
 
     <TextView
         android:layout_width="match_parent"
@@ -24,7 +24,7 @@
         android:layout_marginTop="16dp"
         android:gravity="center"
         android:text="@string/status_generating_and_loading_pdf_preview"
-        android:textColor="@android:color/darker_gray"
+        android:textColor="@color/white"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"/>
 
@@ -34,7 +34,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:background="#3d3d3d"
+        android:background="@color/grey_text_icon"
         android:layout_marginTop="8dp"
         android:padding="8dp">
 
@@ -48,10 +48,16 @@
             android:textColor="@color/white"/>
 
         <RadioButton
-            android:id="@+id/rbBlackWhite"
+            android:id="@+id/rbBlackWhite1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/black_and_white"
+            android:textColor="@color/white"/>
+        <RadioButton
+            android:id="@+id/rbBlackWhite2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pro"
             android:textColor="@color/white"/>
     </RadioGroup>
 
@@ -84,15 +90,6 @@
             android:textColor="@color/white"
             android:layout_marginEnd="8dp"/>
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btnSaveJpeg"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/save_JPG"
-            android:background="@drawable/vuongbogoc"
-            android:textColor="@color/white"
-            android:layout_marginEnd="8dp"/>
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnSavePdf"

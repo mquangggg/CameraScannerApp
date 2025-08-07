@@ -5,9 +5,12 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log; // Import Log
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -18,6 +21,9 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.Rotate; // Import để xoay ảnh với Glide
 import com.bumptech.glide.request.RequestOptions; // Import RequestOptions
 import com.example.camerascanner.R;
+import com.example.camerascanner.activitypdf.DialogHelper;
+import com.example.camerascanner.activitypdf.Jpeg.JpegGenerator;
+import com.example.camerascanner.activitypdf.PermissionHelper;
 import com.example.camerascanner.activitypdf.pdfgroup.PDFGroupActivity;
 import com.example.camerascanner.activitysignature.SignatureActivity;
 import com.example.camerascanner.activitycrop.CropActivity;
@@ -27,18 +33,25 @@ import com.example.camerascanner.activitypdf.PdfGenerationAndPreviewActivity;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ImagePreviewActivity extends AppCompatActivity {
 
     private static final String TAG = "ImagePreviewActivity"; // Thêm TAG cho logging
     private ImageView imageViewPreview;
-    private Button btnRotatePreview,btnSign,btnGenPDF,btnMakeOcr;
+    private ImageButton btnSaveJpeg;
+    private Button btnRotatePreview,btnSign,btnGenPDF,btnMakeOcr,btnCrop;
     private Button btnConfirmPreview;
     private Uri imageUri;
     private int rotationAngle = 0; // Để theo dõi góc xoay hiện tại
 
     private static final int REQUEST_SIGNATURE = 102;
+    private static final int REQUEST_CROP = 104; // Request code cho crop
     private static final int REQUEST_PDF_GEN_PREVIEW = 103; // Thêm dòng này
+    private JpegGenerator jpegGenerator;
+    private ExecutorService executorService;
+    private Handler mainHandler;
 
 
     private boolean isFromPdfGroupPreview = false;
@@ -56,7 +69,19 @@ public class ImagePreviewActivity extends AppCompatActivity {
         btnSign = findViewById(R.id.btnSign);
         btnMakeOcr = findViewById(R.id.btnMakeOcr);
         btnGenPDF = findViewById(R.id.btnGenPDF);
+        btnSaveJpeg = findViewById(R.id.btnSaveJpeg);
+        btnCrop = findViewById(R.id.btnCrop);
 
+        executorService = Executors.newSingleThreadExecutor();
+        mainHandler = new Handler(Looper.getMainLooper());
+
+        try {
+            jpegGenerator = new JpegGenerator(this);
+            Log.d(TAG, "JpegGenerator initialized successfully");
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing JpegGenerator: " + e.getMessage(), e);
+            jpegGenerator = null;
+        }
         Intent intents = getIntent();
         if (intents != null) {
             isFromPdfGroupPreview = intents.getBooleanExtra("FROM_PDF_GROUP_PREVIEW", false);
@@ -148,6 +173,97 @@ public class ImagePreviewActivity extends AppCompatActivity {
             startActivityForResult(intent, REQUEST_SIGNATURE);
 
         });
+        btnCrop.setOnClickListener(v -> {
+            if (imageViewPreview.getDrawable() instanceof BitmapDrawable) {
+                Bitmap currentBitmap = ((BitmapDrawable) imageViewPreview.getDrawable()).getBitmap();
+                Uri tempUri = saveBitmapToCache(currentBitmap);
+
+                if (tempUri != null) {
+                    Intent intent = new Intent(ImagePreviewActivity.this, CropActivity.class);
+                    intent.putExtra("imageUri", tempUri.toString());
+
+                    // Thêm thông tin để CropActivity biết đây là từ ImagePreview
+                    intent.putExtra("FROM_IMAGE_PREVIEW", true);
+
+                    startActivityForResult(intent, REQUEST_CROP);
+                    Log.d(TAG, "ImagePreviewActivity: Starting CropActivity with URI: " + tempUri.toString());
+                } else {
+                    Toast.makeText(ImagePreviewActivity.this, getString(R.string.failed_to_save_image), Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(ImagePreviewActivity.this, getString(R.string.no_image), Toast.LENGTH_SHORT).show();
+            }
+        });
+        btnSaveJpeg.setOnClickListener(v->{
+        //  Bitmap rotatedBitmap = ((BitmapDrawable)imageViewPreview.getDrawable()).getBitmap();
+            handleSaveJpeg();
+        });
+    }
+    /**
+     * Xử lý sự kiện lưu JPEG - Logic được chuyển từ PdfGenerationAndPreviewActivity
+     */
+    private void handleSaveJpeg() {
+        if (imageViewPreview.getDrawable() instanceof BitmapDrawable) {
+            Bitmap currentBitmap = ((BitmapDrawable) imageViewPreview.getDrawable()).getBitmap();
+            if (currentBitmap != null) {
+                // Hiển thị dialog để người dùng nhập tên file
+                DialogHelper.showJpegFileNameDialog(this, this::saveJpegWithFileName);
+            } else {
+                Toast.makeText(this, getString(R.string.no_image_to_save_jpeg), Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(this, getString(R.string.no_image_to_save_jpeg), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Lưu JPEG với tên file do người dùng nhập
+     */
+    private void saveJpegWithFileName(String fileName) {
+        if (PermissionHelper.hasStoragePermission(this)) {
+            performSaveJpeg(fileName);
+        } else {
+            PermissionHelper.requestStoragePermission(this);
+        }
+    }
+
+    /**
+     * Thực hiện lưu JPEG ở background thread
+     */
+    private void performSaveJpeg(String fileName) {
+        if (!(imageViewPreview.getDrawable() instanceof BitmapDrawable)) {
+            Toast.makeText(this, getString(R.string.no_image_to_save_jpeg), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Bitmap currentBitmap = ((BitmapDrawable) imageViewPreview.getDrawable()).getBitmap();
+        if (currentBitmap == null) {
+            Toast.makeText(this, getString(R.string.no_image_to_save_jpeg), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Hiển thị thông báo đang lưu
+        Toast.makeText(this, "Đang lưu ảnh JPEG...", Toast.LENGTH_SHORT).show();
+
+        executorService.execute(() -> {
+            try {
+                Uri jpegUri = jpegGenerator.saveAsJpeg(currentBitmap, fileName);
+
+                mainHandler.post(() -> {
+                    Toast.makeText(this, getString(R.string.jpeg_saved_success) + fileName, Toast.LENGTH_LONG).show();
+                    Log.d(TAG, "JPEG saved successfully: " + fileName);
+
+                    // Có thể chuyển về MainActivity hoặc ở lại
+                    // navigateToMainActivity(); // Uncomment nếu muốn chuyển về MainActivity
+                });
+
+            } catch (Exception e) {
+                Log.e(TAG, "Lỗi khi lưu JPEG: " + e.getMessage(), e);
+                mainHandler.post(() -> {
+                    Toast.makeText(this, "Lỗi khi lưu JPEG: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            }
+        });
     }
     private Uri saveBitmapToCache(Bitmap bitmap) {
         String fileName = "rotated_temp_" + System.currentTimeMillis() + ".jpeg";
@@ -219,6 +335,33 @@ public class ImagePreviewActivity extends AppCompatActivity {
                 Toast.makeText(this, getString(R.string.image_pdf_success), Toast.LENGTH_SHORT).show();
                 Log.d(TAG, "Received processed image URI from PDF Generation: " + processedImageUri.toString());
             }
+        }
+        // Xử lý kết quả trả về từ CropActivity
+        if (requestCode == REQUEST_CROP && resultCode == RESULT_OK) {
+            if (data != null && data.hasExtra("processedImageUri")) {
+                String croppedImageUriString = data.getStringExtra("processedImageUri");
+                Uri croppedImageUri = Uri.parse(croppedImageUriString);
+
+                // Cập nhật biến imageUri với ảnh đã được crop
+                this.imageUri = croppedImageUri;
+
+                // Reset rotation angle vì ảnh crop mới không cần xoay
+                this.rotationAngle = 0;
+
+                // Tải lại ảnh đã được crop vào ImageView
+                loadImageWithRotation();
+                Toast.makeText(this, "Ảnh đã được cắt thành công", Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "ImagePreviewActivity: Received cropped image URI: " + croppedImageUri.toString());
+            }
+        }
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // Giải phóng tài nguyên
+        if (executorService != null && !executorService.isShutdown()) {
+            executorService.shutdownNow();
         }
     }
 }

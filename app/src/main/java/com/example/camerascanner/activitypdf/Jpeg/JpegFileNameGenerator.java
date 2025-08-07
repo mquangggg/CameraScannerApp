@@ -12,7 +12,7 @@ public class JpegFileNameGenerator {
      */
     public static String generateDefaultFileName() {
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-        return "ScannedImage_" + timestamp + ".jpg";
+        return "Scan_Image_" + timestamp + ".jpg";
     }
 
     /**

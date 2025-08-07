@@ -45,17 +45,16 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
     private ImageView ivPdfPreview;
     private Button btnSavePdf;
     private Button btnDeletePdf;
-    private Button btnSaveJPEG;
     private TextView tvPdfPreviewStatus;
     private RadioGroup rgPdfStyle;
     private RadioButton rbOriginal;
-    private RadioButton rbBlackWhite;
+    private RadioButton rbBlackWhite,rbPro;
 
     // Data
     private Uri imageUriToConvert;
     private Bitmap croppedBitmap;
     private Bitmap processedBitmap;
-    private Bitmap blackWhiteBitmap; // Cache bitmap trắng đen để tránh tạo lại
+    private Bitmap blackWhiteBitmap,proBitmap; // Cache bitmap trắng đen để tránh tạo lại
     private Uri finalPdfUri;
     private PdfStyle currentPdfStyle = PdfStyle.ORIGINAL;
 
@@ -89,11 +88,11 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
         ivPdfPreview = findViewById(R.id.ivPdfPreview);
         btnSavePdf = findViewById(R.id.btnSavePdf);
         btnDeletePdf = findViewById(R.id.btnDeletePdf);
-        btnSaveJPEG = findViewById(R.id.btnSaveJpeg);
         tvPdfPreviewStatus = findViewById(R.id.tvPdfPreviewStatus);
         rgPdfStyle = findViewById(R.id.rgPdfStyle);
         rbOriginal = findViewById(R.id.rbOriginal);
-        rbBlackWhite = findViewById(R.id.rbBlackWhite);
+        rbBlackWhite = findViewById(R.id.rbBlackWhite1);
+        rbPro = findViewById(R.id.rbBlackWhite2);
         // Luồng đơn
         executorService = Executors.newSingleThreadExecutor();
         mainHandler = new Handler(Looper.getMainLooper());
@@ -137,7 +136,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                     updatePreview();
                     Toast.makeText(this, getString(R.string.original_mode_selected), Toast.LENGTH_SHORT).show();
                 }
-            } else if (checkedId == R.id.rbBlackWhite) {
+            } else if (checkedId == R.id.rbBlackWhite1) {
                 // Chỉ thay đổi nếu đang không ở chế độ Black & White
                 if (currentPdfStyle != PdfStyle.BLACK_WHITE) {
                     // Tạo bitmap trắng đen chỉ khi chưa có hoặc cần tạo lại
@@ -150,7 +149,20 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                         Toast.makeText(this, getString(R.string.bw_mode_selected), Toast.LENGTH_SHORT).show();
                     }
                 }
-            }
+            }else if (checkedId == R.id.rbBlackWhite2) {
+                // Chỉ thay đổi nếu đang không ở chế độ Black & White
+                if (currentPdfStyle != PdfStyle.PRO) {
+                    // Tạo bitmap trắng đen chỉ khi chưa có hoặc cần tạo lại
+                    if (proBitmap == null) {
+                        createProBitmapAsync();
+                    } else {
+                        processedBitmap = proBitmap;
+                        currentPdfStyle = PdfStyle.PRO;
+                        updatePreview();
+                        Toast.makeText(this, getString(R.string.bw_mode_selected), Toast.LENGTH_SHORT).show();
+                    }
+                }
+                }
         });
     }
 
@@ -188,6 +200,45 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
                 Log.e(TAG, "Lỗi khi tạo bitmap trắng đen: " + e.getMessage(), e);
                 mainHandler.post(() -> {
                     Toast.makeText(this, "Lỗi khi xử lý ảnh trắng đen", Toast.LENGTH_SHORT).show();
+                    rbBlackWhite.setChecked(false);
+                });
+            }
+        });
+    }
+/**
+     * Tạo bitmap trắng đen bất đồng bộ và cache lại
+     */
+    private void createProBitmapAsync() {
+        updateStatus(getString(R.string.processing_bw_image));
+
+        executorService.execute(() -> {
+            try {
+                // Chọn phương pháp phù hợp
+                proBitmap = ImageProcessor.convertToBlackAndWhite(
+                        croppedBitmap,
+                        ImageProcessor.ConversionMethod.ENHANCED // hoặc ADAPTIVE cho tài liệu
+                );
+
+                // Hoặc sử dụng method chuyên biệt
+                // blackWhiteBitmap = ImageProcessor.convertDocumentToBlackAndWhite(croppedBitmap);
+
+                mainHandler.post(() -> {
+                    if (proBitmap != null) {
+                        processedBitmap = proBitmap;
+                        currentPdfStyle = PdfStyle.PRO;
+                        updatePreview();
+                        updateStatus(getString(R.string.bw_image_ready));
+                        Toast.makeText(this, getString(R.string.bw_mode_selected), Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this, getString(R.string.error_creating_bw_image), Toast.LENGTH_SHORT).show();
+                        rbPro.setChecked(false);
+                    }
+                });
+
+            } catch (Exception e) {
+                Log.e(TAG, "Lỗi khi tạo bitmap trắng đen: " + e.getMessage(), e);
+                mainHandler.post(() -> {
+                    Toast.makeText(this, "Lỗi khi xử lý ảnh trắng đen", Toast.LENGTH_SHORT).show();
                     rbOriginal.setChecked(true);
                 });
             }
@@ -200,7 +251,6 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
     private void setupButtonListeners() {
         btnSavePdf.setOnClickListener(v -> handleSavePdf());
         btnDeletePdf.setOnClickListener(v -> handleDeletePdf());
-        btnSaveJPEG.setOnClickListener(v -> handleSaveJpeg());
     }
 
     /**
@@ -296,7 +346,7 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
      */
     private void handleSavePdf() {
         if (processedBitmap == null) {
-            Toast.makeText(this, "Không có ảnh để xử lý.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.error_no_image_to_process), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -338,55 +388,6 @@ public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
             finish();
         }
     }
-
-    /**
-     * Xử lý sự kiện lưu JPEG khi nhấn nút Save JPEG.
-     */
-    private void handleSaveJpeg() {
-        if (processedBitmap != null) {
-            DialogHelper.showJpegFileNameDialog(this, this::saveJpegWithFileName);
-        } else {
-            Toast.makeText(this, getString(R.string.no_image_to_save_jpeg), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    /**
-     * Lưu JPEG với tên file do người dùng nhập.
-     */
-    private void saveJpegWithFileName(String fileName) {
-        if (PermissionHelper.hasStoragePermission(this)) {
-            performSaveJpeg(fileName);
-        } else {
-            PermissionHelper.requestStoragePermission(this);
-        }
-    }
-
-    /**
-     * Thực hiện lưu JPEG ở background.
-     */
-    private void performSaveJpeg(String fileName) {
-        updateStatus("Đang lưu ảnh JPEG...");
-
-        executorService.execute(() -> {
-            try {
-                Uri jpegUri = jpegGenerator.saveAsJpeg(processedBitmap, fileName);
-
-                mainHandler.post(() -> {
-                    Toast.makeText(this, getString(R.string.jpeg_saved_success) + fileName, Toast.LENGTH_LONG).show();
-                    updateStatus(getString(R.string.jpeg_saved_success) + fileName);
-                    navigateToMainActivity();
-                });
-
-            } catch (Exception e) {
-                Log.e(TAG, "Lỗi khi lưu JPEG: " + e.getMessage(), e);
-                mainHandler.post(() -> {
-                    Toast.makeText(this, "Lỗi khi lưu JPEG: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    updateStatus("Lỗi khi lưu JPEG: " + e.getMessage());
-                });
-            }
-        });
-    }
-
     /**
      * Xử lý sự kiện xóa PDF khi nhấn nút Delete.
      */

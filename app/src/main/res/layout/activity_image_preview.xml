@@ -6,110 +6,164 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#000">
+    android:background="@color/main">
 
     <TextView
-    android:layout_width="match_parent"
-    android:layout_height="0dp"
-    android:layout_weight="1.25"
-    android:text="@string/your_image"
-    android:gravity="center"
-    android:textColor="@color/white"
-    android:background="@color/green_accent"/>
-    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.25"
+        android:text="@string/your_image"
+        android:textSize="24sp"
+        android:gravity="center"
+        android:textColor="@color/white"
+        android:background="@color/green_accent"/>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="12">
+
+        <ImageView
             android:id="@+id/imageViewPreview"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="12"
+            android:layout_height="match_parent"
             android:scaleType="fitCenter" />
 
-    <LinearLayout
-                android:id="@+id/actionButtons"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1.5"
-                android:orientation="horizontal"
-                android:background="#3f3f3f"
-                android:gravity="center">
+        <ImageButton
+            android:id="@+id/btnSaveJpeg"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="end"
+            android:layout_margin="10dp"
+            android:background="@drawable/ic_download" />
 
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.5"
+        android:orientation="horizontal"
+        android:background="@color/grey_text_icon"
+        android:gravity="center">
+
+        <!-- Thanh cuộn ngang cho các chức năng phụ -->
+        <HorizontalScrollView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="4"
+            android:scrollbars="none"
+            android:fillViewport="true"
+            android:background="@drawable/vien_den">
+
+            <LinearLayout
+                android:id="@+id/scrollableActionButtons"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnRotate"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
+                    android:layout_width="80dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:text="@string/rotate"
-                    android:textSize="5sp"
+                    android:textSize="7sp"
                     app:icon="@drawable/ic_rotate"
                     app:iconGravity="top"
                     app:iconPadding="4dp"
                     android:textAlignment="center"
-                    app:iconTint="@android:color/white"
+                    app:iconTint="@color/white"
+                    android:textColor="@color/white"
+                    />
+                <View
+                    style="@style/Divider"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCrop"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="Crop"
+                    android:textAlignment="center"
+                    android:textColor="@color/white"
+                    android:textSize="7sp"
+                    app:icon="@drawable/ic_crop"
+                    app:iconGravity="top"
+                    app:iconPadding="4dp"
+                    app:iconTint="@color/white" />
+                <View
+                    style="@style/Divider"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnGenPDF"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/scan_image"
+                    android:textSize="7sp"
+                    app:icon="@drawable/ic_pdf"
+                    app:iconGravity="top"
+                    app:iconPadding="4dp"
+                    android:textAlignment="center"
+                    app:iconTint="@color/white"
                     android:textColor="@color/white" />
 
+                <View
+                    style="@style/Divider"/>
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnMakeOcr"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
+                    android:layout_width="80dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:text="OCR"
-                    android:textSize="5sp"
+                    android:textSize="7sp"
                     app:icon="@drawable/icon_ky_ten"
                     app:iconGravity="top"
                     app:iconPadding="4dp"
                     android:textAlignment="center"
-                    app:iconTint="@android:color/white"
+                    app:iconTint="@color/white"
                     android:textColor="@color/white" />
+                <View
+                    style="@style/Divider"/>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSign"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/sign_image"
-            android:textAlignment="center"
-            android:textColor="@color/white"
-            android:textSize="5sp"
-            app:icon="@drawable/ic_signature"
-            app:iconGravity="top"
-            app:iconPadding="4dp"
-            app:iconTint="@android:color/white" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSign"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sign_image"
+                    android:textAlignment="center"
+                    android:textColor="@color/white"
+                    android:textSize="7sp"
+                    app:icon="@drawable/ic_signature"
+                    app:iconGravity="top"
+                    app:iconPadding="4dp"
+                    app:iconTint="@color/white" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnGenPDF"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/scan_image"
-            android:textSize="5sp"
-            app:icon="@drawable/ic_pdf"
-            app:iconGravity="top"
-            app:iconPadding="4dp"
-            android:textAlignment="center"
-            app:iconTint="@android:color/white"
-            android:textColor="@color/white" />
+            </LinearLayout>
 
+
+        </HorizontalScrollView>
+
+        <!-- Nút Done giữ nguyên -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnConfirmPreview"
-            android:layout_width="0dp"
+            android:layout_width="80dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_marginStart="8dp"
             android:text="@string/done_image"
-            android:textSize="5sp"
+            android:textSize="10sp"
             app:icon="@drawable/ic_done"
             app:backgroundTint="@color/green_accent"
             app:iconGravity="top"
             app:iconPadding="4dp"
             android:textAlignment="center"
-            app:iconTint="@android:color/white"
+            app:iconTint="@color/white"
             android:textColor="@color/white" />
 
     </LinearLayout>
-
 
 </LinearLayout>

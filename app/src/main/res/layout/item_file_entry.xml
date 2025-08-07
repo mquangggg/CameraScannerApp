@@ -13,6 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:background="@color/black"
         android:padding="12dp">
 
         <!-- Icon hoặc thumbnail của file -->
@@ -22,6 +23,7 @@
             android:layout_height="64dp"
             android:layout_marginEnd="12dp"
             android:scaleType="centerCrop"
+            android:layout_gravity="center"
             android:src="@drawable/ic_pdf"
             android:background="@drawable/rounded_background" />
 
@@ -38,7 +40,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Tên file"
-                android:textColor="@color/black"
+                android:textColor="@color/white"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:maxLines="2"
@@ -49,7 +51,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Ngày tạo"
-                android:textColor="@android:color/darker_gray"
+                android:textColor="@color/white"
                 android:textSize="14sp"
                 android:layout_marginTop="4dp" />
 
@@ -58,7 +60,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Kích thước"
-                android:textColor="@android:color/darker_gray"
+                android:textColor="@color/white"
                 android:textSize="14sp"
                 android:layout_marginTop="2dp" />
 

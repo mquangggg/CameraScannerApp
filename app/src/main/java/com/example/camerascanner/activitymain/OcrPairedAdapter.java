@@ -183,7 +183,7 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
         File textFile = item.getTextFile();
 
         if (!imageFile.exists() || !textFile.exists()) {
-            Toast.makeText(context, "Một hoặc cả hai file không tồn tại", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, context.getString(R.string.error_file_not_found), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -208,17 +208,19 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
             Intent shareIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
             shareIntent.setType("*/*"); // Cho phép chia sẻ nhiều loại file
             shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
-            shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Chia sẻ OCR: " + imageFile.getName());
-            shareIntent.putExtra(Intent.EXTRA_TEXT, "Chia sẻ cặp OCR từ Camera Scanner\n" +
-                    "Ảnh: " + imageFile.getName() + "\n" +
-                    "Văn bản: " + textFile.getName());
+            shareIntent.putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.share_ocr) + imageFile.getName());
+            String message = context.getString(R.string.share_ocr_pair_from_camera_scanner,
+                    imageFile.getName(),
+                    textFile.getName());
+
+            shareIntent.putExtra(Intent.EXTRA_TEXT, message);
             shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
             Intent chooserIntent = Intent.createChooser(shareIntent, "Chia sẻ cặp OCR qua");
             context.startActivity(chooserIntent);
 
         } catch (Exception e) {
-            Toast.makeText(context, "Không thể chia sẻ cặp OCR: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(context, context.getString(R.string.error_cannot_share_file) + e.getMessage(), Toast.LENGTH_LONG).show();
             Log.e("OcrPairedAdapter", "Error sharing OCR pair", e);
         }
     }

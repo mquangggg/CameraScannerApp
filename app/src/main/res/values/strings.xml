@@ -95,7 +95,7 @@
     <string name="error_no_processed_image_for_pdf">Không có ảnh đã xử lý để tạo PDF.</string>
     <string name="error_no_image_to_create_pdf">Lỗi: Không có ảnh để tạo PDF.</string>
     <string name="pdf_creation_successful">Đã tạo PDF thành công: %1$s</string>
-    <string name="pdf_saved_at">Đã lưu PDF tại: %1$s</string>
+    <string name="pdf_saved_at">Đã lưu PDF tại: </string>
     <string name="error_no_pdf_uri_for_preview">Không có URI PDF để xem trước.</string>
     <string name="pdf_preview_unsupported_android_version">Xem trước PDF chỉ hỗ trợ từ Android 5.0 (API 21) trở lên.</string>
     <string name="pdf_preview_unsupported">Không hỗ trợ xem trước PDF.</string>
@@ -109,7 +109,7 @@
     <string name="error_creating_pdf">Lỗi khi tạo PDF: %1$s</string>
     <string name="permission_granted">Quyền đã được cấp</string>
     <string name="permission_required_save_file">Cần quyền để lưu file</string>
-    <string name="jpeg_saved_success">Ảnh JPEG đã được lưu thành công: %1$s</string>
+    <string name="jpeg_saved_success">Ảnh JPEG đã được lưu thành công: </string>
     <string name="no_image_to_save_jpeg">Không có ảnh để lưu JPEG.</string>
     <string name="preview_updated">Đã cập nhật bản xem trước.</string>
     <string name="image_ready_for_pdf">Ảnh đã sẵn sàng để tạo PDF.</string>
@@ -229,8 +229,8 @@
     <string name="save">Lưu</string>
 
     <!--PDFFileAdapter-->
-    <string name="day_create">Ngày: %1$s</string>
-    <string name="size">Kích thước: %1$s</string>
+    <string name="day_create">Ngày :</string>
+    <string name="size">Kích thước :</string>
     <string name="error_unsupported_file_format">Định dạng file không được hỗ trợ để mở.</string>
     <string name="error_no_app_to_open_file">Không có ứng dụng nào để mở file này.</string>
     <string name="confirm_delete">Xác nhận xóa</string>
@@ -240,7 +240,6 @@
     <string name="error_delete_permission_denied">Không có quyền xóa file: %1$s</string>
     <string name="error_deleting_file">Lỗi khi xóa file: %1$s</string>
 
-    <!-- Edit file functionality -->
     <string name="edit_file_name">Sửa tên file</string>
     <string name="edit_ocr_file_names">Sửa tên file OCR</string>
     <string name="image_file_name">Tên file ảnh:</string>
@@ -254,6 +253,13 @@
     <string name="error_rename_file_failed">Không thể đổi tên file</string>
     <string name="error_rename_permission_denied">Không có quyền đổi tên file: </string>
     <string name="error_renaming_file">Lỗi khi đổi tên file: </string>
+    <string name="error_file_not_found">File không tồn tại</string>
+    <string name="share_file">Chia sẻ file: </string>
+    <string name="share_file_from_camera_scanner">Chia sẻ file từ Camera Scanner</string>
+    <string name="error_cannot_share_file">Không thể chia sẻ file: </string>
+
+
+
 
     <!--OCRPairAdapter-->
     <string name="confirm_delete_ocr_pair">Bạn có chắc chắn muốn xóa cặp OCR này không ?\n\nẢnh: %1$s\nVăn bản: %2$s</string>
@@ -265,5 +271,8 @@
     <string name="ocr_text_not_found">Văn bản OCR không tìm thấy.</string>
     <string name="error_get_uri_for_file">Không thể lấy Uri cho tệp: %1$s</string>
     <string name="error_open_ocr_details">Không thể mở chi tiết OCR: %1$s</string>
+    <string name="share_ocr">Chia sẻ OCR: </string>
+    <string name="share_ocr_pair_from_camera_scanner">Chia sẻ cặp OCR từ Camera Scanner\nẢnh: %1$s\nVăn bản: %2$s</string>
+
 
 </resources>
