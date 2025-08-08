@@ -1,10 +1,11 @@
-package com.example.camerascanner.activitysignature.signatureview;
+package com.example.camerascanner.activitysignature.signatureview.signature;
 
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+
+import com.example.camerascanner.activitysignature.signatureview.SignatureGeometryUtils;
 
 /**
  * Lớp **SignatureRenderer** chịu trách nhiệm vẽ tất cả các thành phần liên quan đến chữ ký

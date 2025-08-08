@@ -12,10 +12,13 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.Rotate; // Import để xoay ảnh với Glide
@@ -24,15 +27,17 @@ import com.example.camerascanner.R;
 import com.example.camerascanner.activitypdf.DialogHelper;
 import com.example.camerascanner.activitypdf.Jpeg.JpegGenerator;
 import com.example.camerascanner.activitypdf.PermissionHelper;
-import com.example.camerascanner.activitypdf.pdfgroup.PDFGroupActivity;
-import com.example.camerascanner.activitysignature.SignatureActivity;
+import com.example.camerascanner.activitysignature.signatureview.imagesignpreview.ImageSignPreviewActivity;
+import com.example.camerascanner.activitysignature.signatureview.signature.SignatureActivity;
 import com.example.camerascanner.activitycrop.CropActivity;
 import com.example.camerascanner.activityocr.OCRActivity;
 import com.example.camerascanner.activitypdf.PdfGenerationAndPreviewActivity;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -52,6 +57,10 @@ public class ImagePreviewActivity extends AppCompatActivity {
     private JpegGenerator jpegGenerator;
     private ExecutorService executorService;
     private Handler mainHandler;
+
+    private SignatureManager signatureManager;
+    private SignatureAdapter signatureAdapter;
+    private List<Uri> savedSignatures;
 
 
     private boolean isFromPdfGroupPreview = false;
@@ -74,6 +83,10 @@ public class ImagePreviewActivity extends AppCompatActivity {
 
         executorService = Executors.newSingleThreadExecutor();
         mainHandler = new Handler(Looper.getMainLooper());
+
+        // Khởi tạo SignatureManager
+        signatureManager = new SignatureManager(this);
+
 
         try {
             jpegGenerator = new JpegGenerator(this);
@@ -164,14 +177,68 @@ public class ImagePreviewActivity extends AppCompatActivity {
             }
         });
         btnSign.setOnClickListener(v->{
-            Bitmap rotatedBitmap = ((BitmapDrawable)imageViewPreview.getDrawable()).getBitmap();
-            // Phương thức saveBitmapToCache() đã tồn tại trong ImagePreviewActivity.java
-            Uri tempUri = saveBitmapToCache(rotatedBitmap);
+            BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+            View bottomSheetView  = getLayoutInflater().inflate(R.layout.sign_layout_botton,null);
+            bottomSheetDialog.setContentView(bottomSheetView);
 
-            Intent intent = new Intent(this, SignatureActivity.class);
-            intent.putExtra("imageUri", tempUri);
-            startActivityForResult(intent, REQUEST_SIGNATURE);
+            ImageButton btnAddSign = bottomSheetView.findViewById(R.id.btnAddSign);
+            btnAddSign.setOnClickListener(v1->{
+                bottomSheetDialog.dismiss();
+                Bitmap rotatedBitmap = ((BitmapDrawable)imageViewPreview.getDrawable()).getBitmap();
+                    // Phương thức saveBitmapToCache() đã tồn tại trong ImagePreviewActivity.java
+                Uri tempUri = saveBitmapToCache(rotatedBitmap);
 
+                Intent intent = new Intent(ImagePreviewActivity.this, SignatureActivity.class);
+                intent.putExtra("imageUri", tempUri);
+                startActivityForResult(intent, REQUEST_SIGNATURE);
+            });
+
+            RecyclerView recyclerViewSigns = bottomSheetView.findViewById(R.id.recyclerViewSigns);
+
+            LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+            recyclerViewSigns.setLayoutManager(layoutManager);
+            TextView tvNoSignatures = bottomSheetView.findViewById(R.id.tvNoSignatures);
+
+            // Lấy danh sách chữ ký đã lưu
+            savedSignatures = signatureManager.getSavedSignatureUris();
+            if (savedSignatures.isEmpty()) {
+                tvNoSignatures.setVisibility(View.VISIBLE);
+                recyclerViewSigns.setVisibility(View.GONE);
+            } else {
+                tvNoSignatures.setVisibility(View.GONE);
+                recyclerViewSigns.setVisibility(View.VISIBLE);
+            }
+            // Thiết lập adapter
+            signatureAdapter = new SignatureAdapter(this, savedSignatures,
+                    new SignatureAdapter.OnSignatureClickListener() {
+                @Override
+                public void onSignatureClick(Uri signatureUri) {
+                    bottomSheetDialog.dismiss();
+                    // Chuyển trực tiếp sang ImageSignPreviewActivity với chữ ký đã có
+                    Bitmap rotatedBitmap = ((BitmapDrawable)imageViewPreview.getDrawable()).getBitmap();
+                    Uri tempUri = saveBitmapToCache(rotatedBitmap);
+
+                    Intent intent = new Intent(ImagePreviewActivity.this, ImageSignPreviewActivity.class);
+                    intent.putExtra("imageUri", tempUri);
+                    intent.putExtra("signatureUri", signatureUri);
+                    // Đặt vị trí mặc định cho chữ ký (có thể điều chỉnh)
+                    intent.putExtra("boundingBoxLeft", 100f);
+                    intent.putExtra("boundingBoxTop", 100f);
+
+                    startActivityForResult(intent, REQUEST_SIGNATURE);
+
+                }
+            },new SignatureAdapter.OnSignatureDeleteListener() {
+                @Override
+                public void onSignatureDelete(Uri signatureUri, int position) {
+                    // Xác nhận xóa chữ ký
+                    showDeleteConfirmDialog(signatureUri, position, bottomSheetDialog);
+                }
+            });
+            recyclerViewSigns.setAdapter(signatureAdapter);
+
+
+            bottomSheetDialog.show();
         });
         btnCrop.setOnClickListener(v -> {
             if (imageViewPreview.getDrawable() instanceof BitmapDrawable) {
@@ -198,6 +265,51 @@ public class ImagePreviewActivity extends AppCompatActivity {
         //  Bitmap rotatedBitmap = ((BitmapDrawable)imageViewPreview.getDrawable()).getBitmap();
             handleSaveJpeg();
         });
+    }
+    /**
+            * Hiển thị dialog xác nhận xóa chữ ký
+     */
+    private void showDeleteConfirmDialog(Uri signatureUri, int position, BottomSheetDialog bottomSheetDialog) {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setTitle("Xác nhận xóa");
+        builder.setMessage("Bạn có chắc chắn muốn xóa chữ ký này?");
+
+        builder.setPositiveButton("Xóa", (dialog, which) -> {
+            // Xóa chữ ký khỏi SignatureManager
+            signatureManager.removeSignatureUri(signatureUri);
+
+            // Xóa file chữ ký khỏi cache nếu cần
+            deleteSignatureFile(signatureUri);
+
+            // Cập nhật adapter
+            if (signatureAdapter != null) {
+                signatureAdapter.removeSignature(position);
+            }
+
+            Toast.makeText(this, "Đã xóa chữ ký", Toast.LENGTH_SHORT).show();
+        });
+
+        builder.setNegativeButton("Hủy", (dialog, which) -> {
+            dialog.dismiss();
+        });
+
+        builder.show();
+    }
+
+    /**
+     * Xóa file chữ ký khỏi bộ nhớ cache
+     */
+    private void deleteSignatureFile(Uri signatureUri) {
+        try {
+            if (signatureUri.getScheme().equals("file")) {
+                File file = new File(signatureUri.getPath());
+                if (file.exists()) {
+                    file.delete();
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error deleting signature file: " + e.getMessage(), e);
+        }
     }
     /**
      * Xử lý sự kiện lưu JPEG - Logic được chuyển từ PdfGenerationAndPreviewActivity
@@ -313,6 +425,11 @@ public class ImagePreviewActivity extends AppCompatActivity {
         if (requestCode == REQUEST_SIGNATURE && resultCode == RESULT_OK) {
             if (data != null) {
                 Uri mergedImageUri = data.getParcelableExtra("mergedImageUri");
+                Uri newSignatureUri = data.getParcelableExtra("newSignatureUri");
+                if (newSignatureUri != null) {
+                    // Lưu chữ ký mới vào SignatureManager
+                    signatureManager.saveSignatureUri(newSignatureUri);
+                }
                 if (mergedImageUri != null) {
                     Log.d(TAG, "ImagePreviewActivity: Received merged image URI: " + mergedImageUri.toString());
                     this.imageUri = mergedImageUri;

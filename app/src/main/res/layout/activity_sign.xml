@@ -6,6 +6,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:background="@color/white">
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -14,11 +15,51 @@
         android:gravity="center"
         android:textColor="@color/white"
         android:background="@color/green_accent"/>
-    <com.example.camerascanner.activitysignature.signatureview.SignatureView
+
+    <com.example.camerascanner.activitysignature.signatureview.signature.SignatureView
         android:id="@+id/signatureView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="12" />
+
+    <!-- Thanh điều chỉnh độ dày chữ ký -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="16dp"
+        android:background="@color/white">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Độ dày:"
+            android:textColor="@color/black"
+            android:textSize="14sp"
+            android:layout_marginEnd="10dp"/>
+
+        <SeekBar
+            android:id="@+id/seekBarStrokeWidth"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:max="20"
+            android:progress="6"
+            android:layout_marginEnd="10dp"/>
+
+        <TextView
+            android:id="@+id/tvStrokeWidth"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="6px"
+            android:textColor="@color/black"
+            android:textSize="14sp"
+            android:minWidth="40dp"
+            android:gravity="center"/>
+    </LinearLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"

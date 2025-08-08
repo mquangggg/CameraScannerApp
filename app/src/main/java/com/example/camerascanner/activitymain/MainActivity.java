@@ -233,10 +233,9 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, getString(R.string.tools), Toast.LENGTH_SHORT).show();
                     return true;
                 } else if (itemID == R.id.nav_me) {
-//                    Intent intent = new Intent(MainActivity.this, MeActivity.class);
-//                    startActivity(intent);
-//                    finish();
-                    Toast.makeText(MainActivity.this, getString(R.string.me), Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(MainActivity.this, MeActivity.class);
+                    startActivity(intent);
+                    finish();
                     return true;
                 }
                 return false;

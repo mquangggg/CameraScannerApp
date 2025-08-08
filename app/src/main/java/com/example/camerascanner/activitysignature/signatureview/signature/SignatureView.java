@@ -1,4 +1,4 @@
-package com.example.camerascanner.activitysignature.signatureview;
+package com.example.camerascanner.activitysignature.signatureview.signature;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -8,6 +8,9 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import androidx.annotation.Nullable;
+
+import com.example.camerascanner.activitysignature.signatureview.SignatureBitmapProcessor;
+import com.example.camerascanner.activitysignature.signatureview.SignatureGeometryUtils;
 
 /**
  * Lớp **SignatureView** là một View tùy chỉnh trong Android, được thiết kế để cho phép người dùng
@@ -238,6 +241,23 @@ public class SignatureView extends View {
             listener.onBoundingBoxDetected(new RectF(stateManager.getBoundingBox()));
         }
     }
+    /**
+     * Thiết lập độ dày nét vẽ cho chữ ký
+     * @param strokeWidth Độ dày mong muốn (tính bằng pixel)
+     */
+    public void setStrokeWidth(float strokeWidth) {
+        paintManager.setSignatureStrokeWidth(strokeWidth);
+        // Không cần invalidate() vì chỉ áp dụng cho các nét vẽ mới
+    }
+
+    /**
+     * Lấy độ dày nét vẽ hiện tại
+     * @return Độ dày nét vẽ hiện tại
+     */
+    public float getStrokeWidth() {
+        return paintManager.getSignatureStrokeWidth();
+    }
+
 
     /**
      * Chuyển View sang chế độ cắt (crop mode).

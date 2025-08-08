@@ -1,7 +1,9 @@
-package com.example.camerascanner.activitysignature.signatureview;
+package com.example.camerascanner.activitysignature.signatureview.signature;
 
 import android.graphics.RectF;
 import android.view.MotionEvent;
+
+import com.example.camerascanner.activitysignature.signatureview.SignatureGeometryUtils;
 
 /**
  * Lớp **SignatureTouchHandler** xử lý các tương tác chạm từ người dùng trên view chữ ký.

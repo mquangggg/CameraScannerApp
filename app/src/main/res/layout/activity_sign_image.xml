@@ -26,14 +26,13 @@
             android:layout_height="match_parent"
             android:scaleType="fitCenter" />
 
-        <com.example.camerascanner.activitysignature.signatureview.SignatureView
+        <com.example.camerascanner.activitysignature.signatureview.signature.SignatureView
             android:id="@+id/signatureOverlay"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@android:color/transparent" />
 
     </FrameLayout>
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"

@@ -20,7 +20,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="#2E2E2E"
+                android:background="@color/black"
                 android:layout_marginStart="2dp"
                 android:layout_marginEnd="2dp"
                 >
@@ -56,7 +56,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Sử dụng một tài khoản khác"
-                    android:textColor="@android:color/darker_gray"
+                    android:textColor="@color/white"
                     android:textSize="14sp"
                     android:layout_marginStart="20dp"
                     android:layout_marginTop="4dp"/>
@@ -93,7 +93,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Mở khóa đặc quyền"
-                    android:textColor="@android:color/darker_gray"
+                    android:textColor="@color/white"
                     android:textSize="14sp"
                     android:layout_marginStart="20dp"
                     android:layout_marginTop="4dp"/>
@@ -107,12 +107,12 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Tài khoản của tôi"
-                android:textColor="@android:color/darker_gray"
+                android:textColor="@color/white"
                 android:textSize="14sp"
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="10dp"/>
 
-            <View style="@style/Divider" />
+
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -123,160 +123,29 @@
                 android:layout_marginEnd="20dp"
                 android:layout_marginTop="4dp"
                 >
-                <androidx.appcompat.widget.AppCompatButton
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:text="          Tài khoản"
-                    android:textColor="@color/white"
-                    android:gravity="start|center_vertical"
-                    android:background="@drawable/search_background"/>
-                <View style="@style/Divider" />
-                <androidx.appcompat.widget.AppCompatButton
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:text="          Tài khoản"
-                    android:textColor="@color/white"
-                    android:gravity="start|center_vertical"
-                    android:background="@drawable/search_background"/>
-                <View style="@style/Divider" />
-                <androidx.appcompat.widget.AppCompatButton
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:text="          Tài khoản"
-                    android:textColor="@color/white"
-                    android:gravity="start|center_vertical"
-                    android:background="@drawable/search_background"/>
-                <View style="@style/Divider" />
-                <androidx.appcompat.widget.AppCompatButton
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:text="          Tài khoản"
-                    android:textColor="@color/white"
-                    android:gravity="start|center_vertical"
-                    android:background="@drawable/search_background"/>
-                <View style="@style/Divider" />
-                <androidx.appcompat.widget.AppCompatButton
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:text="          Tài khoản"
-                    android:textColor="@color/white"
-                    android:gravity="start|center_vertical"
-                    android:background="@drawable/search_background"/>
-                <View style="@style/Divider" />
-                <androidx.appcompat.widget.AppCompatButton
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:text="          Tài khoản"
-                    android:textColor="@color/white"
-                    android:gravity="start|center_vertical"
-                    android:background="@drawable/search_background"/>
-                <View style="@style/Divider" />
-                <androidx.appcompat.widget.AppCompatButton
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:text="          Tài khoản"
-                    android:textColor="@color/white"
-                    android:gravity="start|center_vertical"
-                    android:background="@drawable/search_background"/>
-
-
-
-            </LinearLayout>
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Giới thiệu"
-                android:textColor="@android:color/darker_gray"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="8dp"
-                />
-            <View style="@style/Divider" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/search_background"
-                android:layout_marginStart="20dp"
-                android:layout_marginEnd="20dp"
-                android:orientation="vertical"
-                >
-                <androidx.appcompat.widget.AppCompatButton
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:text="          Tài khoản"
-                    android:textColor="@color/white"
-                    android:gravity="start|center_vertical"
-                    android:background="@drawable/search_background"/>
-                <View style="@style/Divider" />
-                <androidx.appcompat.widget.AppCompatButton
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:text="          Tài khoản"
-                    android:textColor="@color/white"
-                    android:gravity="start|center_vertical"
-                    android:background="@drawable/search_background"/>
-                <View style="@style/Divider" />
-                <androidx.appcompat.widget.AppCompatButton
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:text="          Tài khoản"
-                    android:textColor="@color/white"
-                    android:gravity="start|center_vertical"
-                    android:background="@drawable/search_background"/>
-
-                <View style="@style/Divider" />
 
                 <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btnLanguage"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="1"
-                    android:text="          Tài khoản"
-                    android:textColor="@color/white"
+                    android:background="@drawable/search_background"
                     android:gravity="start|center_vertical"
-                    android:background="@drawable/search_background"/>
+                    android:text="          Ngôn ngữ"
+                    android:textColor="@color/white" />
 
-                <View style="@style/Divider" />
-
-                <androidx.appcompat.widget.AppCompatButton
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:text="          Tài khoản"
-                    android:textColor="@color/white"
-                    android:gravity="start|center_vertical"
-                    android:background="@drawable/search_background"/>
-
-                <View style="@style/Divider" />
 
                 <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btnBlackWhite"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_weight="1"
-                    android:text="          Tài khoản"
-                    android:textColor="@color/white"
+                    android:background="@drawable/search_background"
                     android:gravity="start|center_vertical"
-                    android:background="@drawable/search_background"/>
-                <View style="@style/Divider" />
-                <androidx.appcompat.widget.AppCompatButton
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:text="          Tài khoản"
-                    android:textColor="@color/white"
-                    android:gravity="start|center_vertical"
-                    android:background="@drawable/search_background"/>
-                <View style="@style/Divider" />
+                    android:text="          Giao Diện"
+                    android:textColor="@color/white" />
+
+
 
             </LinearLayout>
         </LinearLayout>

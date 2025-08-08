@@ -30,8 +30,8 @@
         </activity>
         <activity android:name=".activitycamera.CameraActivity" android:exported="false" />
         <activity android:name=".activitycamera.ImagePreviewActivity" android:exported="false" />
-        <activity android:name=".activitysignature.SignatureActivity" android:exported="false" />
-        <activity android:name=".activitysignature.ImageSignPreviewActivity" android:exported="false" />
+        <activity android:name=".activitysignature.signatureview.signature.SignatureActivity" android:exported="false" />
+        <activity android:name=".activitysignature.signatureview.imagesignpreview.ImageSignPreviewActivity" android:exported="false" />
         <activity android:name=".activitycrop.CropActivity" android:exported="false"/>
         <activity android:name=".activitypdf.PdfGenerationAndPreviewActivity" android:exported="false"/>
         <activity android:name=".activitypdf.pdfgroup.PDFGroupActivity" android:exported="false"/>
