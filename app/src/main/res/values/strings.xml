@@ -275,4 +275,16 @@
     <string name="share_ocr_pair_from_camera_scanner">Chia sẻ cặp OCR từ Camera Scanner\nẢnh: %1$s\nVăn bản: %2$s</string>
 
 
+
+    <!--MeActivitry-->
+    <!--Java-->
+    <string name="dark_mode">Tối </string>
+    <string name="light_mode">Sáng</string>
+    <string name="choose_language">Chọn ngôn ngữ</string>
+    <string name="choose_theme">Chọn giao diện</string>
+    <string name="language">Ngôn ngữ</string>
+    <string name="theme">Giao diện</string>
+    <!--Layout-->
+
+
 </resources>

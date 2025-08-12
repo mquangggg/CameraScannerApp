@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitycamera.CameraActivity;
 import com.example.camerascanner.activitycamera.ImagePreviewActivity;
+import com.example.camerascanner.BaseActivity;
 import com.example.camerascanner.activitymain.MainActivity;
 import com.example.camerascanner.activitypdf.DialogHelper;
 import com.example.camerascanner.activitypdf.PermissionHelper;
@@ -40,7 +41,7 @@ import java.util.concurrent.Executors;
 /**
  * Activity quản lý group ảnh và tạo PDF multi-page
  */
-public class PDFGroupActivity extends AppCompatActivity implements
+public class PDFGroupActivity extends BaseActivity implements
         ImageGroupAdapter.OnImageActionListener {
 
     private static final String TAG = "PDFGroupActivity";

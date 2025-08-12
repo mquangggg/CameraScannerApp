@@ -21,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.canhub.cropper.CropImageView;
 import com.example.camerascanner.R;
+import com.example.camerascanner.BaseActivity;
 import com.example.camerascanner.activitypdf.pdfgroup.PDFGroupActivity;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.text.Text;
@@ -42,7 +43,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class CropActivity extends AppCompatActivity {
+public class CropActivity extends BaseActivity {
 
     private static final String TAG = "CropActivity";
 

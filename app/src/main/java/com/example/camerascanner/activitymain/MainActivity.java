@@ -52,7 +52,7 @@ import java.util.concurrent.Executors;
  * để người dùng xem các tệp PDF và các cặp tệp OCR (ảnh và văn bản) đã lưu.
  * Nó cũng cung cấp chức năng mở Camera để chụp ảnh mới và xử lý các quyền cần thiết.
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends com.example.camerascanner.BaseActivity {
 
     // Hằng số cho các mã yêu cầu quyền
     private static final int REQUEST_CAMERA_PERMISSION = 101;
@@ -67,7 +67,6 @@ public class MainActivity extends AppCompatActivity {
     private List<File> originalPdfFiles;
     private List<OcrPairedItem> originalOcrPairedItems;
     private Button btnPdfAndOcr;
-    private MaterialButton btnBlackWhite;
     private FloatingActionButton fabScan; // Nút Floating Action Button để bắt đầu quét
 
     // Khai báo Adapters và danh sách dữ liệu
@@ -100,7 +99,6 @@ public class MainActivity extends AppCompatActivity {
         tabLayout = findViewById(R.id.tabLayout);
         fabScan = findViewById(R.id.btnStartCamera);
         btnPdfAndOcr = findViewById(R.id.btnPdfAndOcr);
-        btnBlackWhite = findViewById(R.id.btnBlackWhite);
 
         // Khởi tạo ExecutorService với một luồng duy nhất để tải tệp trong nền
         fileLoadingExecutor = Executors.newSingleThreadExecutor();
@@ -187,14 +185,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        btnBlackWhite.setOnClickListener(v -> {
-            int mode = AppCompatDelegate.getDefaultNightMode();
-            if (mode == AppCompatDelegate.MODE_NIGHT_NO) {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES); // Chuyển sang Light Mode
-            } else {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO); // Chuyển sang Dark Mode
-            }
-        });
         btnPdfAndOcr.setOnClickListener(v -> {
             // Kiểm tra quyền Camera trước khi mở CameraActivity
             if (checkCameraPermission()) {

@@ -39,6 +39,7 @@ import androidx.core.content.ContextCompat;
 
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitycamera.ImagePreviewActivity;
+import com.example.camerascanner.BaseActivity;
 import com.example.camerascanner.activitymain.MainActivity;
 import com.google.android.gms.tasks.Tasks;
 import com.google.mlkit.vision.common.InputImage;
@@ -63,7 +64,7 @@ import java.util.concurrent.TimeUnit;
  * OCRActivity được tối ưu hóa với các kỹ thuật xử lý ảnh nâng cao
  * để cải thiện độ chính xác của nhận dạng chữ viết
  */
-public class OCRActivity extends AppCompatActivity {
+public class OCRActivity extends BaseActivity {
 
     // Khai báo các thành phần UI
     private ImageButton btnOCRBack;

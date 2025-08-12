@@ -13,6 +13,7 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.camerascanner.BaseActivity;
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitycamera.SignatureManager;
 import com.example.camerascanner.activitysignature.signatureview.imagesignpreview.ImageSignPreviewActivity;
@@ -20,7 +21,7 @@ import com.example.camerascanner.activitysignature.signatureview.imagesignprevie
 import java.io.File;
 import java.io.FileOutputStream;
 
-public class SignatureActivity extends AppCompatActivity {
+public class SignatureActivity extends BaseActivity {
 
     private SignatureView signatureView;
     private SeekBar seekBarStrokeWidth;

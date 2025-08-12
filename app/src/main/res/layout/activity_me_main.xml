@@ -131,9 +131,9 @@
                     android:layout_weight="1"
                     android:background="@drawable/search_background"
                     android:gravity="start|center_vertical"
-                    android:text="          Ngôn ngữ"
+                    android:paddingStart="35dp"
+                    android:text="@string/language"
                     android:textColor="@color/white" />
-
 
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/btnBlackWhite"
@@ -142,7 +142,8 @@
                     android:layout_weight="1"
                     android:background="@drawable/search_background"
                     android:gravity="start|center_vertical"
-                    android:text="          Giao Diện"
+                    android:text="@string/theme"
+                    android:paddingStart="35dp"
                     android:textColor="@color/white" />
 
 

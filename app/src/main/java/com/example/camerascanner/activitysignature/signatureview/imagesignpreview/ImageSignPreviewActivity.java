@@ -4,19 +4,26 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
 import android.graphics.RectF;
+import android.graphics.drawable.GradientDrawable;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.camerascanner.BaseActivity;
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitysignature.signatureview.signature.SignatureView;
 
@@ -25,123 +32,219 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-/**
- * ImageSignPreviewActivity hiển thị ảnh gốc và cho phép người dùng đặt chữ ký lên ảnh.
- * Người dùng có thể di chuyển, thay đổi kích thước và xoay chữ ký trước khi hợp nhất vào ảnh.
- */
-public class ImageSignPreviewActivity extends AppCompatActivity implements SignatureView.OnSignatureChangeListener {
+import yuku.ambilwarna.AmbilWarnaDialog;
 
-    private ImageView imageViewPreview; // ImageView hiển thị ảnh gốc
-    private SignatureView signatureOverlay; // Custom View để hiển thị và thao tác với chữ ký
-    private ImageButton btnCancel, btnConfirm; // Các nút hủy và xác nhận
+public class ImageSignPreviewActivity extends BaseActivity implements SignatureView.OnSignatureChangeListener {
 
-    private Uri imageUri; // URI của ảnh gốc
-    private Uri signatureUri; // URI của chữ ký
-    private Bitmap originalImageBitmap; // Bitmap của ảnh gốc
-    private Bitmap signatureBitmap; // Bitmap của chữ ký
-    private float boundingBoxLeft; // Tọa độ X ban đầu của hộp giới hạn chữ ký (tương đối với ảnh gốc)
-    private float boundingBoxTop; // Tọa độ Y ban đầu của hộp giới hạn chữ ký (tương đối với ảnh gốc)
+    private ImageView imageViewPreview;
+    private SignatureView signatureOverlay;
+    private ImageButton btnCancel, btnConfirm;
+    private Button btnColorPicker;
+    private TextView tvColorHex;
 
-    /**
-     * Phương thức được gọi khi Activity được tạo lần đầu.
-     * Khởi tạo layout, lấy dữ liệu từ Intent và thiết lập các listeners.
-     * @param savedInstanceState Đối tượng Bundle chứa trạng thái Activity đã lưu.
-     */
+    private Uri imageUri;
+    private Uri signatureUri;
+    private Bitmap originalImageBitmap;
+    private Bitmap originalSignatureBitmap; // Bitmap gốc không thay đổi màu
+    private Bitmap currentColoredSignature; // Bitmap đã được apply màu
+    private float boundingBoxLeft;
+    private float boundingBoxTop;
+
+    // Current selected color
+    private int selectedColor = Color.BLACK;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_sign_image); // Đặt layout cho Activity
+        setContentView(R.layout.activity_sign_image);
 
-        // Ánh xạ các View từ layout
+        initViews();
+        getDataFromIntent();
+        setupColorPicker();
+        loadImageAndSignature();
+        setupClickListeners();
+    }
+
+    private void initViews() {
         imageViewPreview = findViewById(R.id.imageViewPreview);
         signatureOverlay = findViewById(R.id.signatureOverlay);
         btnCancel = findViewById(R.id.btnCancelImageSign);
         btnConfirm = findViewById(R.id.btnYesImageSign);
+        btnColorPicker = findViewById(R.id.btnColorPicker);
+        tvColorHex = findViewById(R.id.tvColorHex);
+    }
 
-        // Lấy dữ liệu từ Intent
+    private void getDataFromIntent() {
         imageUri = getIntent().getParcelableExtra("imageUri");
         signatureUri = getIntent().getParcelableExtra("signatureUri");
         boundingBoxLeft = getIntent().getFloatExtra("boundingBoxLeft", 0f);
         boundingBoxTop = getIntent().getFloatExtra("boundingBoxTop", 0f);
+    }
 
-        // Nếu có URI ảnh, tải bitmap và hiển thị lên ImageView
+    private void setupColorPicker() {
+        // Set initial color
+        updateColorPreview(selectedColor);
+
+        // Set click listener for color picker button
+        btnColorPicker.setOnClickListener(v -> {
+            AmbilWarnaDialog colorPickerDialog = new AmbilWarnaDialog(this, selectedColor, new AmbilWarnaDialog.OnAmbilWarnaListener() {
+                @Override
+                public void onCancel(AmbilWarnaDialog dialog) {
+                    Log.d("AmbilWarna", "Color picker cancelled");
+                }
+
+                @Override
+                public void onOk(AmbilWarnaDialog dialog, int color) {
+                    // User selected a color
+                    selectedColor = color;
+                    updateColorPreview(color);
+
+                    // Apply new color to signature
+                    applyColorToSignatureOverlay();
+
+                    Log.d("AmbilWarna", "Color selected: " + String.format("#%06X", (0xFFFFFF & color)));
+                }
+            });
+
+            colorPickerDialog.show();
+        });
+    }
+
+    /**
+     * Apply màu mới cho signature overlay
+     */
+    private void applyColorToSignatureOverlay() {
+        if (originalSignatureBitmap != null) {
+            // Tạo bitmap mới với màu đã chọn
+            currentColoredSignature = createColoredSignatureBitmap(originalSignatureBitmap, selectedColor);
+
+            // Load bitmap mới vào SignatureView
+            if (currentColoredSignature != null) {
+                signatureOverlay.loadBitmap(currentColoredSignature);
+                signatureOverlay.invalidate(); // Force redraw
+            }
+        }
+    }
+
+    /**
+     * Tạo bitmap chữ ký với màu mới
+     */
+    private Bitmap createColoredSignatureBitmap(Bitmap originalBitmap, int newColor) {
+        if (originalBitmap == null) return null;
+
+        // Create a mutable copy
+        Bitmap coloredBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true);
+
+        // Create canvas to draw on the bitmap
+        Canvas canvas = new Canvas(coloredBitmap);
+
+        // Create paint with color filter
+        Paint paint = new Paint();
+        paint.setColorFilter(new android.graphics.PorterDuffColorFilter(newColor, PorterDuff.Mode.SRC_ATOP));
+
+        // Draw the original bitmap with the color filter
+        canvas.drawBitmap(originalBitmap, 0, 0, paint);
+
+        return coloredBitmap;
+    }
+
+    /**
+     * Update color preview button and hex text
+     */
+    private void updateColorPreview(int color) {
+        // Update button background color
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.RECTANGLE);
+        drawable.setColor(color);
+        drawable.setStroke(4, Color.WHITE);
+        drawable.setCornerRadius(8);
+        btnColorPicker.setBackground(drawable);
+
+        // Update hex text
+        String hexColor = String.format("#%06X", (0xFFFFFF & color));
+        tvColorHex.setText(hexColor);
+
+        // Add subtle animation
+        btnColorPicker.animate()
+                .scaleX(1.1f)
+                .scaleY(1.1f)
+                .setDuration(100)
+                .withEndAction(() -> {
+                    btnColorPicker.animate()
+                            .scaleX(1.0f)
+                            .scaleY(1.0f)
+                            .setDuration(100)
+                            .start();
+                })
+                .start();
+    }
+
+    private void loadImageAndSignature() {
         if (imageUri != null) {
             originalImageBitmap = getBitmapFromUri(imageUri);
-            imageViewPreview.setImageBitmap(originalImageBitmap); // dùng setImageBitmap để tránh delay render
+            imageViewPreview.setImageBitmap(originalImageBitmap);
         }
 
-        loadSignatureBitmap(); // Tải bitmap chữ ký
+        loadSignatureBitmap();
 
-        // Đảm bảo ImageView đã được layout xong trước khi thiết lập SignatureOverlay
         imageViewPreview.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
             setupSignatureOverlay();
         });
+    }
 
-        // Thiết lập listener cho nút xác nhận
+    private void setupClickListeners() {
         btnConfirm.setOnClickListener(v -> {
-            if (imageUri != null && signatureUri != null && signatureBitmap != null) {
-                mergeImagesAndFinish(); // Hợp nhất ảnh và kết thúc Activity
+            if (imageUri != null && signatureUri != null && currentColoredSignature != null) {
+                mergeImagesAndFinish();
             } else {
                 Toast.makeText(this, getString(R.string.error_merging_images_missing_elements), Toast.LENGTH_SHORT).show();
-                finish(); // Kết thúc Activity nếu thiếu dữ liệu
+                finish();
             }
         });
 
-        // Thiết lập listener cho nút hủy
         btnCancel.setOnClickListener(v -> finish());
     }
 
-    /**
-     * Thiết lập SignatureOverlay: đặt chế độ, hiển thị khung và đăng ký listener.
-     * Nếu có chữ ký, tải chữ ký và điều chỉnh vị trí/kích thước khung.
-     */
     private void setupSignatureOverlay() {
-        signatureOverlay.setDrawingMode(false); // Đặt chế độ không vẽ (chỉ chỉnh sửa)
-        signatureOverlay.showSignatureFrame(true); // Hiển thị khung chữ ký
-        signatureOverlay.setFrameResizable(true); // Cho phép thay đổi kích thước khung
-        signatureOverlay.setOnSignatureChangeListener(this); // Đăng ký listener để nhận các sự kiện thay đổi
+        signatureOverlay.setDrawingMode(false);
+        signatureOverlay.showSignatureFrame(true);
+        signatureOverlay.setFrameResizable(true);
+        signatureOverlay.setOnSignatureChangeListener(this);
 
-        if (signatureBitmap != null) {
-            // Đảm bảo SignatureOverlay đã được layout trước khi tải bitmap và điều chỉnh khung
+        if (originalSignatureBitmap != null) {
+            // Apply initial color và load vào overlay
+            applyColorToSignatureOverlay();
+
             signatureOverlay.post(() -> {
-                signatureOverlay.loadBitmap(signatureBitmap); // Tải bitmap chữ ký vào overlay
-                RectF adjustedFrame = calculateAdjustedSignatureFrame(); // Tính toán khung chữ ký đã điều chỉnh
+                RectF adjustedFrame = calculateAdjustedSignatureFrame();
                 Log.d("DEBUG", "Adjusted frame: " + adjustedFrame.toString());
-                signatureOverlay.setSignatureFrame(adjustedFrame); // Đặt khung chữ ký đã điều chỉnh
+                signatureOverlay.setSignatureFrame(adjustedFrame);
             });
-            signatureOverlay.setVisibility(View.VISIBLE); // Hiển thị SignatureOverlay
+            signatureOverlay.setVisibility(View.VISIBLE);
         } else {
-            signatureOverlay.setVisibility(View.GONE); // Ẩn SignatureOverlay nếu không có chữ ký
+            signatureOverlay.setVisibility(View.GONE);
         }
     }
 
-    /**
-     * Tính toán kích thước và vị trí của khung chữ ký trên SignatureOverlay
-     * dựa trên kích thước của ImageView và ảnh gốc, cùng với vị trí bounding box ban đầu.
-     * @return RectF đại diện cho khung chữ ký đã điều chỉnh trong không gian của ImageView.
-     */
     private RectF calculateAdjustedSignatureFrame() {
-        if (originalImageBitmap == null || signatureBitmap == null) return new RectF(); // Trả về RectF rỗng nếu thiếu bitmap
+        if (originalImageBitmap == null || originalSignatureBitmap == null) return new RectF();
 
         int imageViewWidth = imageViewPreview.getWidth();
         int imageViewHeight = imageViewPreview.getHeight();
         int bitmapWidth = originalImageBitmap.getWidth();
         int bitmapHeight = originalImageBitmap.getHeight();
 
-        // Tính toán tỷ lệ scaling để ảnh vừa với ImageView
         float scaleX = (float) imageViewWidth / bitmapWidth;
         float scaleY = (float) imageViewHeight / bitmapHeight;
         float scale = Math.min(scaleX, scaleY);
 
-        // Tính toán kích thước ảnh đã scale và offset để căn giữa trong ImageView
         float scaledWidth = bitmapWidth * scale;
         float scaledHeight = bitmapHeight * scale;
         float offsetX = (imageViewWidth - scaledWidth) / 2;
         float offsetY = (imageViewHeight - scaledHeight) / 2;
 
-        // Tính toán kích thước và vị trí chữ ký trong không gian của ImageView
-        float signatureWidthInImageView = signatureBitmap.getWidth() * scale;
-        float signatureHeightInImageView = signatureBitmap.getHeight() * scale;
+        float signatureWidthInImageView = originalSignatureBitmap.getWidth() * scale;
+        float signatureHeightInImageView = originalSignatureBitmap.getHeight() * scale;
         float signatureLeftInImageView = offsetX + (boundingBoxLeft * scale);
         float signatureTopInImageView = offsetY + (boundingBoxTop * scale);
 
@@ -153,58 +256,57 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
         );
     }
 
-    /**
-     * Tải bitmap chữ ký từ URI được cung cấp.
-     */
     private void loadSignatureBitmap() {
         if (signatureUri == null) {
-            signatureBitmap = null;
+            originalSignatureBitmap = null;
+            currentColoredSignature = null;
             return;
         }
         try {
-            signatureBitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(signatureUri)); // Giải mã bitmap từ InputStream
+            originalSignatureBitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(signatureUri));
+            // Tạo version với màu hiện tại
+            if (originalSignatureBitmap != null) {
+                currentColoredSignature = createColoredSignatureBitmap(originalSignatureBitmap, selectedColor);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(this, "Không tìm thấy file chữ ký.", Toast.LENGTH_SHORT).show();
-            signatureBitmap = null;
+            originalSignatureBitmap = null;
+            currentColoredSignature = null;
         }
     }
 
-    /**
-     * Hợp nhất ảnh gốc và chữ ký, sau đó kết thúc Activity và trả về URI của ảnh đã hợp nhất.
-     * Thực hiện trong một luồng riêng để tránh chặn UI.
-     */
     private void mergeImagesAndFinish() {
-        RectF signatureFrame = signatureOverlay.getSignatureFrame(); // Lấy khung chữ ký hiện tại từ overlay
-        float rotationAngle = signatureOverlay.getRotationAngle(); // Lấy góc xoay hiện tại của chữ ký
+        RectF signatureFrame = signatureOverlay.getSignatureFrame();
+        float rotationAngle = signatureOverlay.getRotationAngle();
 
-        if (signatureBitmap == null || originalImageBitmap == null) {
+        if (currentColoredSignature == null || originalImageBitmap == null) {
             Toast.makeText(this, "Không có chữ ký hợp lệ hoặc ảnh gốc để hợp nhất.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        new Thread(() -> { // Chạy trong một luồng nền
+        new Thread(() -> {
             try {
-                // Thay đổi kích thước ảnh gốc nếu cần thiết để tối ưu hóa việc hợp nhất
                 Bitmap processedImage = resizeIfNeeded(originalImageBitmap, 1080, 1920);
-                // Chuyển đổi tọa độ khung chữ ký từ không gian UI sang không gian của ảnh thật
                 RectF realImageFrame = convertUICoordinatesToImageCoordinates(signatureFrame, processedImage);
+
                 Log.d("DEBUG", "Converted frame: " + realImageFrame.toString());
                 Log.d("DEBUG", "Rotation angle: " + Math.toDegrees(rotationAngle));
+                Log.d("DEBUG", "Selected color: " + String.format("#%06X", (0xFFFFFF & selectedColor)));
 
-                // Hợp nhất ảnh gốc và chữ ký với góc xoay đã cho
-                Bitmap mergedImage = mergeBitmapWithRotation(processedImage, signatureBitmap, realImageFrame, rotationAngle);
-                Uri mergedImageUri = saveBitmapToCache(mergedImage); // Lưu ảnh đã hợp nhất vào cache
+                // Sử dụng signature đã được apply màu
+                Bitmap mergedImage = mergeBitmapWithRotation(processedImage, currentColoredSignature, realImageFrame, rotationAngle);
+                Uri mergedImageUri = saveBitmapToCache(mergedImage);
 
-                // Giải phóng bitmap đã hợp nhất nếu không còn cần thiết
                 if (mergedImage != null && !mergedImage.isRecycled()) mergedImage.recycle();
 
-                runOnUiThread(() -> { // Chạy trên luồng UI
+                runOnUiThread(() -> {
                     if (mergedImageUri != null) {
                         Intent resultIntent = new Intent();
-                        resultIntent.putExtra("mergedImageUri", mergedImageUri); // Đặt URI ảnh đã hợp nhất vào Intent kết quả
-                        setResult(RESULT_OK, resultIntent); // Đặt kết quả OK
-                        finish(); // Kết thúc Activity
+                        resultIntent.putExtra("mergedImageUri", mergedImageUri);
+                        resultIntent.putExtra("selectedColor", selectedColor);
+                        setResult(RESULT_OK, resultIntent);
+                        finish();
                     } else {
                         Toast.makeText(this, "Lưu ảnh thất bại.", Toast.LENGTH_SHORT).show();
                     }
@@ -219,12 +321,6 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
         }).start();
     }
 
-    /**
-     * Chuyển đổi tọa độ của một khung từ không gian UI (ImageView) sang không gian của ảnh Bitmap thực tế.
-     * @param uiFrame RectF của khung trong không gian UI.
-     * @param actualBitmap Bitmap thực tế mà khung sẽ được áp dụng.
-     * @return RectF của khung trong không gian tọa độ của Bitmap thực tế.
-     */
     private RectF convertUICoordinatesToImageCoordinates(RectF uiFrame, Bitmap actualBitmap) {
         if (actualBitmap == null) return new RectF();
 
@@ -233,7 +329,6 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
         int bitmapWidth = actualBitmap.getWidth();
         int bitmapHeight = actualBitmap.getHeight();
 
-        // Tính toán tỷ lệ scaling và offset tương tự như calculateAdjustedSignatureFrame
         float scaleX = (float) imageViewWidth / bitmapWidth;
         float scaleY = (float) imageViewHeight / bitmapHeight;
         float scale = Math.min(scaleX, scaleY);
@@ -243,7 +338,6 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
         float offsetX = (imageViewWidth - scaledWidth) / 2;
         float offsetY = (imageViewHeight - scaledHeight) / 2;
 
-        // Chuyển đổi ngược từ tọa độ UI sang tọa độ ảnh
         float realLeft = (uiFrame.left - offsetX) / scale;
         float realTop = (uiFrame.top - offsetY) / scale;
         float realRight = (uiFrame.right - offsetX) / scale;
@@ -252,70 +346,39 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
         return new RectF(realLeft, realTop, realRight, realBottom);
     }
 
-    /**
-     * Hợp nhất một bitmap overlay lên một bitmap nền, áp dụng xoay.
-     * @param baseBitmap Bitmap nền.
-     * @param overlayBitmap Bitmap sẽ được phủ lên.
-     * @param overlayFrame RectF định vị và kích thước của overlayBitmap trên baseBitmap.
-     * @param rotationAngle Góc xoay của overlayBitmap (radian).
-     * @return Bitmap đã được hợp nhất.
-     */
     private Bitmap mergeBitmapWithRotation(Bitmap baseBitmap, Bitmap overlayBitmap, RectF overlayFrame, float rotationAngle) {
-        Bitmap mergedBitmap = baseBitmap.copy(baseBitmap.getConfig(), true); // Tạo bản sao của bitmap nền để vẽ lên
-        Canvas canvas = new Canvas(mergedBitmap); // Tạo Canvas từ bitmap đã sao chép
+        Bitmap mergedBitmap = baseBitmap.copy(baseBitmap.getConfig(), true);
+        Canvas canvas = new Canvas(mergedBitmap);
 
-        // Tính toán tâm của khung overlay
         float centerX = overlayFrame.centerX();
         float centerY = overlayFrame.centerY();
 
-        canvas.save(); // Lưu trạng thái hiện tại của canvas
+        canvas.save();
 
-        // Áp dụng xoay quanh tâm của khung overlay
         if (rotationAngle != 0f) {
             canvas.rotate((float) Math.toDegrees(rotationAngle), centerX, centerY);
         }
 
-        canvas.drawBitmap(overlayBitmap, null, overlayFrame, null); // Vẽ overlay bitmap lên canvas
+        canvas.drawBitmap(overlayBitmap, null, overlayFrame, null);
 
-        canvas.restore(); // Khôi phục trạng thái canvas đã lưu
+        canvas.restore();
 
         return mergedBitmap;
     }
 
-    /**
-     * Hợp nhất một bitmap overlay lên một bitmap nền mà không áp dụng xoay.
-     * (Phương thức này có thể không còn được sử dụng nếu `mergeBitmapWithRotation` là đủ).
-     * @param baseBitmap Bitmap nền.
-     * @param overlayBitmap Bitmap sẽ được phủ lên.
-     * @param overlayFrame RectF định vị và kích thước của overlayBitmap trên baseBitmap.
-     * @return Bitmap đã được hợp nhất.
-     */
-    private Bitmap mergeBitmap(Bitmap baseBitmap, Bitmap overlayBitmap, RectF overlayFrame) {
-        Bitmap mergedBitmap = baseBitmap.copy(baseBitmap.getConfig(), true); // Tạo bản sao của bitmap nền
-        Canvas canvas = new Canvas(mergedBitmap); // Tạo Canvas từ bitmap đã sao chép
-        canvas.drawBitmap(overlayBitmap, null, overlayFrame, null); // Vẽ overlay bitmap lên canvas
-        return mergedBitmap;
-    }
-
-    /**
-     * Tải một Bitmap từ Uri, bao gồm xử lý xoay ảnh dựa trên thông tin Exif.
-     * @param uri Uri của ảnh.
-     * @return Bitmap đã được giải mã và xoay đúng hướng, hoặc null nếu có lỗi.
-     */
     private Bitmap getBitmapFromUri(Uri uri) {
         try {
             InputStream input = getContentResolver().openInputStream(uri);
-            Bitmap bitmap = BitmapFactory.decodeStream(input); // Giải mã bitmap
+            Bitmap bitmap = BitmapFactory.decodeStream(input);
 
-            // Xử lý xoay ảnh từ Exif
             InputStream exifStream = getContentResolver().openInputStream(uri);
-            ExifInterface exif = new ExifInterface(exifStream); // Đọc thông tin Exif
+            ExifInterface exif = new ExifInterface(exifStream);
             int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-            int rotation = exifToDegrees(orientation); // Chuyển đổi hướng Exif sang độ xoay
+            int rotation = exifToDegrees(orientation);
             if (rotation != 0) {
                 Matrix matrix = new Matrix();
-                matrix.postRotate(rotation); // Tạo ma trận xoay
-                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true); // Tạo bitmap đã xoay
+                matrix.postRotate(rotation);
+                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
             }
 
             return bitmap;
@@ -325,11 +388,6 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
         }
     }
 
-    /**
-     * Chuyển đổi giá trị hướng Exif sang góc xoay tương ứng (độ).
-     * @param exifOrientation Giá trị hướng từ Exif.
-     * @return Góc xoay tính bằng độ.
-     */
     private int exifToDegrees(int exifOrientation) {
         switch (exifOrientation) {
             case ExifInterface.ORIENTATION_ROTATE_90: return 90;
@@ -339,68 +397,54 @@ public class ImageSignPreviewActivity extends AppCompatActivity implements Signa
         }
     }
 
-    /**
-     * Lưu một Bitmap vào thư mục cache của ứng dụng.
-     * @param bitmap Bitmap cần lưu.
-     * @return Uri của file Bitmap đã lưu, hoặc null nếu có lỗi.
-     */
     private Uri saveBitmapToCache(Bitmap bitmap) {
         try {
-            File cachePath = new File(getCacheDir(), "merged_images"); // Tạo thư mục con trong cache
-            cachePath.mkdirs(); // Tạo thư mục nếu chưa tồn tại
-            File file = new File(cachePath, "merged_image_" + System.currentTimeMillis() + ".jpg"); // Tạo tên file duy nhất
+            File cachePath = new File(getCacheDir(), "merged_images");
+            cachePath.mkdirs();
+            File file = new File(cachePath, "merged_image_" + System.currentTimeMillis() + ".jpg");
             FileOutputStream fos = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos); // Nén bitmap thành JPEG với chất lượng 90%
-            fos.close(); // Đóng FileOutputStream
-            return Uri.fromFile(file); // Trả về Uri của file đã lưu
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, fos);
+            fos.close();
+            return Uri.fromFile(file);
         } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
     }
 
-    /**
-     * Thay đổi kích thước của Bitmap nếu nó lớn hơn kích thước tối đa cho phép.
-     * @param bitmap Bitmap gốc.
-     * @param maxWidth Chiều rộng tối đa.
-     * @param maxHeight Chiều cao tối đa.
-     * @return Bitmap đã được thay đổi kích thước nếu cần, hoặc Bitmap gốc nếu không cần thay đổi.
-     */
     private Bitmap resizeIfNeeded(Bitmap bitmap, int maxWidth, int maxHeight) {
-        if (bitmap.getWidth() <= maxWidth && bitmap.getHeight() <= maxHeight) return bitmap; // Không cần thay đổi kích thước
-        // Tính toán tỷ lệ thu nhỏ để ảnh vừa với kích thước tối đa
+        if (bitmap.getWidth() <= maxWidth && bitmap.getHeight() <= maxHeight) return bitmap;
         float ratio = Math.min((float) maxWidth / bitmap.getWidth(), (float) maxHeight / bitmap.getHeight());
         int newWidth = Math.round(bitmap.getWidth() * ratio);
         int newHeight = Math.round(bitmap.getHeight() * ratio);
-        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true); // Tạo bitmap đã được scale
+        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true);
     }
 
-    // Các phương thức interface OnSignatureChangeListener (hiện tại không làm gì)
-
-    /**
-     * Callback khi chữ ký thay đổi. (Không được sử dụng trong Activity này)
-     */
+    // Interface callbacks
     @Override
     public void onSignatureChanged() {}
 
-    /**
-     * Callback khi hộp giới hạn được phát hiện. (Không được sử dụng trong Activity này)
-     * @param boundingBox RectF của hộp giới hạn.
-     */
     @Override
     public void onBoundingBoxDetected(RectF boundingBox) {}
 
-    /**
-     * Callback khi hộp cắt thay đổi. (Không được sử dụng trong Activity này)
-     * @param cropBox RectF của hộp cắt.
-     */
     @Override
     public void onCropBoxChanged(RectF cropBox) {}
 
-    /**
-     * Callback khi khung chữ ký thay đổi kích thước. (Không được sử dụng trong Activity này)
-     * @param frame RectF của khung chữ ký.
-     */
     @Override
     public void onFrameResized(RectF frame) {}
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Clean up bitmaps to prevent memory leaks
+        if (originalImageBitmap != null && !originalImageBitmap.isRecycled()) {
+            originalImageBitmap.recycle();
+        }
+        if (originalSignatureBitmap != null && !originalSignatureBitmap.isRecycled()) {
+            originalSignatureBitmap.recycle();
+        }
+        if (currentColoredSignature != null && !currentColoredSignature.isRecycled()) {
+            currentColoredSignature.recycle();
+        }
+    }
 }

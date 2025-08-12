@@ -270,4 +270,14 @@
     <string name="share_ocr_pair_from_camera_scanner">Share OCR pair from Camera Scanner\nImage: %1$s\nText: %2$s</string>
 
 
+    <!--MeActivitry-->
+    <!--Java-->
+    <string name="dark_mode">Dark </string>
+    <string name="light_mode">Light</string>
+    <string name="choose_language">Choose language</string>
+    <string name="choose_theme">Choose theme</string>
+    <string name="language">Languages</string>
+    <string name="theme">Theme</string>
+    <!--Layout-->
+
 </resources>

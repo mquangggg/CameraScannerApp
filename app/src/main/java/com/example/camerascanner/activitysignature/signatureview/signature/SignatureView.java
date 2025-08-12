@@ -371,4 +371,42 @@ public class SignatureView extends View {
     public void setOnSignatureChangeListener(OnSignatureChangeListener listener) {
         this.listener = listener;
     }
+
+    // Thêm các method sau vào class SignatureView của bạn:
+
+    /**
+     * Thiết lập màu sắc cho chữ ký
+     * @param color Màu sắc mong muốn (int color)
+     */
+    public void setSignatureColor(int color) {
+        paintManager.setSignatureColor(color);
+        // Không cần invalidate() vì chỉ áp dụng cho các nét vẽ mới
+        // Nếu muốn áp dụng cho nét vẽ hiện tại thì cần invalidate()
+        invalidate();
+    }
+
+    /**
+     * Lấy màu sắc hiện tại của chữ ký
+     * @return Màu sắc hiện tại
+     */
+    public int getSignatureColor() {
+        return paintManager.getSignatureColor();
+    }
+
+    /**
+     * Thiết lập màu nền cho View (tùy chọn)
+     * @param color Màu nền mong muốn
+     */
+    public void setBackgroundColor(int color) {
+        paintManager.setBackgroundColor(color);
+        invalidate();
+    }
+
+    /**
+     * Reset màu chữ ký về màu mặc định (đen)
+     */
+    public void resetSignatureColor() {
+        paintManager.resetSignatureColor();
+        invalidate();
+    }
 }

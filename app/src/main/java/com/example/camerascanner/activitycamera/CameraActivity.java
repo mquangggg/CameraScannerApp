@@ -42,6 +42,7 @@ import com.bumptech.glide.Glide;
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitycrop.CropActivity;
 import com.example.camerascanner.activitycamera.AppPermissionHandler;
+import com.example.camerascanner.BaseActivity;
 import com.example.camerascanner.activitypdf.PdfGenerationAndPreviewActivity;
 import com.example.camerascanner.activitypdf.pdfgroup.PDFGroupActivity;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -71,7 +72,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class CameraActivity extends AppCompatActivity implements AppPermissionHandler.PermissionCallbacks{
+public class CameraActivity extends BaseActivity implements AppPermissionHandler.PermissionCallbacks{
 
     private static final String TAG = "CameraActivity";
     private static final int REQUEST_CODE_CROP = 200;

@@ -19,8 +19,10 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
+import com.example.camerascanner.BaseActivity;
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitycamera.ImagePreviewActivity;
+import com.example.camerascanner.BaseActivity;
 import com.example.camerascanner.activitymain.MainActivity;
 import com.example.camerascanner.activitypdf.Jpeg.JpegGenerator;
 import com.example.camerascanner.activitypdf.pdf.PdfFileManager;
@@ -38,7 +40,7 @@ import java.util.concurrent.Executors;
 /**
  * Activity được refactor để sử dụng các lớp helper
  */
-public class PdfGenerationAndPreviewActivity extends AppCompatActivity {
+public class PdfGenerationAndPreviewActivity extends BaseActivity {
     private static final String TAG = "PdfGenAndPreview";
 
     // UI Components

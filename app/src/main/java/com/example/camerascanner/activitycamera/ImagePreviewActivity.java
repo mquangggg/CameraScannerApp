@@ -24,6 +24,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.Rotate; // Import để xoay ảnh với Glide
 import com.bumptech.glide.request.RequestOptions; // Import RequestOptions
 import com.example.camerascanner.R;
+import com.example.camerascanner.BaseActivity;
 import com.example.camerascanner.activitypdf.DialogHelper;
 import com.example.camerascanner.activitypdf.Jpeg.JpegGenerator;
 import com.example.camerascanner.activitypdf.PermissionHelper;
@@ -41,7 +42,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class ImagePreviewActivity extends AppCompatActivity {
+public class ImagePreviewActivity extends BaseActivity {
 
     private static final String TAG = "ImagePreviewActivity"; // Thêm TAG cho logging
     private ImageView imageViewPreview;
