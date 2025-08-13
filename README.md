@@ -27,7 +27,7 @@
 
 ### CameraScannerActivity 
 
-<img src="images/camera_activity.jpg" alt="Camera Scanner" width="200200" align="left"/>
+<img src="images/camera_activity.jpg" alt="Camera Scanner" width="200" align="left"/>
 
 - **OpenCV realtime detection** - Nhận diện khung tài liệu trong thời gian thực
 - **Auto crop** - Tự động cắt theo khung phát hiện
