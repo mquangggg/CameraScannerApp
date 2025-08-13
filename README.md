@@ -14,25 +14,25 @@
 ## Cấu trúc Activities
 
 ### MainActivity
-![Main Activity](images/main_activity.jpg)
+<img src="images/main_activity.jpg" alt="Main Activity" width="250"/>
 - Hiển thị danh sách ảnh đã quét
 - Nút "QUÉT NGAY BÂY GIỜ" mở camera scanner
 - Tìm kiếm ảnh, navigation tabs
 
 ### CameraScannerActivity
-![Camera Scanner](images/camera_activity.jpg)
+<img src="images/camera_activity.jpg" alt="Camera Activity" width="250"/>Camera Scanner](images/camera_activity.jpg)
 - **OpenCV realtime detection** - Nhận diện khung tài liệu trong thời gian thực
 - **Auto crop** - Tự động cắt theo khung phát hiện
 - **Fallback** - Dùng ML Kit Text Detection nếu không phát hiện được khung
 
 ### ImageListActivity
-![Image List](images/image_list_activity.jpg)
+<img src="images/image_list_activity.jpg" alt="Image List Activity" width="250"/>
 - Hiển thị tất cả ảnh đã quét
 - Nút thêm ảnh mới (quay lại camera scanner)
 - Chọn và xóa nhiều ảnh
 
 ### ImageEditorActivity
-![Image Editor](images/image_preview_activity.jpg)
+<img src="images/image_preview_activity.jpg" alt="Image Editor Activity" width="250"/>
 - **Xoay ảnh** - 90°, 180°, 270° hoặc góc tùy chỉnh
 - **Crop ảnh** - Cắt tự do hoặc theo tỷ lệ chuẩn
 - **Tạo PDF** - Chuyển đổi ảnh thành PDF
