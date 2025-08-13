@@ -32,14 +32,13 @@
 </table
 
 ### CameraScannerActivity  
-<img src="images/camera_activity.jpg" alt="Camera Scanner" width="250" align="left"/>
+<div align="center">
+    <img src="images/camera_activity.jpg" alt="Camera Scanner" width="250" style="border-radius:10px; box-shadow: 0 0 10px rgba(0,0,0,0.2);"/>
+</div>
 
-- **OpenCV realtime detection** - Nhận diện khung tài liệu trong thời gian thực
-- **Auto crop** - Tự động cắt theo khung phát hiện
+- **OpenCV realtime detection** - Nhận diện khung tài liệu trong thời gian thực  
+- **Auto crop** - Tự động cắt theo khung phát hiện  
 - **Fallback** - Dùng ML Kit Text Detection nếu không phát hiện được khung
-
-<br clear="left"/>
-
 ### ImageListActivity
 <img src="images/image_list_activity.jpg" alt="Image List" width="250" align="left"/>
 
