@@ -23,7 +23,7 @@
       <img src="images/main_activity.jpg" alt="Main Activity" width="200" />
     </td>
     <td style="text-align:left; vertical-align:middle;">
-      <h4>MainActivity</h4>
+      <h4></h4>
       <ul>
         <li>Hiển thị danh sách file PDF ,JPG, OCR đã lưu trong bộ nhớ</li>
         <li>Nút "QUÉT NGAY BÂY GIỜ" mở camera scanner</li>
@@ -42,7 +42,7 @@
       <img src="images/camera_activity.jpg" alt="Camera Scanner" width="200" />
     </td>
     <td style="text-align:left; vertical-align:middle;">
-      <h4>CameraScannerActivity</h4>
+      <h4></h4>
       <ul>
         <li><b>OpenCV realtime detection</b> - Nhận diện khung tài liệu trong thời gian thực</li>
         <li><b>Auto crop</b> - Tự động cắt và tạo khung cắt theo khung phát hiện</li>
@@ -61,7 +61,7 @@
       <img src="images/image_list_activity.jpg" alt="Image List" width="200" />
     </td>
     <td style="text-align:left; vertical-align:middle;">
-      <h4>ImageListActivity</h4>
+      <h4></h4>
       <ul>
         <li>Hiển thị tất cả ảnh đã qua crop</li>
         <li>Nút thêm ảnh mới (quay lại camera scanner)</li>
@@ -79,7 +79,7 @@
       <img src="images/image_preview_activity.jpg" alt="Image Editor" width="200" />
     </td>
     <td style="text-align:left; vertical-align:middle;">
-      <h4>ImageEditorActivity</h4>
+      <h4></h4>
       <ul>
         <li><b>Xoay ảnh</b> - 90°, 180°, 270° hoặc góc tùy chỉnh</li>
         <li><b>Crop ảnh</b> - Cắt tự do hoặc theo tỷ lệ chuẩn</li>
