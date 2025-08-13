@@ -5,7 +5,7 @@ import android.widget.EditText;
 import androidx.appcompat.app.AlertDialog;
 
 import com.example.camerascanner.R;
-import com.example.camerascanner.activitypdf.Jpeg.JpegFileNameGenerator;
+import com.example.camerascanner.activityimagepreview.Jpeg.JpegFileNameGenerator;
 import com.example.camerascanner.activitypdf.pdf.FileNameGenerator;
 
 public class DialogHelper {

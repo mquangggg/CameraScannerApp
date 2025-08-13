@@ -25,7 +25,7 @@ public class PdfGenerator {
     private static final int PAGE_WIDTH = 792; // Chiều rộng mặc định của trang PDF (điểm).
     private static final int PAGE_HEIGHT = 1120; // Chiều cao mặc định của trang PDF (điểm).
 
-    private Context context; // Ngữ cảnh của ứng dụng, cần thiết để truy cập hệ thống file.
+    private final Context context; // Ngữ cảnh của ứng dụng, cần thiết để truy cập hệ thống file.
 
     /**
      * Hàm khởi tạo (Constructor) cho lớp PdfGenerator.
@@ -161,7 +161,7 @@ public class PdfGenerator {
             }
 
             final int MARGIN = 0; // Margin cho 4 cạnh
-            final int USABLE_PAGE_WIDTH = PAGE_WIDTH - (2 * MARGIN);
+            final int USABLE_PAGE_WIDTH = PAGE_WIDTH;
 
             int bitmapWidth = bitmap.getWidth();
             int bitmapHeight = bitmap.getHeight();
@@ -173,7 +173,7 @@ public class PdfGenerator {
             int scaledImageHeight = Math.round(bitmapHeight * scale);
 
             // Chiều cao page = chiều cao ảnh đã scale + margin
-            int calculatedPageHeight = scaledImageHeight + (2 * MARGIN);
+            int calculatedPageHeight = scaledImageHeight;
 
             // Đảm bảo chiều cao page không quá nhỏ (tối thiểu 100 point)
             return Math.max(calculatedPageHeight, 100);

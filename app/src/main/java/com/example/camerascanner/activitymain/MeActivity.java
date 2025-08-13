@@ -80,10 +80,7 @@ public class MeActivity extends AppCompatActivity {
                 }else if(itemID == R.id.nav_tools){
                     Toast.makeText(MeActivity.this, "Chức năng Tools sẽ sớm ra mắt!", Toast.LENGTH_SHORT).show();
                     return true;
-                }else if(itemID == R.id.nav_me){
-                    return true; // Đã ở MeActivity, không làm gì
-                }
-                return false;
+                }else return itemID == R.id.nav_me; // Đã ở MeActivity, không làm gì
             }
         });
     }

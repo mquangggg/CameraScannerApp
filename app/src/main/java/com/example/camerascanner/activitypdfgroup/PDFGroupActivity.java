@@ -1,8 +1,7 @@
-package com.example.camerascanner.activitypdf.pdfgroup;
+package com.example.camerascanner.activitypdfgroup;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -17,13 +16,12 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitycamera.CameraActivity;
-import com.example.camerascanner.activitycamera.ImagePreviewActivity;
+import com.example.camerascanner.activityimagepreview.ImagePreviewActivity;
 import com.example.camerascanner.BaseActivity;
 import com.example.camerascanner.activitymain.MainActivity;
 import com.example.camerascanner.activitypdf.DialogHelper;

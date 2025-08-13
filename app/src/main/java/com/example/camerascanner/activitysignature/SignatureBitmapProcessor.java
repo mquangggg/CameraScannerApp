@@ -1,4 +1,4 @@
-package com.example.camerascanner.activitysignature.signatureview;
+package com.example.camerascanner.activitysignature;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;

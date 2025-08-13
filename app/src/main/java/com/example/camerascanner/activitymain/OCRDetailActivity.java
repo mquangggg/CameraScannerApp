@@ -13,8 +13,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
-
+import com.example.camerascanner.BaseActivity;
 import com.example.camerascanner.R;
 
 import java.io.BufferedReader;
@@ -28,7 +27,7 @@ import java.util.concurrent.Executors;
  * OCRDetailActivity hiển thị chi tiết kết quả OCR, bao gồm ảnh gốc và văn bản đã nhận dạng.
  * Người dùng có thể xem ảnh, xem/chỉnh sửa văn bản và sao chép văn bản vào clipboard.
  */
-public class OCRDetailActivity extends com.example.camerascanner.BaseActivity {
+public class OCRDetailActivity extends BaseActivity {
 
     private static final String TAG = "OCRDetailActivity"; // Thẻ (tag) dùng để ghi log cho debugging
     // Các khóa (keys) cho Intent extras để truyền URI của ảnh và văn bản liên quan đến OCR

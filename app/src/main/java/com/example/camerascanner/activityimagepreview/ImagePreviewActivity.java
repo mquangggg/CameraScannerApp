@@ -1,4 +1,4 @@
-package com.example.camerascanner.activitycamera;
+package com.example.camerascanner.activityimagepreview;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -23,11 +23,13 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.Rotate; // Import để xoay ảnh với Glide
 import com.bumptech.glide.request.RequestOptions; // Import RequestOptions
 import com.example.camerascanner.R;
-import com.example.camerascanner.activitymain.BaseActivity;
+import com.example.camerascanner.activitysignature.SignatureAdapter;
+import com.example.camerascanner.activitysignature.SignatureManager;
+import com.example.camerascanner.BaseActivity;
 import com.example.camerascanner.activitypdf.DialogHelper;
-import com.example.camerascanner.activitysignature.signatureview.imagesignpreview.Jpeg.JpegGenerator;
 import com.example.camerascanner.activitypdf.PermissionHelper;
 import com.example.camerascanner.activitysignature.signatureview.imagesignpreview.ImageSignPreviewActivity;
+import com.example.camerascanner.activityimagepreview.Jpeg.JpegGenerator;
 import com.example.camerascanner.activitysignature.signatureview.signature.SignatureActivity;
 import com.example.camerascanner.activitycrop.CropActivity;
 import com.example.camerascanner.activityocr.OCRActivity;

@@ -1,4 +1,4 @@
-package com.example.camerascanner.activitysignature.signatureview.imagesignpreview.Jpeg;
+package com.example.camerascanner.activityimagepreview.Jpeg;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;

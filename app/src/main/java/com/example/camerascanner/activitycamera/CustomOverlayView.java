@@ -102,7 +102,7 @@ public class CustomOverlayView extends View {
 
         // Nhân thêm 1.2f (có thể điều chỉnh) để ảnh được phóng to hơn một chút,
         // thường dùng trong các trường hợp "centerCrop" để lấp đầy màn hình và cắt bớt phần thừa.
-        float scale = Math.min(scaleX, scaleY) * 1.0f;
+        float scale = Math.min(scaleX, scaleY);
 
         // Tính toán kích thước của ảnh sau khi đã scale.
         float scaledImageWidth = matWidth * scale;

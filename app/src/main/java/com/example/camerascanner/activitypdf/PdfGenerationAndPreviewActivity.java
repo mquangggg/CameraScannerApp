@@ -16,21 +16,16 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
 import com.example.camerascanner.BaseActivity;
 import com.example.camerascanner.R;
-import com.example.camerascanner.activitycamera.ImagePreviewActivity;
-import com.example.camerascanner.BaseActivity;
 import com.example.camerascanner.activitymain.MainActivity;
-import com.example.camerascanner.activitypdf.Jpeg.JpegGenerator;
+import com.example.camerascanner.activityimagepreview.Jpeg.JpegGenerator;
 import com.example.camerascanner.activitypdf.pdf.PdfFileManager;
 import com.example.camerascanner.activitypdf.pdf.PdfGenerator;
 import com.example.camerascanner.activitypdf.pdf.PdfStyle;
-import com.example.camerascanner.activitypdf.pdfgroup.PDFGroupActivity;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -68,8 +63,8 @@ public class PdfGenerationAndPreviewActivity extends BaseActivity {
     // Background processing
     private ExecutorService executorService;
     private Handler mainHandler;
-    private boolean isFromPdfGroup = false;
-    private int originalRequestCode = -1;
+    private final boolean isFromPdfGroup = false;
+    private final int originalRequestCode = -1;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {

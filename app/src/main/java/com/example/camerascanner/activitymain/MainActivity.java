@@ -2,7 +2,6 @@
 package com.example.camerascanner.activitymain;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -17,20 +16,17 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.camerascanner.BaseActivity;
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitycamera.CameraActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationBarView;
-import com.google.android.material.resources.MaterialAttributes;
 import com.google.android.material.tabs.TabLayout;
 
 import java.io.File;
@@ -52,7 +48,7 @@ import java.util.concurrent.Executors;
  * để người dùng xem các tệp PDF và các cặp tệp OCR (ảnh và văn bản) đã lưu.
  * Nó cũng cung cấp chức năng mở Camera để chụp ảnh mới và xử lý các quyền cần thiết.
  */
-public class MainActivity extends com.example.camerascanner.BaseActivity {
+public class MainActivity extends BaseActivity {
 
     // Hằng số cho các mã yêu cầu quyền
     private static final int REQUEST_CAMERA_PERMISSION = 101;

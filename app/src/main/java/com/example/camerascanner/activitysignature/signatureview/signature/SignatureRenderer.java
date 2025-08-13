@@ -5,7 +5,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 
-import com.example.camerascanner.activitysignature.signatureview.SignatureGeometryUtils;
+import com.example.camerascanner.activitysignature.SignatureGeometryUtils;
 
 /**
  * Lớp **SignatureRenderer** chịu trách nhiệm vẽ tất cả các thành phần liên quan đến chữ ký

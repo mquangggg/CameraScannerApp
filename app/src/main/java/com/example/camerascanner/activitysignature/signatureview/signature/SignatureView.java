@@ -9,8 +9,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import androidx.annotation.Nullable;
 
-import com.example.camerascanner.activitysignature.signatureview.SignatureBitmapProcessor;
-import com.example.camerascanner.activitysignature.signatureview.SignatureGeometryUtils;
+import com.example.camerascanner.activitysignature.SignatureBitmapProcessor;
+import com.example.camerascanner.activitysignature.SignatureGeometryUtils;
 
 /**
  * Lớp **SignatureView** là một View tùy chỉnh trong Android, được thiết kế để cho phép người dùng

@@ -324,11 +324,7 @@ public class PdfFileAdapter extends RecyclerView.Adapter<PdfFileAdapter.PdfFileV
         }
 
         // Kiểm tra độ dài tên file (Windows có giới hạn 255 ký tự)
-        if (fileName.length() > 200) {
-            return false;
-        }
-
-        return true;
+        return fileName.length() <= 200;
     }
 
 

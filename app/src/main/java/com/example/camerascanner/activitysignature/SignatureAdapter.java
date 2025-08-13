@@ -1,4 +1,4 @@
-package com.example.camerascanner.activitycamera;
+package com.example.camerascanner.activitysignature;
 
 import android.content.Context;
 import android.graphics.Bitmap;

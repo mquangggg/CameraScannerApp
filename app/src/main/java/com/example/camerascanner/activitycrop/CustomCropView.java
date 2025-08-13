@@ -22,13 +22,13 @@ public class CustomCropView extends View {
     private ArrayList<PointF> points;
     private PointF currentPoint;
     private int currentPointIndex = -1;
-    private float touchTolerance = 50f;
+    private final float touchTolerance = 50f;
     private final float magnifierRadius = 150f;
 
     private MagnifierView magnifierView;
     private Bitmap currentImageBitmap;
-    private float[] imageToViewMatrixValues = new float[9];
-    private float[] viewToImageMatrixValues = new float[9];
+    private final float[] imageToViewMatrixValues = new float[9];
+    private final float[] viewToImageMatrixValues = new float[9];
 
     public CustomCropView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);

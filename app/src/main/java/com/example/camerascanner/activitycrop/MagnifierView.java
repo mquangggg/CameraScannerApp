@@ -22,7 +22,7 @@ public class MagnifierView extends View {
     private RectF srcRect;
     private RectF destRect;
     private Paint borderPaint;
-    private float magnifierRadius = 150f;
+    private final float magnifierRadius = 150f;
     private ArrayList<PointF> cropLines; // Các đường crop lines
 
     public MagnifierView(Context context) {

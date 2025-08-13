@@ -400,11 +400,7 @@ public class OcrPairedAdapter extends RecyclerView.Adapter<OcrPairedAdapter.OcrP
         }
 
         // Kiểm tra độ dài tên file
-        if (fileName.length() > 200) {
-            return false;
-        }
-
-        return true;
+        return fileName.length() <= 200;
     }
 
     /**

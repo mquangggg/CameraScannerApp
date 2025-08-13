@@ -3,13 +3,8 @@ package com.example.camerascanner.activitycamera;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Size;
@@ -24,7 +19,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
@@ -35,22 +29,17 @@ import androidx.camera.core.resolutionselector.ResolutionSelector;
 import androidx.camera.core.resolutionselector.ResolutionStrategy;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.bumptech.glide.Glide;
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitycrop.CropActivity;
-import com.example.camerascanner.activitycamera.AppPermissionHandler;
 import com.example.camerascanner.BaseActivity;
-import com.example.camerascanner.activitypdf.PdfGenerationAndPreviewActivity;
-import com.example.camerascanner.activitypdf.pdfgroup.PDFGroupActivity;
+import com.example.camerascanner.activitypdfgroup.PDFGroupActivity;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import org.opencv.android.OpenCVLoader;
-import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -61,9 +50,6 @@ import org.opencv.imgproc.CLAHE;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -118,7 +104,7 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
 
     // --- Các biến và hằng số mới cho chức năng tự động chụp thẻ ID ---
     private boolean isIdCardMode = false;
-    private boolean autoCaptureEnabled = true;
+    private final boolean autoCaptureEnabled = true;
     private long lastAutoCaptureTime = 0L;
     private static final long AUTO_CAPTURE_COOLDOWN_MS = 3000;
     private static final double ID_CARD_ASPECT_RATIO_MIN = 1.5;

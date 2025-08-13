@@ -1,4 +1,4 @@
-package com.example.camerascanner.activitypdf.pdfgroup;
+package com.example.camerascanner.activitypdfgroup;
 
 import android.graphics.Bitmap;
 

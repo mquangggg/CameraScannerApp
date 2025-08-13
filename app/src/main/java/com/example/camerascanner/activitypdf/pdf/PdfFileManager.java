@@ -8,7 +8,7 @@ import android.util.Log;
 public class PdfFileManager {
     private static final String TAG = "PdfFileManager"; // Tag để sử dụng trong Logcat, giúp dễ dàng lọc thông báo.
 
-    private Context context; // Biến thành viên để lưu trữ Context của ứng dụng, cần thiết cho các thao tác với ContentResolver.
+    private final Context context; // Biến thành viên để lưu trữ Context của ứng dụng, cần thiết cho các thao tác với ContentResolver.
 
     /**
      * Hàm khởi tạo (Constructor) cho lớp PdfFileManager.
@@ -45,11 +45,11 @@ public class PdfFileManager {
             // Kiểm tra xem có bao nhiêu hàng đã bị xóa. Nếu lớn hơn 0, có nghĩa là file đã được xóa.
             if (rowsDeleted > 0) {
                 // Ghi log thông báo xóa thành công.
-                Log.d(TAG, "Đã xóa PDF thành công: " + pdfUri.toString());
+                Log.d(TAG, "Đã xóa PDF thành công: " + pdfUri);
                 return true; // Trả về true để chỉ ra xóa thành công.
             } else {
                 // Ghi log thông báo không thể xóa (ví dụ: file không tồn tại hoặc không có quyền).
-                Log.e(TAG, "Không thể xóa PDF: " + pdfUri.toString() + ". Có thể file không tồn tại hoặc không có quyền.");
+                Log.e(TAG, "Không thể xóa PDF: " + pdfUri + ". Có thể file không tồn tại hoặc không có quyền.");
                 return false; // Trả về false để chỉ ra xóa không thành công.
             }
         } catch (Exception e) {

@@ -21,7 +21,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.camerascanner.activitymain.BaseActivity;
+import com.example.camerascanner.BaseActivity;
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitysignature.signatureview.signature.SignatureView;
 
