@@ -17,12 +17,17 @@
 
 ### MainActivity
 
-<img src="images/main_activity.jpg" alt="Main Activity" width="200" align="left"/>
-
-- Hiển thị danh sách ảnh đã quét
-- Nút "QUÉT NGAY BÂY GIỜ" mở camera scanner
-- Tìm kiếm ảnh, navigation tabs
-
+<div style="display: flex; align-items: center; gap: 20px;">
+  <img src="Images/main_activity.jpg" alt="Main Activity" width="200" />
+  <div>
+    <h4>MainActivity</h4>
+    <ul>
+      <li>Hiển thị danh sách ảnh đã quét</li>
+      <li>Nút "QUÉT NGAY BÂY GIỜ" mở camera scanner</li>
+      <li>Tìm kiếm ảnh, navigation tabs</li>
+    </ul>
+  </div>
+</div>
 <br clear="left"/>
 
 ### CameraScannerActivity 
