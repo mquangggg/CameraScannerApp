@@ -20,7 +20,7 @@
 <div style="display: flex; align-items: center; gap: 20px;">
   <img src="images/main_activity.jpg" alt="Main Activity" width="200" />
   <div>
-    <h4>MainActivity</h4>
+    <h4></h4>
     <ul>
       <li>Hiển thị danh sách ảnh đã quét</li>
       <li>Nút "QUÉT NGAY BÂY GIỜ" mở camera scanner</li>
