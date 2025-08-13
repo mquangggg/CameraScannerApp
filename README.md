@@ -2,6 +2,10 @@
 
 Ứng dụng quét tài liệu với AI nhận diện realtime và xử lý ảnh chuyên nghiệp.
 
+<p align="center">
+  <img src="images/camera_scanner.png" alt="APP" width="250"/>
+</p>
+
 ## Tính năng
 
 - 📷 **Camera Scanner** - Nhận diện khung tài liệu realtime bằng OpenCV
@@ -12,6 +16,7 @@
 ## Cấu trúc Activities
 
 ### MainActivity
+
 <img src="images/main_activity.jpg" alt="Main Activity" width="250" align="left"/>
 
 - Hiển thị danh sách ảnh đã quét
@@ -20,7 +25,8 @@
 
 <br clear="left"/>
 
-### CameraScannerActivity  
+### CameraScannerActivity 
+
 <img src="images/camera_activity.jpg" alt="Camera Scanner" width="250" align="left"/>
 
 - **OpenCV realtime detection** - Nhận diện khung tài liệu trong thời gian thực
@@ -30,6 +36,7 @@
 <br clear="left"/>
 
 ### ImageListActivity
+
 <img src="images/image_list_activity.jpg" alt="Image List" width="250" align="left"/>
 
 - Hiển thị tất cả ảnh đã quét
