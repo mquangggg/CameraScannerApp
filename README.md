@@ -18,7 +18,7 @@
 ### MainActivity
 
 <div style="display: flex; align-items: center; gap: 20px;">
-  <img src="Images/main_activity.jpg" alt="Main Activity" width="200" />
+  <img src="images/main_activity.jpg" alt="Main Activity" width="200" />
   <div>
     <h4>MainActivity</h4>
     <ul>
