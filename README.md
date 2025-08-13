@@ -40,15 +40,16 @@
 <br clear="left"/>
 
 ### ImageEditorActivity
-<img src="images/image_preview_activity.jpg" alt="Image Editor" width="250" align="left"/>
-
-- **Xoay ảnh** - 90°, 180°, 270° hoặc góc tùy chỉnh
-- **Crop ảnh** - Cắt tự do hoặc theo tỷ lệ chuẩn
-- **Tạo PDF** - Chuyển đổi ảnh thành PDF
-- **OCR** - Trích xuất text bằng Google ML Kit
-- **Ký tên** - Thêm chữ ký số lên ảnh
-
-<br clear="left"/>
+<div style="display: flex; align-items: center;">
+    <img src="images/image_preview_activity.jpg" alt="Image Editor" width="250" style="margin-right: 15px;"/>
+    <div style="display: flex; flex-direction: column; justify-content: center;">
+        <p><b>Xoay ảnh</b> - 90°, 180°, 270° hoặc góc tùy chỉnh</p>
+        <p><b>Crop ảnh</b> - Cắt tự do hoặc theo tỷ lệ chuẩn</p>
+        <p><b>Tạo PDF</b> - Chuyển đổi ảnh thành PDF</p>
+        <p><b>OCR</b> - Trích xuất text bằng Google ML Kit</p>
+        <p><b>Ký tên</b> - Thêm chữ ký số lên ảnh</p>
+    </div>
+</div>
 
 ## Công nghệ
 
