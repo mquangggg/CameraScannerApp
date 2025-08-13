@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#2E2E2E"
+    android:background="@color/main"
     tools:context=".activitymain.OCRDetailActivity">
 
     <TextView
@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/ocr_details"
-        android:textColor="@android:color/white"
+        android:textColor="@color/black"
         android:textSize="24sp"
         android:textStyle="bold"
         android:padding="16dp"
@@ -34,7 +34,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/original_image"
-                android:textColor="#AAAAAA"
+                android:textColor="@color/black"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp"/>
@@ -53,7 +53,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/extracted_text"
-                android:textColor="#AAAAAA"
+                android:textColor="@color/black"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp"/>
@@ -83,6 +83,6 @@
         android:layout_marginBottom="16dp"
         android:text="@string/copy_ocr"
         android:backgroundTint="@color/green_accent"
-        android:textColor="@android:color/white"/>
+        android:textColor="@color/black"/>
 
 </LinearLayout>

@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@color/black">
+    android:background="@color/main">
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="0dp"
@@ -20,7 +20,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="@color/black"
+                android:background="@color/main"
                 android:layout_marginStart="2dp"
                 android:layout_marginEnd="2dp"
                 >
@@ -39,7 +39,7 @@
                         android:layout_weight="1"
                         android:layout_marginStart="16dp"
                         android:text="Quang Vuc"
-                        android:textColor="@color/white"
+                        android:textColor="@color/black"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -56,7 +56,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Sử dụng một tài khoản khác"
-                    android:textColor="@color/white"
+                    android:textColor="@color/black"
                     android:textSize="14sp"
                     android:layout_marginStart="20dp"
                     android:layout_marginTop="4dp"/>
@@ -76,7 +76,7 @@
                         android:layout_weight="1"
                         android:layout_marginStart="16dp"
                         android:text="Nâng cấp tài khoản của bạn"
-                        android:textColor="@color/white"
+                        android:textColor="@color/black"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -93,7 +93,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Mở khóa đặc quyền"
-                    android:textColor="@color/white"
+                    android:textColor="@color/black"
                     android:textSize="14sp"
                     android:layout_marginStart="20dp"
                     android:layout_marginTop="4dp"/>
@@ -107,9 +107,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Tài khoản của tôi"
-                android:textColor="@color/white"
+                android:textColor="@color/black"
                 android:textSize="14sp"
-                android:layout_marginStart="16dp"
+                android:layout_marginStart="20dp"
                 android:layout_marginTop="10dp"/>
 
 
@@ -133,7 +133,7 @@
                     android:gravity="start|center_vertical"
                     android:paddingStart="35dp"
                     android:text="@string/language"
-                    android:textColor="@color/white" />
+                    android:textColor="@color/black" />
 
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/btnBlackWhite"
@@ -144,7 +144,7 @@
                     android:gravity="start|center_vertical"
                     android:text="@string/theme"
                     android:paddingStart="35dp"
-                    android:textColor="@color/white" />
+                    android:textColor="@color/black" />
 
 
 
@@ -158,9 +158,9 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:background="#2E2E2E"
+        android:background="@color/grey_text_icon"
         app:itemIconTint="@color/bottom_nav_item_color"
-        app:itemTextColor="@color/bottom_nav_item_color"
+        app:itemTextColor="@color/black"
         app:menu="@menu/bottom_navigation_menu"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"

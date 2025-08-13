@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/black">
+    android:background="@color/main">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -73,7 +73,7 @@
         android:layout_weight="2"
         android:orientation="horizontal"
         android:gravity="center"
-        android:background="@color/black"
+        android:background="@drawable/vien_den"
         android:paddingTop="5dp"
         android:paddingBottom="5dp">
 

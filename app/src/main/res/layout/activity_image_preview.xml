@@ -15,7 +15,7 @@
         android:text="@string/your_image"
         android:textSize="24sp"
         android:gravity="center"
-        android:textColor="@color/white"
+        android:textColor="@color/black"
         android:background="@color/green_accent"/>
 
     <FrameLayout
@@ -44,8 +44,9 @@
         android:layout_height="0dp"
         android:layout_weight="1.5"
         android:orientation="horizontal"
-        android:background="@color/grey_text_icon"
-        android:gravity="center">
+        android:background="@color/white"
+        android:gravity="center"
+        >
 
         <!-- Thanh cuộn ngang cho các chức năng phụ -->
         <HorizontalScrollView
@@ -74,8 +75,8 @@
                     app:iconGravity="top"
                     app:iconPadding="4dp"
                     android:textAlignment="center"
-                    app:iconTint="@color/white"
-                    android:textColor="@color/white"
+                    app:iconTint="@color/black"
+                    android:textColor="@color/black"
                     />
                 <View
                     style="@style/Divider"/>
@@ -87,12 +88,13 @@
                     android:layout_height="wrap_content"
                     android:text="Crop"
                     android:textAlignment="center"
-                    android:textColor="@color/white"
                     android:textSize="7sp"
                     app:icon="@drawable/ic_crop"
                     app:iconGravity="top"
                     app:iconPadding="4dp"
-                    app:iconTint="@color/white" />
+                    app:iconTint="@color/black"
+                    android:textColor="@color/black"
+                    />
                 <View
                     style="@style/Divider"/>
 
@@ -107,8 +109,8 @@
                     app:iconGravity="top"
                     app:iconPadding="4dp"
                     android:textAlignment="center"
-                    app:iconTint="@color/white"
-                    android:textColor="@color/white" />
+                    app:iconTint="@color/black"
+                    android:textColor="@color/black" />
 
                 <View
                     style="@style/Divider"/>
@@ -124,8 +126,8 @@
                     app:iconGravity="top"
                     app:iconPadding="4dp"
                     android:textAlignment="center"
-                    app:iconTint="@color/white"
-                    android:textColor="@color/white" />
+                    app:iconTint="@color/black"
+                    android:textColor="@color/black" />
                 <View
                     style="@style/Divider"/>
 
@@ -136,12 +138,13 @@
                     android:layout_height="wrap_content"
                     android:text="@string/sign_image"
                     android:textAlignment="center"
-                    android:textColor="@color/white"
                     android:textSize="7sp"
                     app:icon="@drawable/ic_signature"
                     app:iconGravity="top"
                     app:iconPadding="4dp"
-                    app:iconTint="@color/white" />
+                    app:iconTint="@color/black"
+                    android:textColor="@color/black"
+                     />
 
             </LinearLayout>
 

@@ -2,7 +2,7 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Nền tròn -->
-    <item android:drawable="@drawable/round" />
+    <item android:drawable="@drawable/vien_den" />
 
     <!-- Icon gallery nằm trên -->
     <item android:drawable="@drawable/gallery" />

@@ -18,7 +18,7 @@
         android:textStyle="bold"
         android:layout_margin="16dp"
         android:gravity="center"
-        android:textColor="@color/white"
+        android:textColor="@color/black"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
@@ -30,7 +30,7 @@
         android:text="@string/add_more"
         android:layout_marginEnd="16dp"
         android:backgroundTint="@color/main"
-        android:textColor="@color/white"
+        android:textColor="@color/black"
         app:layout_constraintTop_toTopOf="@id/tvTitle"
         app:layout_constraintBottom_toBottomOf="@id/tvTitle"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -109,7 +109,7 @@
         android:orientation="horizontal"
         android:gravity="center"
         android:padding="16dp"
-        android:background="@color/black"
+        android:background="@drawable/vien_den"
         android:elevation="4dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -125,9 +125,9 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
-            android:background="@drawable/vuongbogoc"
+            android:background="@drawable/vien_den"
             android:text="@string/cancel"
-            android:textColor="@android:color/white" />
+            android:textColor="@color/black" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnConfirm"
@@ -136,7 +136,7 @@
             android:layout_weight="1"
             android:text="@string/confirm"
             android:background="@drawable/login_background"
-            android:textColor="@android:color/white"
+            android:textColor="@color/black"
             android:layout_marginStart="8dp"
             style="@style/Widget.AppCompat.Button" />
 

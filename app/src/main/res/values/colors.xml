@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="green_accent">#7fff00</color> <!-- Xanh lá nhạt hơn để nổi trên nền tối -->
-    <color name="black">#FFFFFF</color> <!-- Đen → Trắng -->
-    <color name="white">#000000</color> <!-- Trắng → Đen -->
-    <color name="blue_word_icon">#90CAF9</color> <!-- Xanh dương nhạt -->
-    <color name="grey_text_icon">#D4D4D4</color> <!-- Xám sáng hơn để nổi -->
+    <color name="green_accent">#4CAF50</color>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="blue_word_icon">#2196F3</color>
+    <color name="grey_text_icon">#E0DCDC</color>
+    <color name="main">#F4FFF4</color>
+    <color name="search">#F9FFF9</color>
+    <color name="search_name">@color/black</color>
 
-    <color name="main">#f5f5dc</color>
+
+
 </resources>

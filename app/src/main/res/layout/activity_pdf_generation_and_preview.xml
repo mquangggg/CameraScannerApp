@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/black">
+    android:background="@color/main">
 
     <TextView
         android:layout_width="match_parent"
@@ -14,7 +14,7 @@
         android:textStyle="bold"
         android:gravity="center"
         android:padding="16dp"
-        android:textColor="@android:color/white"
+        android:textColor="@color/black"
         android:background="@color/green_accent"/>
 
     <TextView
@@ -24,7 +24,7 @@
         android:layout_marginTop="16dp"
         android:gravity="center"
         android:text="@string/status_generating_and_loading_pdf_preview"
-        android:textColor="@color/white"
+        android:textColor="@color/black"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"/>
 
@@ -34,7 +34,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:background="@color/grey_text_icon"
+        android:background="@drawable/search_background"
         android:layout_marginTop="8dp"
         android:padding="8dp">
 
@@ -45,20 +45,20 @@
             android:text="@string/original"
             android:checked="true"
             android:layout_marginEnd="16dp"
-            android:textColor="@color/white"/>
+            android:textColor="@color/black"/>
 
-        <RadioButton
-            android:id="@+id/rbBlackWhite1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/black_and_white"
-            android:textColor="@color/white"/>
         <RadioButton
             android:id="@+id/rbBlackWhite2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="@string/black_and_white"
+            android:textColor="@color/black"/>
+        <RadioButton
+            android:id="@+id/rbBlackWhite1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="Pro"
-            android:textColor="@color/white"/>
+            android:textColor="@color/black"/>
     </RadioGroup>
 
     <ImageView
@@ -70,7 +70,7 @@
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
         android:layout_weight="1"
-        android:background="#3D3D3D"
+        android:background="@color/main"
         android:padding="4dp"
         android:scaleType="fitCenter" />
 
@@ -78,6 +78,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:background="@drawable/vien_den"
         android:gravity="center"
         android:padding="16dp">
         <androidx.appcompat.widget.AppCompatButton
@@ -86,8 +87,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/delete_and_cancel"
-            android:background="@drawable/vuongbogoc"
-            android:textColor="@color/white"
+            android:background="@drawable/vien_den"
+            android:textColor="@color/black"
             android:layout_marginEnd="8dp"/>
 
 
@@ -98,7 +99,7 @@
             android:layout_weight="1"
             android:text="@string/save_PDF"
             android:background="@drawable/login_background"
-            android:textColor="@color/white" />
+            android:textColor="@color/black" />
     </LinearLayout>
 
 </LinearLayout>

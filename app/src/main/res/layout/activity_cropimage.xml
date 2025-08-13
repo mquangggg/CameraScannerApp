@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".activitycrop.CropActivity"
-    android:background="@color/black">
+    android:background="@color/main">
 
     <TextView
         android:id="@+id/textViewCropTitle"
@@ -18,7 +18,7 @@
         android:textStyle="bold"
         android:padding="16dp"
         android:background="@color/green_accent"
-        android:textColor="@color/white" />
+        android:textColor="@color/black" />
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -53,7 +53,7 @@
         android:orientation="horizontal"
         android:padding="16dp"
         android:gravity="center"
-        android:background="@color/black">
+        android:background="@drawable/vien_den">
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnHuyCrop"
@@ -61,9 +61,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/cancel"
-            android:background="@drawable/vuongbogoc"
+            android:background="@drawable/search_background"
             android:layout_marginEnd="8dp"
-            android:textColor="@color/white"/>
+            android:textColor="@color/black"/>
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnYesCrop"
@@ -73,7 +73,7 @@
             android:text="@string/crop"
             android:background="@drawable/login_background"
             android:layout_marginStart="8dp"
-            android:textColor="@color/white"/>
+            android:textColor="@color/black"/>
     </LinearLayout>
 
 </LinearLayout>

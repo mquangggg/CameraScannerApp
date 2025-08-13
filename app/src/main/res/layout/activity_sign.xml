@@ -26,11 +26,11 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1.1"
+        android:layout_weight="1.2"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:padding="16dp"
-        android:background="@color/white">
+        android:background="@drawable/vien_den">
 
         <TextView
             android:layout_width="wrap_content"
@@ -66,7 +66,7 @@
         android:layout_weight="1.25"
         android:orientation="horizontal"
         android:gravity="center"
-        android:background="@color/main">
+        android:background="@drawable/vien_den">
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnDeleteSign"

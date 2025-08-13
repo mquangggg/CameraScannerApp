@@ -5,5 +5,5 @@
         android:state_checked="true"
         android:color="@color/green_accent" />
     <item
-        android:color="@android:color/white" />
+        android:color="@color/black" />
 </selector>
