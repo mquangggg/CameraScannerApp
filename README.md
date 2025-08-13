@@ -17,48 +17,79 @@
 
 ### MainActivity
 
-<div style="display: flex; align-items: center; gap: 20px;">
-  <img src="images/main_activity.jpg" alt="Main Activity" width="200" />
-  <div>
-    <h4>MainActivity</h4>
-    <ul>
-      <li>Hiển thị danh sách ảnh đã quét</li>
-      <li>Nút "QUÉT NGAY BÂY GIỜ" mở camera scanner</li>
-      <li>Tìm kiếm ảnh, navigation tabs</li>
-    </ul>
-  </div>
-</div>
+<table style="width:100%; border:none;">
+  <tr>
+    <td style="width:200px; text-align:left; vertical-align:middle;">
+      <img src="images/main_activity.jpg" alt="Main Activity" width="200" />
+    </td>
+    <td style="text-align:left; vertical-align:middle;">
+      <h4>MainActivity</h4>
+      <ul>
+        <li>Hiển thị danh sách file PDF ,JPG, OCR đã lưu trong bộ nhớ</li>
+        <li>Nút "QUÉT NGAY BÂY GIỜ" mở camera scanner</li>
+        <li>Tìm kiếm ảnh đã lưu</li>
+        <li>Activity me chứa logic đổi giao diện sáng tối và ngôn ngữ( vi và en )</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
 ### CameraScannerActivity 
 
-<img src="images/camera_activity.jpg" alt="Camera Scanner" width="200" align="left"/>
-
-- **OpenCV realtime detection** - Nhận diện khung tài liệu trong thời gian thực
-- **Auto crop** - Tự động cắt theo khung phát hiện
-- **Fallback** - Dùng ML Kit Text Detection nếu không phát hiện được khung
-
-<br clear="left"/>
+<table style="width:100%; border:none;">
+  <tr>
+    <td style="width:200px; text-align:left; vertical-align:middle; padding-right: 20px; white-space: nowrap;">
+      <img src="images/camera_activity.jpg" alt="Camera Scanner" width="200" />
+    </td>
+    <td style="text-align:left; vertical-align:middle;">
+      <h4>CameraScannerActivity</h4>
+      <ul>
+        <li><b>OpenCV realtime detection</b> - Nhận diện khung tài liệu trong thời gian thực</li>
+        <li><b>Auto crop</b> - Tự động cắt và tạo khung cắt theo khung phát hiện</li>
+        <li><b>Fallback</b> - Dùng ML Kit Text Detection nếu không phát hiện được khung</li>
+        <li>Chức năng Thẻ ID sẽ tự động chụp ảnh nếu khung nằm trong tỷ lệ sát với tỷ lệ ảnh thẻ</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
 ### ImageListActivity
 
-<img src="images/image_list_activity.jpg" alt="Image List" width="200" align="left"/>
-
-- Hiển thị tất cả ảnh đã quét
-- Nút thêm ảnh mới (quay lại camera scanner)
-- Chọn và xóa nhiều ảnh
-
-<br clear="left"/>
+<table style="width:100%; border:none;">
+  <tr>
+    <td style="width:200px; text-align:left; vertical-align:middle;">
+      <img src="images/image_list_activity.jpg" alt="Image List" width="200" />
+    </td>
+    <td style="text-align:left; vertical-align:middle;">
+      <h4>ImageListActivity</h4>
+      <ul>
+        <li>Hiển thị tất cả ảnh đã qua crop</li>
+        <li>Nút thêm ảnh mới (quay lại camera scanner)</li>
+        <li>Lưu ảnh thành file pdf</li>
+        <li>Xóa ảnh tùy chọn</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
 ### ImageEditorActivity
-<img src="images/image_preview_activity.jpg" alt="Image Editor" width="200" align="left"/>
-
-- **Xoay ảnh** - 90°, 180°, 270° hoặc góc tùy chỉnh
-- **Crop ảnh** - Cắt tự do hoặc theo tỷ lệ chuẩn
-- **Tạo PDF** - Chuyển đổi ảnh thành PDF
-- **OCR** - Trích xuất text bằng Google ML Kit
-- **Ký tên** - Thêm chữ ký số lên ảnh
-
-<br clear="left"/>
+<table style="width:100%; border:none;">
+  <tr>
+    <td style="width:200px; text-align:left; vertical-align:middle; padding-right: 20px;">
+      <img src="images/image_preview_activity.jpg" alt="Image Editor" width="200" />
+    </td>
+    <td style="text-align:left; vertical-align:middle;">
+      <h4>ImageEditorActivity</h4>
+      <ul>
+        <li><b>Xoay ảnh</b> - 90°, 180°, 270° hoặc góc tùy chỉnh</li>
+        <li><b>Crop ảnh</b> - Cắt tự do hoặc theo tỷ lệ chuẩn</li>
+        <li><b>Tạo PDF</b> - Chuyển đổi ảnh thành PDF</li>
+        <li><b>OCR</b> - Trích xuất text bằng Google ML Kit</li>
+        <li><b>Ký tên</b> - Thêm chữ ký số lên ảnh</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
 ## Công nghệ
 
