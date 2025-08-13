@@ -16,9 +16,9 @@ import com.example.camerascanner.R;
 import java.util.List;
 
 public class ColorAdapter extends RecyclerView.Adapter<ColorAdapter.ColorViewHolder> {
-    private List<Integer> colorList; // Danh sách màu
-    private Context context;
-    private OnColorSelectedListener listener;
+    private final List<Integer> colorList; // Danh sách màu
+    private final Context context;
+    private final OnColorSelectedListener listener;
     private int selectedPosition = 0; // Vị trí màu được chọn (mặc định là màu đầu tiên)
 
     @NonNull

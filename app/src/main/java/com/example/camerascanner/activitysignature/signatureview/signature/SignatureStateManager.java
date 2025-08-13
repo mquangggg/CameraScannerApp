@@ -35,9 +35,9 @@ public class SignatureStateManager {
     // Góc xoay hiện tại của chữ ký hoặc khung, tính bằng radian.
     private float rotationAngle = 0f;
     // Chiều rộng khởi tạo mặc định cho khung chữ ký.
-    private float initialFrameWidth = 600f;
+    private final float initialFrameWidth = 600f;
     // Chiều cao khởi tạo mặc định cho khung chữ ký.
-    private float initialFrameHeight = 200f;
+    private final float initialFrameHeight = 200f;
 
     /**
      * Constructor mặc định của lớp **SignatureStateManager**.

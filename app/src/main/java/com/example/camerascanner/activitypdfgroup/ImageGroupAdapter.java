@@ -24,9 +24,9 @@ import java.util.List;
  */
 public class ImageGroupAdapter extends RecyclerView.Adapter<ImageGroupAdapter.ImageViewHolder> {
 
-    private Context context;
+    private final Context context;
     private List<ImageItem> imageList;
-    private OnImageActionListener listener;
+    private final OnImageActionListener listener;
 
     public interface OnImageActionListener {
         void onImageClick(int position);
@@ -73,11 +73,11 @@ public class ImageGroupAdapter extends RecyclerView.Adapter<ImageGroupAdapter.Im
     }
 
     class ImageViewHolder extends RecyclerView.ViewHolder {
-        private ImageView ivImage;
-        private TextView tvImageName;
-        private TextView tvImageInfo;
-        private ImageView ivDelete;
-        private View itemContainer;
+        private final ImageView ivImage;
+        private final TextView tvImageName;
+        private final TextView tvImageInfo;
+        private final ImageView ivDelete;
+        private final View itemContainer;
 
         @SuppressLint("RestrictedApi")
         public ImageViewHolder(@NonNull View itemView) {

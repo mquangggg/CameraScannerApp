@@ -29,9 +29,9 @@ public class SignatureTouchHandler {
     private float initialAngle = 0f;
 
     // Đối tượng quản lý trạng thái hiện tại của chữ ký (đường dẫn, khung, hộp, cờ, v.v.).
-    private SignatureStateManager stateManager;
+    private final SignatureStateManager stateManager;
     // Đối tượng cung cấp các tiện ích hình học (ví dụ: tính khoảng cách, góc, xoay điểm).
-    private SignatureGeometryUtils geometryUtils;
+    private final SignatureGeometryUtils geometryUtils;
 
     /**
      * Constructor khởi tạo **SignatureTouchHandler**.

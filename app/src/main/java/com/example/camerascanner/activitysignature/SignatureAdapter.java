@@ -17,9 +17,9 @@ import java.util.List;
 public class SignatureAdapter extends RecyclerView.Adapter<SignatureAdapter.SignatureViewHolder> {
 
     private List<Uri> signatureUris;
-    private Context context;
-    private OnSignatureClickListener listener;
-    private OnSignatureDeleteListener deleteListener;
+    private final Context context;
+    private final OnSignatureClickListener listener;
+    private final OnSignatureDeleteListener deleteListener;
 
     public interface OnSignatureClickListener {
         void onSignatureClick(Uri signatureUri);

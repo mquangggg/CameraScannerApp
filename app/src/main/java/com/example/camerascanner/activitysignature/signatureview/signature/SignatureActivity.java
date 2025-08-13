@@ -11,9 +11,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.camerascanner.BaseActivity;
+import com.example.camerascanner.activitymain.BaseActivity;
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitycamera.SignatureManager;
 import com.example.camerascanner.activitysignature.signatureview.imagesignpreview.ImageSignPreviewActivity;

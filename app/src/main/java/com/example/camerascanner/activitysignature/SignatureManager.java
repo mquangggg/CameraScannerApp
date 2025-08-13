@@ -13,8 +13,8 @@ public class SignatureManager {
     private static final String PREF_NAME = "signature_prefs";
     private static final String KEY_SIGNATURE_URIS = "signature_uris";
 
-    private Context context;
-    private SharedPreferences sharedPreferences;
+    private final Context context;
+    private final SharedPreferences sharedPreferences;
 
     public SignatureManager(Context context) {
         this.context = context;

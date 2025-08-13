@@ -18,11 +18,11 @@ public class SignatureRenderer {
     private static final int HANDLE_SIZE = 50;
 
     // Đối tượng quản lý các bút vẽ (Paint) cho các thành phần khác nhau.
-    private SignaturePaintManager paintManager;
+    private final SignaturePaintManager paintManager;
     // Đối tượng quản lý trạng thái hiện tại của chữ ký (đường dẫn, bitmap, khung, hộp, cờ hiển thị, v.v.).
-    private SignatureStateManager stateManager;
+    private final SignatureStateManager stateManager;
     // Đối tượng cung cấp các tiện ích hình học (ví dụ: xoay điểm, tính khoảng cách).
-    private SignatureGeometryUtils geometryUtils;
+    private final SignatureGeometryUtils geometryUtils;
 
     /**
      * Constructor khởi tạo **SignatureRenderer** với các đối tượng quản lý cần thiết.

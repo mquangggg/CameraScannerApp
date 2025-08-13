@@ -9,7 +9,7 @@ public class ImageItem {
     private Bitmap bitmap;
     private String name;
     private String filePath;
-    private long timestamp;
+    private final long timestamp;
     private boolean isSelected;
 
     public ImageItem(Bitmap bitmap, String name) {

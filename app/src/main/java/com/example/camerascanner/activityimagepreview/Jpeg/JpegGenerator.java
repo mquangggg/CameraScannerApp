@@ -1,4 +1,4 @@
-package com.example.camerascanner.activitypdf.Jpeg;
+package com.example.camerascanner.activitysignature.signatureview.imagesignpreview.Jpeg;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -19,7 +19,7 @@ public class JpegGenerator {
     private static final String TAG = "JpegGenerator";
     private static final int JPEG_QUALITY = 90; // Chất lượng JPEG (0-100)
 
-    private Context context;
+    private final Context context;
 
     /**
      * Constructor khởi tạo JpegGenerator với Context

@@ -15,9 +15,9 @@ import com.example.camerascanner.activitysignature.signatureview.signature.Signa
  */
 public class SignatureBitmapProcessor {
     // Đối tượng quản lý trạng thái hiện tại của chữ ký (đường dẫn, bitmap phủ, khung, hộp, v.v.).
-    private SignatureStateManager stateManager;
+    private final SignatureStateManager stateManager;
     // Đối tượng quản lý các thuộc tính của bút vẽ (màu sắc, độ rộng nét, v.v.).
-    private SignaturePaintManager paintManager;
+    private final SignaturePaintManager paintManager;
 
     /**
      * Constructor khởi tạo **SignatureBitmapProcessor** với các đối tượng quản lý trạng thái và bút vẽ.

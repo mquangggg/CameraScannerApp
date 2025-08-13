@@ -16,7 +16,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -24,9 +23,9 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.Rotate; // Import để xoay ảnh với Glide
 import com.bumptech.glide.request.RequestOptions; // Import RequestOptions
 import com.example.camerascanner.R;
-import com.example.camerascanner.BaseActivity;
+import com.example.camerascanner.activitymain.BaseActivity;
 import com.example.camerascanner.activitypdf.DialogHelper;
-import com.example.camerascanner.activitypdf.Jpeg.JpegGenerator;
+import com.example.camerascanner.activitysignature.signatureview.imagesignpreview.Jpeg.JpegGenerator;
 import com.example.camerascanner.activitypdf.PermissionHelper;
 import com.example.camerascanner.activitysignature.signatureview.imagesignpreview.ImageSignPreviewActivity;
 import com.example.camerascanner.activitysignature.signatureview.signature.SignatureActivity;
@@ -254,7 +253,7 @@ public class ImagePreviewActivity extends BaseActivity {
                     intent.putExtra("FROM_IMAGE_PREVIEW", true);
 
                     startActivityForResult(intent, REQUEST_CROP);
-                    Log.d(TAG, "ImagePreviewActivity: Starting CropActivity with URI: " + tempUri.toString());
+                    Log.d(TAG, "ImagePreviewActivity: Starting CropActivity with URI: " + tempUri);
                 } else {
                     Toast.makeText(ImagePreviewActivity.this, getString(R.string.failed_to_save_image), Toast.LENGTH_SHORT).show();
                 }
@@ -432,7 +431,7 @@ public class ImagePreviewActivity extends BaseActivity {
                     signatureManager.saveSignatureUri(newSignatureUri);
                 }
                 if (mergedImageUri != null) {
-                    Log.d(TAG, "ImagePreviewActivity: Received merged image URI: " + mergedImageUri.toString());
+                    Log.d(TAG, "ImagePreviewActivity: Received merged image URI: " + mergedImageUri);
                     this.imageUri = mergedImageUri;
                     loadImageWithRotation();
                     Toast.makeText(this, getString(R.string.image_sign), Toast.LENGTH_SHORT).show();

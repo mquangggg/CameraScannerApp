@@ -21,9 +21,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import com.example.camerascanner.BaseActivity;
+import com.example.camerascanner.activitymain.BaseActivity;
 import com.example.camerascanner.R;
 import com.example.camerascanner.activitysignature.signatureview.signature.SignatureView;
 
@@ -217,7 +215,7 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
 
             signatureOverlay.post(() -> {
                 RectF adjustedFrame = calculateAdjustedSignatureFrame();
-                Log.d("DEBUG", "Adjusted frame: " + adjustedFrame.toString());
+                Log.d("DEBUG", "Adjusted frame: " + adjustedFrame);
                 signatureOverlay.setSignatureFrame(adjustedFrame);
             });
             signatureOverlay.setVisibility(View.VISIBLE);
@@ -290,7 +288,7 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
                 Bitmap processedImage = resizeIfNeeded(originalImageBitmap, 1080, 1920);
                 RectF realImageFrame = convertUICoordinatesToImageCoordinates(signatureFrame, processedImage);
 
-                Log.d("DEBUG", "Converted frame: " + realImageFrame.toString());
+                Log.d("DEBUG", "Converted frame: " + realImageFrame);
                 Log.d("DEBUG", "Rotation angle: " + Math.toDegrees(rotationAngle));
                 Log.d("DEBUG", "Selected color: " + String.format("#%06X", (0xFFFFFF & selectedColor)));
 

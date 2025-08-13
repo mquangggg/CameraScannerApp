@@ -1,4 +1,4 @@
-package com.example.camerascanner.activitypdf.Jpeg;
+package com.example.camerascanner.activitysignature.signatureview.imagesignpreview.Jpeg;
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -8,7 +8,7 @@ import android.util.Log;
 public class JpegFileManager {
     private static final String TAG = "JpegFileManager";
 
-    private Context context;
+    private final Context context;
 
     /**
      * Constructor khởi tạo JpegFileManager với Context
@@ -34,10 +34,10 @@ public class JpegFileManager {
             int rowsDeleted = resolver.delete(jpegUri, null, null);
 
             if (rowsDeleted > 0) {
-                Log.d(TAG, "Đã xóa JPEG thành công: " + jpegUri.toString());
+                Log.d(TAG, "Đã xóa JPEG thành công: " + jpegUri);
                 return true;
             } else {
-                Log.e(TAG, "Không thể xóa JPEG: " + jpegUri.toString() + ". Có thể file không tồn tại hoặc không có quyền.");
+                Log.e(TAG, "Không thể xóa JPEG: " + jpegUri + ". Có thể file không tồn tại hoặc không có quyền.");
                 return false;
             }
         } catch (Exception e) {
