@@ -15,22 +15,21 @@
 ## Cấu trúc Activities
 
 ### MainActivity
-<p>
-  <img src="images/main_activity.jpg" alt="Main Activity" width="250" align="left" style="margin-right:20px"/>
-  <b>Main Activity</b><br>
-  - Hiển thị danh sách ảnh đã quét<br>
-  - Nút <b>"QUÉT NGAY BÂY GIỜ"</b> mở camera scanner<br>
-  - Tìm kiếm ảnh, navigation tabs
-</p>
-<br clear="left"/>
-### CameraScannerActivity  
-<div align="center">
-    <img src="images/camera_activity.jpg" alt="Camera Scanner" width="250" style="border-radius:10px; box-shadow: 0 0 10px rgba(0,0,0,0.2);"/>
-</div>
+<table>
+<tr>
+<td width="260">
+  <img src="images/main_activity.jpg" alt="Main Activity" width="250"/>
+</td>
+<td>
+  
+**Main Activity**  
+- Hiển thị danh sách ảnh đã quét  
+- Nút **"QUÉT NGAY BÂY GIỜ"** mở camera scanner  
+- Tìm kiếm ảnh, navigation tabs  
 
-- **OpenCV realtime detection** - Nhận diện khung tài liệu trong thời gian thực  
-- **Auto crop** - Tự động cắt theo khung phát hiện  
-- **Fallback** - Dùng ML Kit Text Detection nếu không phát hiện được khung
+</td>
+</tr>
+</table
 ### ImageListActivity
 <img src="images/image_list_activity.jpg" alt="Image List" width="250" align="left"/>
 
