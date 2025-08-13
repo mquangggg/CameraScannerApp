@@ -3,7 +3,7 @@
 Ứng dụng quét tài liệu với AI nhận diện realtime và xử lý ảnh chuyên nghiệp.
 
 <p align="center">
-  <img src="images/camera_scanner.png" alt="APP" width="250"/>
+  <img src="images/camera_scanner.png" alt="APP" width="350"/>
 </p>
 
 ## Tính năng
@@ -17,7 +17,7 @@
 
 ### MainActivity
 
-<img src="images/main_activity.jpg" alt="Main Activity" width="250" align="left"/>
+<img src="images/main_activity.jpg" alt="Main Activity" width="200" align="left"/>
 
 - Hiển thị danh sách ảnh đã quét
 - Nút "QUÉT NGAY BÂY GIỜ" mở camera scanner
@@ -27,7 +27,7 @@
 
 ### CameraScannerActivity 
 
-<img src="images/camera_activity.jpg" alt="Camera Scanner" width="250" align="left"/>
+<img src="images/camera_activity.jpg" alt="Camera Scanner" width="200200" align="left"/>
 
 - **OpenCV realtime detection** - Nhận diện khung tài liệu trong thời gian thực
 - **Auto crop** - Tự động cắt theo khung phát hiện
@@ -37,7 +37,7 @@
 
 ### ImageListActivity
 
-<img src="images/image_list_activity.jpg" alt="Image List" width="250" align="left"/>
+<img src="images/image_list_activity.jpg" alt="Image List" width="200" align="left"/>
 
 - Hiển thị tất cả ảnh đã quét
 - Nút thêm ảnh mới (quay lại camera scanner)
@@ -46,7 +46,7 @@
 <br clear="left"/>
 
 ### ImageEditorActivity
-<img src="images/image_preview_activity.jpg" alt="Image Editor" width="250" align="left"/>
+<img src="images/image_preview_activity.jpg" alt="Image Editor" width="200" align="left"/>
 
 - **Xoay ảnh** - 90°, 180°, 270° hoặc góc tùy chỉnh
 - **Crop ảnh** - Cắt tự do hoặc theo tỷ lệ chuẩn
