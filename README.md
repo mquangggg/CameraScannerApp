@@ -1,9 +1,6 @@
 # Camera Scanner App
 
 Ứng dụng quét tài liệu với AI nhận diện realtime và xử lý ảnh chuyên nghiệp.
-<p align="center">
-  <img src="images/camera_scanner.png" alt="App" width="250"/>
-</p>
 
 ## Tính năng
 
@@ -15,23 +12,25 @@
 ## Cấu trúc Activities
 
 ### MainActivity
-<table>
-<tr>
-<td width="260">
-  <img src="images/main_activity.jpg" alt="Main Activity" width="250"/>
-</td>
-<td>
-  
-**Main Activity**  
-- Hiển thị danh sách ảnh đã quét  
-- Nút **"QUÉT NGAY BÂY GIỜ"** mở camera scanner  
-- Tìm kiếm ảnh, navigation tabs  
+<img src="images/main_activity.jpg" alt="Main Activity" width="250" align="left"/>
 
-</td>
-</tr>
-</table
+- Hiển thị danh sách ảnh đã quét
+- Nút "QUÉT NGAY BÂY GIỜ" mở camera scanner
+- Tìm kiếm ảnh, navigation tabs
+
+<br clear="left"/>
+
+### CameraScannerActivity  
+<img src="images/camera_scanner.jpg" alt="Camera Scanner" width="250" align="left"/>
+
+- **OpenCV realtime detection** - Nhận diện khung tài liệu trong thời gian thực
+- **Auto crop** - Tự động cắt theo khung phát hiện
+- **Fallback** - Dùng ML Kit Text Detection nếu không phát hiện được khung
+
+<br clear="left"/>
+
 ### ImageListActivity
-<img src="images/image_list_activity.jpg" alt="Image List" width="250" align="left"/>
+<img src="images/image_list.jpg" alt="Image List" width="250" align="left"/>
 
 - Hiển thị tất cả ảnh đã quét
 - Nút thêm ảnh mới (quay lại camera scanner)
@@ -40,19 +39,15 @@
 <br clear="left"/>
 
 ### ImageEditorActivity
-<div style="display: flex; align-items: center;">
+<img src="images/image_editor.jpg" alt="Image Editor" width="250" align="left"/>
 
-<img src="images/image_preview_activity.jpg" alt="Image Editor" width="250" style="margin-right: 15px;"/>
+- **Xoay ảnh** - 90°, 180°, 270° hoặc góc tùy chỉnh
+- **Crop ảnh** - Cắt tự do hoặc theo tỷ lệ chuẩn
+- **Tạo PDF** - Chuyển đổi ảnh thành PDF
+- **OCR** - Trích xuất text bằng Google ML Kit
+- **Ký tên** - Thêm chữ ký số lên ảnh
 
-<div>
-- **Xoay ảnh** - 90°, 180°, 270° hoặc góc tùy chỉnh  
-- **Crop ảnh** - Cắt tự do hoặc theo tỷ lệ chuẩn  
-- **Tạo PDF** - Chuyển đổi ảnh thành PDF  
-- **OCR** - Trích xuất text bằng Google ML Kit  
-- **Ký tên** - Thêm chữ ký số lên ảnh  
-</div>
-
-</div>
+<br clear="left"/>
 
 ## Công nghệ
 
