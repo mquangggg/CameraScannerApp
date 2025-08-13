@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="@color/white"
+        android:background="@drawable/vien_den_nen_trang"
         android:padding="12dp">
 
         <!-- Thumbnail ảnh OCR -->
