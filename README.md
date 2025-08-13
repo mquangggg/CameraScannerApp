@@ -15,13 +15,21 @@
 ## Cấu trúc Activities
 
 ### MainActivity
-<img src="images/main_activity.jpg" alt="Main Activity" width="250" align="left"/>
+<table>
+<tr>
+<td width="260">
+  <img src="images/main_activity.jpg" alt="Main Activity" width="250"/>
+</td>
+<td>
+  
+**Main Activity**  
+- Hiển thị danh sách ảnh đã quét  
+- Nút **"QUÉT NGAY BÂY GIỜ"** mở camera scanner  
+- Tìm kiếm ảnh, navigation tabs  
 
-- Hiển thị danh sách ảnh đã quét
-- Nút "QUÉT NGAY BÂY GIỜ" mở camera scanner
-- Tìm kiếm ảnh, navigation tabs
-
-<br clear="left"/>
+</td>
+</tr>
+</table
 
 ### CameraScannerActivity  
 <img src="images/camera_activity.jpg" alt="Camera Scanner" width="250" align="left"/>
