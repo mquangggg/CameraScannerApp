@@ -93,7 +93,7 @@
 
 ## Công nghệ
 
-- **OpenCV 4.x** - Computer vision và image processing
+- **OpenCV 4.11.0** - Computer vision và image processing
 - **Google ML Kit** - Text recognition và object detection
 - **CameraX** - Camera handling
 - **Android 7.0+** - Target platform
@@ -101,9 +101,8 @@
 ## Dependencies
 
 ```gradle
-implementation 'org.opencv:opencv-android:4.8.0'
-implementation 'com.google.android.gms:play-services-mlkit-text-recognition:19.0.0'
-implementation 'com.google.android.gms:play-services-mlkit-object-detection:17.0.0'
+implementation("com.github.barteksc:pdfium-android:1.9.0")
+implementation("com.google.mlkit:text-recognition:16.0.1")
 ```
 
 ## Permissions
