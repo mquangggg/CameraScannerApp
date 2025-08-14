@@ -64,7 +64,6 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation("com.vanniktech:android-image-cropper:4.5.0")
-    implementation("com.github.barteksc:pdfium-android:1.9.0")
     implementation("com.google.mlkit:text-recognition:16.0.1")
     implementation ("androidx.exifinterface:exifinterface:1.4.1")
 
@@ -73,7 +72,6 @@ dependencies {
     implementation("androidx.camera:camera-camera2:1.4.2")
     implementation("androidx.camera:camera-lifecycle:1.4.2")
     implementation("androidx.camera:camera-view:1.4.2")
-    // CameraX core library
     implementation ("androidx.camera:camera-core:1.4.2")    // CameraX Extensions (nếu bạn cần các tính năng mở rộng như HDR, Night Mode, v.v.)
     implementation ("androidx.camera:camera-extensions:1.4.2") // Hoặc phiên bản mới nhất, ổn định
 

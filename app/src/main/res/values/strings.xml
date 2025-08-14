@@ -115,6 +115,7 @@
     <string name="image_ready_for_pdf">Ảnh đã sẵn sàng để tạo PDF.</string>
     <string name="bw_image_ready">Ảnh trắng đen đã sẵn sàng.</string>
     <string name="bw_mode_selected">Chế độ Trắng đen được chọn</string>
+    <string name="pro_mode_selected">Chế độ Pro được chọn</string>
     <string name="error_creating_bw_image">Lỗi khi tạo ảnh trắng đen</string>
     <string name="processing_bw_image">Đang xử lý ảnh trắng đen...</string>
     <string name="original_mode_selected">Chế độ gốc được chọn</string>

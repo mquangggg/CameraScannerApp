@@ -156,7 +156,7 @@ public class PdfGenerationAndPreviewActivity extends BaseActivity {
                         processedBitmap = proBitmap;
                         currentPdfStyle = PdfStyle.PRO;
                         updatePreview();
-                        Toast.makeText(this, getString(R.string.bw_mode_selected), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.pro_mode_selected), Toast.LENGTH_SHORT).show();
                     }
                 }
                 }

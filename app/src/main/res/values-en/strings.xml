@@ -109,6 +109,7 @@
     <string name="image_ready_for_pdf">Image is ready to create PDF.</string>
     <string name="bw_image_ready">Black and white image is ready.</string>
     <string name="bw_mode_selected">Black and White mode selected</string>
+    <string name="pro_mode_selected">Pro mode selected</string>
     <string name="error_creating_bw_image">Failed to create black and white image</string>
     <string name="processing_bw_image">Processing black and white image...</string>
     <string name="original_mode_selected">Original mode selected</string>
