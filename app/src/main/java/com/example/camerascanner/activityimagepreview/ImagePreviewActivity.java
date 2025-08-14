@@ -120,18 +120,22 @@ public class ImagePreviewActivity extends BaseActivity {
             Log.d(TAG, "ImagePreviewActivity: Rotated image to " + rotationAngle + " degrees."); // Log khi xoay ảnh
         });
 
+        // XỬ LÝ SỰ KIỆN XÁC NHẬN PREVIEW:
+        // Lưu ảnh đã xoay vào cache và trả kết quả về PDFGroupActivity
         btnConfirmPreview.setOnClickListener(v -> {
+            // Lấy bitmap hiện tại từ ImageView (đã bao gồm góc xoay)
             Bitmap rotatedBitmap = ((BitmapDrawable) imageViewPreview.getDrawable()).getBitmap();
             Uri tempUri = saveBitmapToCache(rotatedBitmap);
 
             if (tempUri != null) {
-                // Trả kết quả về PDFGroupActivity
-                    Intent resultIntent = new Intent();
-                    resultIntent.putExtra("updatedImageUri", tempUri.toString());
-                    resultIntent.putExtra("imagePosition", imagePosition);
-                    setResult(RESULT_OK, resultIntent);
-                    finish();
-                    Log.d(TAG, "ImagePreviewActivity: Returning updated image to PDFGroupActivity at position " + imagePosition);
+                // TRẢ KẾT QUẢ VỀ PDFGROUPACTIVITY:
+                // Truyền URI ảnh đã xoay và vị trí để cập nhật đúng ảnh trong list
+                Intent resultIntent = new Intent();
+                resultIntent.putExtra("updatedImageUri", tempUri.toString());
+                resultIntent.putExtra("imagePosition", imagePosition);
+                setResult(RESULT_OK, resultIntent);
+                finish();
+                Log.d(TAG, "ImagePreviewActivity: Returning updated image to PDFGroupActivity at position " + imagePosition);
             } else {
                 Toast.makeText(this, getString(R.string.failed_to_save_image), Toast.LENGTH_SHORT).show();
                 setResult(RESULT_CANCELED); // Đặt kết quả là hủy nếu không lưu được
@@ -139,24 +143,21 @@ public class ImagePreviewActivity extends BaseActivity {
                 Log.e(TAG, "ImagePreviewActivity: Failed to save bitmap for confirmation.");
             }
         });
+        // XỬ LÝ SỰ KIỆN TẠO OCR:
+        // Chuyển ảnh hiện tại sang OCRActivity để nhận dạng văn bản
         btnMakeOcr.setOnClickListener(v->{
             if (imageViewPreview.getDrawable() instanceof BitmapDrawable) {
                 Bitmap currentBitmap = ((BitmapDrawable) imageViewPreview.getDrawable()).getBitmap();
 
-                // 2. Lưu Bitmap vào bộ nhớ cache
-                // Điều này đảm bảo rằng chúng ta có một tệp ảnh để gửi tới OCRActivity
+                // LƯU BITMAP VÀO CACHE:
+                // Cần lưu ảnh tạm thời để truyền URI cho OCRActivity
                 Uri tempUri = saveBitmapToCache(currentBitmap);
 
                 if (tempUri != null) {
-                    // 3. Tạo Intent để mở OCRActivity và gửi URI
+                    // KHỞI ĐỘNG OCRActivity:
+                    // Truyền URI ảnh để thực hiện nhận dạng văn bản
                     Intent intent = new Intent(ImagePreviewActivity.this, OCRActivity.class);
-
-                    // OCRActivity đã được cung cấp sử dụng một key cho URI,
-                    // thường là "imageUriForOcr" hoặc một biến tĩnh tương tự.
-                    // Nếu OCRActivity.java sử dụng EXTRA_IMAGE_URI_FOR_OCR, hãy sử dụng nó.
-                    // Nếu không, sử dụng một chuỗi thông thường như "imageUriForOcr".
                     intent.putExtra("image_uri_for_ocr", tempUri.toString());
-
                     startActivity(intent);
                 } else {
                     // Xử lý lỗi nếu không lưu được ảnh tạm thời
@@ -166,11 +167,16 @@ public class ImagePreviewActivity extends BaseActivity {
                 Toast.makeText(ImagePreviewActivity.this, getString(R.string.no_image), Toast.LENGTH_SHORT).show();
             }
         });
+        // XỬ LÝ SỰ KIỆN TẠO PDF:
+        // Chuyển ảnh hiện tại sang PdfGenerationAndPreviewActivity để tạo PDF
         btnGenPDF.setOnClickListener(v-> {
+            // Lấy bitmap đã xoay từ ImageView
             Bitmap rotatedBitmap = ((BitmapDrawable)imageViewPreview.getDrawable()).getBitmap();
             Uri tempUri = saveBitmapToCache(rotatedBitmap);
 
             if (tempUri != null) {
+                // KHỞI ĐỘNG PDF GENERATION:
+                // Truyền URI ảnh để tạo PDF với ảnh đã được xoay
                 Intent intent = new Intent(this, PdfGenerationAndPreviewActivity.class);
                 intent.putExtra("imageUri", tempUri.toString());
                 startActivityForResult(intent, REQUEST_PDF_GEN_PREVIEW);
@@ -178,62 +184,78 @@ public class ImagePreviewActivity extends BaseActivity {
                 Toast.makeText(this, getString(R.string.no_image_to_pdf), Toast.LENGTH_SHORT).show();
             }
         });
+        // XỬ LÝ SỰ KIỆN THÊM CHỮ KÝ:
+        // Hiển thị BottomSheetDialog với danh sách chữ ký và tùy chọn thêm mới
         btnSign.setOnClickListener(v->{
+            // TẠO BOTTOM SHEET DIALOG:
+            // Hiển thị giao diện chọn chữ ký từ dưới lên
             BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
             View bottomSheetView  = getLayoutInflater().inflate(R.layout.sign_layout_botton,null);
             bottomSheetDialog.setContentView(bottomSheetView);
 
+            // XỬ LÝ NÚT THÊM CHỮ KÝ MỚI:
             ImageButton btnAddSign = bottomSheetView.findViewById(R.id.btnAddSign);
             btnAddSign.setOnClickListener(v1->{
                 bottomSheetDialog.dismiss();
+                // Lấy bitmap đã xoay và lưu vào cache
                 Bitmap rotatedBitmap = ((BitmapDrawable)imageViewPreview.getDrawable()).getBitmap();
-                    // Phương thức saveBitmapToCache() đã tồn tại trong ImagePreviewActivity.java
                 Uri tempUri = saveBitmapToCache(rotatedBitmap);
 
+                // KHỞI ĐỘNG SIGNATURE ACTIVITY:
+                // Cho phép người dùng vẽ chữ ký mới trên ảnh
                 Intent intent = new Intent(ImagePreviewActivity.this, SignatureActivity.class);
                 intent.putExtra("imageUri", tempUri);
                 startActivityForResult(intent, REQUEST_SIGNATURE);
             });
 
+            // THIẾT LẬP RECYCLERVIEW CHO DANH SÁCH CHỮ KÝ:
             RecyclerView recyclerViewSigns = bottomSheetView.findViewById(R.id.recyclerViewSigns);
 
+            // Layout manager ngang để hiển thị chữ ký theo hàng ngang
             LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
             recyclerViewSigns.setLayoutManager(layoutManager);
             TextView tvNoSignatures = bottomSheetView.findViewById(R.id.tvNoSignatures);
 
-            // Lấy danh sách chữ ký đã lưu
+            // KIỂM TRA VÀ HIỂN THỊ DANH SÁCH CHỮ KÝ:
+            // Lấy danh sách chữ ký đã lưu từ SignatureManager
             savedSignatures = signatureManager.getSavedSignatureUris();
             if (savedSignatures.isEmpty()) {
+                // Hiển thị thông báo "không có chữ ký" nếu danh sách rỗng
                 tvNoSignatures.setVisibility(View.VISIBLE);
                 recyclerViewSigns.setVisibility(View.GONE);
             } else {
+                // Hiển thị RecyclerView nếu có chữ ký
                 tvNoSignatures.setVisibility(View.GONE);
                 recyclerViewSigns.setVisibility(View.VISIBLE);
             }
-            // Thiết lập adapter
+            // THIẾT LẬP ADAPTER CHO RECYCLERVIEW:
+            // Xử lý sự kiện click và delete cho từng chữ ký
             signatureAdapter = new SignatureAdapter(this, savedSignatures,
                     new SignatureAdapter.OnSignatureClickListener() {
                 @Override
                 public void onSignatureClick(Uri signatureUri) {
                     bottomSheetDialog.dismiss();
-                    // Chuyển trực tiếp sang ImageSignPreviewActivity với chữ ký đã có
+                    // CHỌN CHỮ KÝ CÓ SẴN:
+                    // Lấy bitmap đã xoay và lưu vào cache
                     Bitmap rotatedBitmap = ((BitmapDrawable)imageViewPreview.getDrawable()).getBitmap();
                     Uri tempUri = saveBitmapToCache(rotatedBitmap);
 
+                    // KHỞI ĐỘNG IMAGE SIGN PREVIEW:
+                    // Cho phép đặt chữ ký đã có lên ảnh với vị trí mặc định
                     Intent intent = new Intent(ImagePreviewActivity.this, ImageSignPreviewActivity.class);
                     intent.putExtra("imageUri", tempUri);
                     intent.putExtra("signatureUri", signatureUri);
-                    // Đặt vị trí mặc định cho chữ ký (có thể điều chỉnh)
+                    // Vị trí mặc định cho chữ ký (có thể điều chỉnh sau)
                     intent.putExtra("boundingBoxLeft", 100f);
                     intent.putExtra("boundingBoxTop", 100f);
 
                     startActivityForResult(intent, REQUEST_SIGNATURE);
-
                 }
             },new SignatureAdapter.OnSignatureDeleteListener() {
                 @Override
                 public void onSignatureDelete(Uri signatureUri, int position) {
-                    // Xác nhận xóa chữ ký
+                    // XÁC NHẬN XÓA CHỮ KÝ:
+                    // Hiển thị dialog xác nhận trước khi xóa
                     showDeleteConfirmDialog(signatureUri, position, bottomSheetDialog);
                 }
             });
@@ -242,16 +264,22 @@ public class ImagePreviewActivity extends BaseActivity {
 
             bottomSheetDialog.show();
         });
+        // XỬ LÝ SỰ KIỆN CROP ẢNH:
+        // Chuyển ảnh hiện tại sang CropActivity để cắt và chỉnh sửa
         btnCrop.setOnClickListener(v -> {
             if (imageViewPreview.getDrawable() instanceof BitmapDrawable) {
+                // Lấy bitmap hiện tại từ ImageView
                 Bitmap currentBitmap = ((BitmapDrawable) imageViewPreview.getDrawable()).getBitmap();
                 Uri tempUri = saveBitmapToCache(currentBitmap);
 
                 if (tempUri != null) {
+                    // KHỞI ĐỘNG CROP ACTIVITY:
+                    // Truyền URI ảnh và flag để CropActivity biết nguồn gọi
                     Intent intent = new Intent(ImagePreviewActivity.this, CropActivity.class);
                     intent.putExtra("imageUri", tempUri.toString());
 
-                    // Thêm thông tin để CropActivity biết đây là từ ImagePreview
+                    // FLAG ĐỂ IDENTIFY NGUỒN GỌI:
+                    // CropActivity sẽ xử lý khác nhau tùy theo nguồn gọi
                     intent.putExtra("FROM_IMAGE_PREVIEW", true);
 
                     startActivityForResult(intent, REQUEST_CROP);
@@ -269,7 +297,12 @@ public class ImagePreviewActivity extends BaseActivity {
         });
     }
     /**
-            * Hiển thị dialog xác nhận xóa chữ ký
+     * HIỂN THỊ DIALOG XÁC NHẬN XÓA CHỮ KÝ:
+     * Hiển thị AlertDialog để người dùng xác nhận trước khi xóa chữ ký.
+     * Sau khi xác nhận, sẽ xóa chữ ký khỏi SignatureManager và cập nhật UI.
+     * @param signatureUri URI của chữ ký cần xóa
+     * @param position Vị trí của chữ ký trong RecyclerView
+     * @param bottomSheetDialog BottomSheetDialog để đóng sau khi xóa
      */
     private void showDeleteConfirmDialog(Uri signatureUri, int position, BottomSheetDialog bottomSheetDialog) {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
@@ -299,7 +332,10 @@ public class ImagePreviewActivity extends BaseActivity {
     }
 
     /**
-     * Xóa file chữ ký khỏi bộ nhớ cache
+     * XÓA FILE CHỮ KÝ KHỎI BỘ NHỚ CACHE:
+     * Xóa file chữ ký vật lý khỏi bộ nhớ cache của ứng dụng.
+     * Chỉ xóa file local (scheme "file"), không xóa URI content.
+     * @param signatureUri URI của file chữ ký cần xóa
      */
     private void deleteSignatureFile(Uri signatureUri) {
         try {
@@ -314,7 +350,10 @@ public class ImagePreviewActivity extends BaseActivity {
         }
     }
     /**
-     * Xử lý sự kiện lưu JPEG - Logic được chuyển từ PdfGenerationAndPreviewActivity
+     * XỬ LÝ SỰ KIỆN LƯU JPEG:
+     * Kiểm tra ảnh hiện tại và hiển thị dialog để người dùng nhập tên file.
+     * Logic này được chuyển từ PdfGenerationAndPreviewActivity để tái sử dụng.
+     * Sử dụng DialogHelper để hiển thị giao diện nhập tên file.
      */
     private void handleSaveJpeg() {
         if (imageViewPreview.getDrawable() instanceof BitmapDrawable) {
@@ -331,7 +370,10 @@ public class ImagePreviewActivity extends BaseActivity {
     }
 
     /**
-     * Lưu JPEG với tên file do người dùng nhập
+     * LƯU JPEG VỚI TÊN FILE DO NGƯỜI DÙNG NHẬP:
+     * Kiểm tra quyền lưu trữ trước khi thực hiện lưu file.
+     * Nếu chưa có quyền, sẽ yêu cầu người dùng cấp quyền.
+     * @param fileName Tên file do người dùng nhập
      */
     private void saveJpegWithFileName(String fileName) {
         if (PermissionHelper.hasStoragePermission(this)) {
@@ -342,7 +384,11 @@ public class ImagePreviewActivity extends BaseActivity {
     }
 
     /**
-     * Thực hiện lưu JPEG ở background thread
+     * THỰC HIỆN LƯU JPEG Ở BACKGROUND THREAD:
+     * Lưu ảnh JPEG với tên file cụ thể trong background thread để không block UI.
+     * Sử dụng JpegGenerator để tạo file JPEG và lưu vào bộ nhớ ngoài.
+     * Hiển thị thông báo tiến trình và kết quả trên main thread.
+     * @param fileName Tên file JPEG cần lưu
      */
     private void performSaveJpeg(String fileName) {
         if (!(imageViewPreview.getDrawable() instanceof BitmapDrawable)) {
@@ -359,10 +405,15 @@ public class ImagePreviewActivity extends BaseActivity {
         // Hiển thị thông báo đang lưu
         Toast.makeText(this, "Đang lưu ảnh JPEG...", Toast.LENGTH_SHORT).show();
 
+        // THỰC HIỆN LƯU JPEG TRONG BACKGROUND THREAD:
         executorService.execute(() -> {
             try {
+                // SỬ DỤNG JPEG GENERATOR:
+                // Tạo file JPEG với tên file cụ thể và lưu vào bộ nhớ ngoài
                 Uri jpegUri = jpegGenerator.saveAsJpeg(currentBitmap, fileName);
 
+                // CẬP NHẬT UI TRÊN MAIN THREAD:
+                // Hiển thị thông báo thành công và log kết quả
                 mainHandler.post(() -> {
                     Toast.makeText(this, getString(R.string.jpeg_saved_success) + fileName, Toast.LENGTH_LONG).show();
                     Log.d(TAG, "JPEG saved successfully: " + fileName);
@@ -372,6 +423,8 @@ public class ImagePreviewActivity extends BaseActivity {
                 });
 
             } catch (Exception e) {
+                // XỬ LÝ LỖI TRÊN MAIN THREAD:
+                // Log lỗi và hiển thị thông báo lỗi cho người dùng
                 Log.e(TAG, "Lỗi khi lưu JPEG: " + e.getMessage(), e);
                 mainHandler.post(() -> {
                     Toast.makeText(this, "Lỗi khi lưu JPEG: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -379,6 +432,13 @@ public class ImagePreviewActivity extends BaseActivity {
             }
         });
     }
+    /**
+     * LƯU BITMAP VÀO CACHE:
+     * Lưu bitmap vào thư mục cache của ứng dụng với tên file tự động.
+     * Tạo thư mục cache nếu chưa tồn tại và sử dụng JPEG format với chất lượng 90%.
+     * @param bitmap Bitmap cần lưu vào cache
+     * @return Uri của file đã lưu hoặc null nếu lỗi
+     */
     private Uri saveBitmapToCache(Bitmap bitmap) {
         String fileName = "rotated_temp_" + System.currentTimeMillis() + ".jpeg";
         File cachePath = new File(getCacheDir(), "rotated_images");
@@ -407,11 +467,20 @@ public class ImagePreviewActivity extends BaseActivity {
     }
 
 
-    // Phương thức tải ảnh với góc xoay hiện tại
+    /**
+     * TẢI ẢNH VỚI GÓC XOAY HIỆN TẠI:
+     * Sử dụng Glide để tải ảnh từ URI với góc xoay được áp dụng.
+     * Sử dụng RequestOptions và Rotate transform để xoay ảnh theo rotationAngle.
+     * @param rotationAngle Góc xoay hiện tại (0°, 90°, 180°, 270°)
+     */
     private void loadImageWithRotation() {
+        // THIẾT LẬP REQUEST OPTIONS VỚI ROTATE TRANSFORM:
+        // Tạo transform để xoay ảnh theo góc hiện tại
         RequestOptions requestOptions = new RequestOptions();
         requestOptions = requestOptions.transform(new Rotate(rotationAngle)); // Áp dụng xoay
 
+        // TẢI ẢNH VỚI GLIDE:
+        // Sử dụng Glide để tải ảnh từ URI với transform xoay đã áp dụng
         Glide.with(this)
                 .load(imageUri)
                 .apply(requestOptions) // Áp dụng RequestOptions

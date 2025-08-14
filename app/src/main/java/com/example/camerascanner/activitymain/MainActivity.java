@@ -75,12 +75,7 @@ public class MainActivity extends BaseActivity {
     private ExecutorService fileLoadingExecutor;
     private BottomNavigationView bottomNavigationiew;
 
-    /**
-     * Phương thức được gọi khi Activity lần đầu tiên được tạo.
-     * Thiết lập layout, ánh xạ các View, khởi tạo Adapters và các danh sách dữ liệu,
-     * thiết lập listener cho tab và nút FAB, và kiểm tra/yêu cầu quyền cần thiết.
-     * @param savedInstanceState Đối tượng Bundle chứa trạng thái Activity trước đó nếu có.
-     */
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,11 +111,7 @@ public class MainActivity extends BaseActivity {
 
         // Thiết lập listener cho sự kiện chọn tab
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            /**
-             * Được gọi khi một tab được chọn.
-             * Cập nhật Adapter của RecyclerView và tải lại dữ liệu tương ứng với tab đã chọn.
-             * @param tab Tab vừa được chọn.
-             */
+
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 //Xóa văn bản khi chuyển tap
@@ -137,19 +128,13 @@ public class MainActivity extends BaseActivity {
                 }
             }
 
-            /**
-             * Được gọi khi một tab không còn được chọn.
-             * @param tab Tab vừa bị bỏ chọn.
-             */
+
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {
                 // Không cần làm gì khi tab không được chọn trong trường hợp này
             }
 
-            /**
-             * Được gọi khi một tab đã được chọn trước đó lại được chọn lại (ví dụ: người dùng nhấp vào tab hiện tại).
-             * @param tab Tab vừa được chọn lại.
-             */
+
             @Override
             public void onTabReselected(TabLayout.Tab tab) {
                 // Tải lại dữ liệu để làm mới danh sách khi tab được chọn lại
@@ -231,11 +216,7 @@ public class MainActivity extends BaseActivity {
         checkAndRequestStoragePermission();
     }
 
-    /**
-     * Phương thức lọc danh sách dựa trên văn bản tìm kiếm
-     *
-     * @param text văn bản người dùng nhập vào để tìm kiếm
-     */
+
     private void filters(String text) {
         //Kiểm tra tab
         if (tabLayout.getSelectedTabPosition() == 0) {

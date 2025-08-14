@@ -245,7 +245,11 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
         });
     }
 
-    // Các phương thức camera giữ nguyên như cũ...
+    /**
+     * Khởi tạo camera sử dụng CameraX ProcessCameraProvider.
+     * Thiết lập camera provider và binding các use cases (Preview, ImageAnalysis, ImageCapture).
+     * Xử lý lifecycle và error handling.
+     */
     private void startCamera() {
         if (isDestroyed) {
             Log.w(TAG, "Activity is destroyed, not starting camera");
@@ -267,6 +271,12 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
         }, ContextCompat.getMainExecutor(this));
     }
 
+    /**
+     * Binding các use cases của camera (Preview, ImageAnalysis, ImageCapture) với ProcessCameraProvider.
+     * Thiết lập ImageAnalysis để xử lý frame realtime với OpenCV detection.
+     * Xử lý auto-capture ID card và hiển thị bounding box overlay.
+     * @param cameraProvider ProcessCameraProvider đã được khởi tạo
+     */
     private void bindCameraUseCases(@NonNull ProcessCameraProvider cameraProvider) {
         if (isDestroyed || previewView == null) {
             Log.w(TAG, "Activity is destroyed or previewView is null, not binding camera");
@@ -288,6 +298,8 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
 
+        // Thiết lập ImageAnalyzer để xử lý frame realtime
+        // Mỗi frame sẽ được phân tích để detect document boundaries và xử lý auto-capture
         imageAnalysis.setAnalyzer(cameraExecutor, imageProxy -> {
             if (isDestroyed) {
                 imageProxy.close();
@@ -302,6 +314,8 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
             try {
                 final MatOfPoint finalQuadrilateralForOverlay;
 
+                // Chỉ xử lý 1/3 frame để tối ưu performance
+                // PROCESS_FRAME_INTERVAL = 3, nghĩa là chỉ xử lý frame thứ 0, 3, 6, 9...
                 if (frameCount % PROCESS_FRAME_INTERVAL == 0) {
                     Pair<MatOfPoint, Mat> detectionResult = processImageFrame(imageProxy);
                     newlyDetectedQuadrilateral = detectionResult.first;
@@ -324,7 +338,9 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
                         Log.d(TAG, "DEBUG_DIM: Processed Mat dimensions (from processedFrameForDimensions): " + processedFrameForDimensions.width() + "x" + processedFrameForDimensions.height());
                         Log.d(TAG, "DEBUG_DIM: Stored lastImageProxyWidth: " + lastImageProxyWidth + " lastImageProxyHeight: " + lastImageProxyHeight);
 
-                        // Logic tự động chụp thẻ ID
+                        // LOGIC TỰ ĐỘNG CHỤP THẺ ID:
+                        // Kiểm tra xem có đang ở chế độ ID Card và auto-capture có được bật không
+                        // Nếu phát hiện khung có tỷ lệ khớp với thẻ ID (1.5-1.85), sẽ tự động chụp
                         if (isIdCardMode && autoCaptureEnabled && !isDestroyed) {
                             long currentTime = System.currentTimeMillis();
                             Point[] points = newlyDetectedQuadrilateral.toArray();
@@ -332,10 +348,13 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
                                 MatOfPoint sortedPoints = sortPoints(new MatOfPoint(points));
                                 Point[] sortedPts = sortedPoints.toArray();
 
+                                // TÍNH TOÁN KÍCH THƯỚC VÀ TỶ LỆ KHUNG:
+                                // Tính chiều rộng trung bình (top và bottom)
                                 double widthTop = Math.sqrt(Math.pow(sortedPts[0].x - sortedPts[1].x, 2) + Math.pow(sortedPts[0].y - sortedPts[1].y, 2));
                                 double widthBottom = Math.sqrt(Math.pow(sortedPts[3].x - sortedPts[2].x, 2) + Math.pow(sortedPts[3].y - sortedPts[2].y, 2));
                                 double avgWidth = (widthTop + widthBottom) / 2.0;
 
+                                // Tính chiều cao trung bình (left và right)
                                 double heightLeft = Math.sqrt(Math.pow(sortedPts[0].x - sortedPts[3].x, 2) + Math.pow(sortedPts[0].y - sortedPts[3].y, 2));
                                 double heightRight = Math.sqrt(Math.pow(sortedPts[1].x - sortedPts[2].x, 2) + Math.pow(sortedPts[1].y - sortedPts[2].y, 2));
                                 double avgHeight = (heightLeft + heightRight) / 2.0;
@@ -344,10 +363,16 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
                                     double aspectRatio = avgWidth / avgHeight;
                                     Log.d(TAG, "Calculated Aspect Ratio: " + String.format("%.2f", aspectRatio) + " (Min: " + ID_CARD_ASPECT_RATIO_MIN + ", Max: " + ID_CARD_ASPECT_RATIO_MAX + ")");
 
+                                    // KIỂM TRA TỶ LỆ KHUNG CÓ KHỚP VỚI THẺ ID KHÔNG:
+                                    // Tỷ lệ thẻ ID: 1.5-1.85 (cả chiều ngang và chiều dọc)
+                                    // Nếu khớp, tăng số frame hợp lệ liên tiếp
                                     if (aspectRatio >= ID_CARD_ASPECT_RATIO_MIN && aspectRatio <= ID_CARD_ASPECT_RATIO_MAX || aspectRatio >= 1/ID_CARD_ASPECT_RATIO_MAX && aspectRatio <= 1/ID_CARD_ASPECT_RATIO_MIN) {
                                         consecutiveValidFrames++;
                                         Log.d(TAG, "Valid frame. Consecutive: " + consecutiveValidFrames + "/" + REQUIRED_CONSECUTIVE_FRAMES);
 
+                                        // AUTO-CAPTURE TRIGGER:
+                                        // Nếu đủ số frame hợp lệ liên tiếp (10 frame) và đã qua thời gian cooldown (3 giây)
+                                        // Thì tự động chụp ảnh và reset counter
                                         if (consecutiveValidFrames >= REQUIRED_CONSECUTIVE_FRAMES) {
                                             if (currentTime - lastAutoCaptureTime > AUTO_CAPTURE_COOLDOWN_MS) {
                                                 Log.d(TAG, "Phát hiện thẻ ID hợp lệ liên tục. Đang tự động chụp...");
@@ -395,12 +420,16 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
                     Log.d(TAG, "Bỏ qua xử lý khung hình đầy đủ. Khung: " + frameCount + ". Hiển thị khung cũ nếu có.");
                 }
 
+                // CẬP NHẬT UI VỚI BOUNDING BOX:
+                // Chuyển về main thread để cập nhật overlay view
+                // Scale tọa độ từ image space sang screen space để hiển thị chính xác
                 runOnUiThread(() -> {
                     if (!isDestroyed && customOverlayView != null && previewView != null) {
                         if (finalQuadrilateralForOverlay != null) {
                             int effectiveImageWidth = lastImageProxyWidth;
                             int effectiveImageHeight = lastImageProxyHeight;
 
+                            // Scale tọa độ khung nhận diện từ image space sang screen space
                             customOverlayView.setQuadrilateral(
                                     CustomOverlayView.scalePointsToOverlayView(
                                             finalQuadrilateralForOverlay,
@@ -457,6 +486,11 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
         }
     }
 
+    /**
+     * Chụp ảnh sử dụng CameraX ImageCapture.
+     * Lưu ảnh vào cache và tự động chuyển sang CropActivity.
+     * Xử lý error handling và lifecycle management.
+     */
     private void takePhoto() {
         if (imageCapture == null || isDestroyed) {
             Log.e(TAG, "ImageCapture chưa được khởi tạo hoặc Activity đã bị destroy.");
@@ -481,7 +515,8 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
                     Toast.makeText(CameraActivity.this, getString(R.string.photo_captured_saved), Toast.LENGTH_SHORT).show();
                     Log.d(TAG, "Ảnh đã chụp và lưu: " + savedUri);
 
-                    // LUÔN chuyển sang CropActivity
+                    // LUÔN chuyển sang CropActivity sau khi chụp ảnh
+                    // Truyền URI ảnh và khung nhận diện (nếu có) để auto-crop
                     startCropActivity(savedUri, lastDetectedQuadrilateral);
 
                 } else {
@@ -500,6 +535,13 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
         });
     }
 
+    /**
+     * Khởi động CropActivity với ảnh đã chụp.
+     * Truyền thông tin khung nhận diện để auto-crop chính xác.
+     * Xử lý flow khác nhau cho PDFGroup và single image.
+     * @param imageUri URI của ảnh đã chụp
+     * @param detectedQuadrilateral Khung nhận diện từ camera (có thể null)
+     */
     private void startCropActivity(Uri imageUri, MatOfPoint detectedQuadrilateral) {
         if (isDestroyed) return;
 
@@ -515,7 +557,9 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
             Log.d(TAG, "Starting CropActivity from single image flow");
         }
 
-        // Nếu có khung phát hiện từ camera, truyền các điểm
+        // TRUYỀN THÔNG TIN KHUNG NHẬN DIỆN ĐỂ AUTO-CROP:
+        // Nếu có khung phát hiện từ camera, truyền các điểm tọa độ
+        // Format: [x1, y1, x2, y2, x3, y3, x4, y4] - 4 điểm của khung tứ giác
         if (detectedQuadrilateral != null && !detectedQuadrilateral.empty()) {
             Point[] points = detectedQuadrilateral.toArray();
             if (points.length == 4) {
@@ -533,6 +577,11 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
         startActivityForResult(cropIntent, REQUEST_CODE_CROP);
     }
 
+    /**
+     * Hiển thị camera preview và ẩn các view khác.
+     * Khởi động camera nếu đã có quyền truy cập.
+     * Quản lý visibility của các UI components.
+     */
     private void showCameraPreview() {
         if (isDestroyed) return;
 
@@ -624,7 +673,13 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
         }
     }
 
-    // Các phương thức OpenCV giữ nguyên...
+    /**
+     * XỬ LÝ FRAME ẢNH VỚI OPENCV:
+     * Chuyển đổi ImageProxy thành Mat, xử lý ảnh và detect document boundaries.
+     * Sử dụng Canny edge detection, contour finding và quadrilateral detection.
+     * @param imageProxy Frame ảnh từ camera để xử lý
+     * @return Pair<MatOfPoint, Mat> - Khung tứ giác phát hiện và Mat để lưu kích thước
+     */
     @androidx.annotation.OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)
     private Pair<MatOfPoint, Mat> processImageFrame(ImageProxy imageProxy) {
         if (isDestroyed) {
@@ -648,6 +703,7 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
             int originalFrameHeight = imageProxy.getHeight();
             int rotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
 
+            // Điều chỉnh tham số OpenCV dựa trên độ phân giải frame để tối ưu detection
             adjustOpenCVParametersForResolution(originalFrameWidth, originalFrameHeight);
 
             gray = new Mat(originalFrameHeight, originalFrameWidth, CvType.CV_8UC1);
@@ -676,13 +732,15 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
             }
             gray.put(0, 0, data);
 
+            // XỬ LÝ ROTATION ẢNH:
+            // Nếu ảnh bị xoay 90° hoặc 270°, cần transpose và flip để có orientation đúng
             Mat processedGray = gray;
             boolean needsRotation = (rotationDegrees == 90 || rotationDegrees == 270);
 
             if (needsRotation) {
                 Mat rotatedGray = new Mat();
-                Core.transpose(gray, rotatedGray);
-                Core.flip(rotatedGray, rotatedGray, (rotationDegrees == 90) ? 1 : 0);
+                Core.transpose(gray, rotatedGray);        // Chuyển vị ma trận
+                Core.flip(rotatedGray, rotatedGray, (rotationDegrees == 90) ? 1 : 0);  // Flip theo trục
                 processedGray = rotatedGray;
             }
 
@@ -693,12 +751,19 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
                     " -> Processed " + finalProcessedWidth + "x" + finalProcessedHeight +
                     " (rotation: " + rotationDegrees + "°)");
 
+            // TIỀN XỬ LÝ ẢNH ĐỂ TĂNG CHẤT LƯỢNG DETECTION:
+            // 1. Median blur: Loại bỏ noise (salt & pepper)
+            // 2. Gaussian blur: Làm mịn ảnh
+            // 3. CLAHE: Tăng độ tương phản cục bộ
             Imgproc.medianBlur(processedGray, processedGray, 3);
             Imgproc.GaussianBlur(processedGray, processedGray, new org.opencv.core.Size(7,7), 0);
 
             CLAHE clahe = Imgproc.createCLAHE(2.0, new org.opencv.core.Size(8, 8));
             clahe.apply(processedGray, processedGray);
 
+            // PHÁT HIỆN CẠNH VÀ TĂNG CƯỜNG:
+            // 1. Canny edge detection: Phát hiện cạnh với threshold động
+            // 2. Morphological dilation: Tăng cường cạnh để kết nối các đường đứt đoạn
             edges = new Mat();
             Imgproc.Canny(processedGray, edges, dynamicCannyThreshold1, dynamicCannyThreshold2);
 
@@ -706,6 +771,9 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
             Imgproc.dilate(edges, edges, kernel);
             kernel.release();
 
+            // TÌM CONTOUR VÀ PHÁT HIỆN KHUNG TỨ GIÁC:
+            // 1. findContours: Tìm tất cả contour trong ảnh edge
+            // 2. findBestQuadrilateral: Lọc và chọn khung tứ giác tốt nhất
             contours = new ArrayList<>();
             hierarchy = new Mat();
             Imgproc.findContours(edges, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
@@ -738,6 +806,13 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
         return new Pair<>(bestQuadrilateral, matForDimensionStorage);
     }
 
+    /**
+     * ĐIỀU CHỈNH THAM SỐ OPENCV THEO ĐỘ PHÂN GIẢI:
+     * Canny threshold được điều chỉnh động để phù hợp với kích thước frame.
+     * Frame nhỏ cần threshold thấp, frame lớn cần threshold cao hơn.
+     * @param frameWidth Chiều rộng frame
+     * @param frameHeight Chiều cao frame
+     */
     private void adjustOpenCVParametersForResolution(int frameWidth, int frameHeight) {
         if (frameWidth <= 480) {
             dynamicCannyThreshold1 = 20;
@@ -755,6 +830,15 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
         Log.d(TAG, "Canny thresholds adjusted to: " + dynamicCannyThreshold1 + ", " + dynamicCannyThreshold2 + " for resolution " + frameWidth + "x" + frameHeight);
     }
 
+    /**
+     * TÌM KHUNG TỨ GIÁC TỐT NHẤT TỪ DANH SÁCH CONTOUR:
+     * Lọc contour theo các tiêu chí: 4 đỉnh, diện tích hợp lệ, hình dạng lồi, góc vuông.
+     * Sử dụng thuật toán approxPolyDP để làm mịn contour.
+     * @param contours Danh sách contour từ findContours
+     * @param imageWidth Chiều rộng ảnh
+     * @param imageHeight Chiều cao ảnh
+     * @return MatOfPoint khung tứ giác tốt nhất hoặc null
+     */
     private MatOfPoint findBestQuadrilateral(List<MatOfPoint> contours, int imageWidth, int imageHeight) {
         MatOfPoint bestQuadrilateral = null;
         double maxArea = 0;
@@ -762,15 +846,24 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
         double minAllowedArea = totalArea * MIN_AREA_PERCENTAGE;
         double maxAllowedArea = totalArea * MAX_AREA_PERCENTAGE;
 
+        // DUYỆT QUA TỪNG CONTOUR ĐỂ TÌM KHUNG TỨ GIÁC TỐT NHẤT:
         for (MatOfPoint contour : contours) {
+            // Chuyển đổi contour sang MatOfPoint2f để xử lý với approxPolyDP
             MatOfPoint2f contour2f = new MatOfPoint2f(contour.toArray());
             double perimeter = Imgproc.arcLength(contour2f, true);
             MatOfPoint2f approxCurve = new MatOfPoint2f();
+            
+            // Làm mịn contour với thuật toán Douglas-Peucker
             Imgproc.approxPolyDP(contour2f, approxCurve, APPROX_POLY_DP_EPSILON_FACTOR * perimeter, true);
 
             long numVertices = approxCurve.total();
             double currentArea = Imgproc.contourArea(approxCurve);
 
+            // KIỂM TRA TIÊU CHÍ KHUNG TỨ GIÁC:
+            // 1. Phải có đúng 4 đỉnh
+            // 2. Diện tích phải nằm trong khoảng cho phép (2%-90% ảnh)
+            // 3. Phải là hình lồi (convex)
+            // 4. Góc phải gần vuông (cosine < 0.3)
             if (numVertices == 4 &&
                     currentArea > minAllowedArea &&
                     currentArea < maxAllowedArea) {
@@ -779,6 +872,8 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
                     double maxCosine = 0;
                     Point[] points = approxCurve.toArray();
 
+                    // TÍNH GÓC TẠI MỖI ĐỈNH:
+                    // Sử dụng 3 điểm liên tiếp để tính góc
                     for (int i = 0; i < 4; i++) {
                         Point p1 = points[i];
                         Point p2 = points[(i + 1) % 4];
@@ -788,6 +883,7 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
                         maxCosine = Math.max(maxCosine, cosineAngle);
                     }
 
+                    // Chọn khung có góc gần vuông nhất (cosine nhỏ nhất)
                     if (maxCosine < MIN_COSINE_ANGLE) {
                         if (currentArea > maxArea) {
                             maxArea = currentArea;
@@ -802,30 +898,55 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
         return bestQuadrilateral;
     }
 
+    /**
+     * TÍNH GÓC GIỮA 3 ĐIỂM (p1-p2-p3):
+     * Sử dụng công thức dot product để tính cosine của góc.
+     * Góc càng gần 90° thì cosine càng gần 0.
+     * @param p1 Điểm đầu
+     * @param p2 Điểm giữa (đỉnh góc)
+     * @param p3 Điểm cuối
+     * @return Giá trị cosine của góc (0 = 90°, 1 = 0° hoặc 180°)
+     */
     private double angle(Point p1, Point p2, Point p3) {
         double dx1 = p1.x - p2.x;
         double dy1 = p1.y - p2.y;
         double dx2 = p3.x - p2.x;
         double dy2 = p3.y - p2.y;
+        // CÔNG THỨC DOT PRODUCT: cos(θ) = (a·b) / (|a|·|b|)
+        // Thêm 1e-10 để tránh chia cho 0
         return (dx1 * dx2 + dy1 * dy2) / (Math.sqrt(dx1 * dx1 + dy1 * dy1) * Math.sqrt(dx2 * dx2 + dy2 * dy2) + 1e-10);
     }
 
+    /**
+     * SẮP XẾP 4 ĐIỂM THEO THỨ TỰ CHUẨN:
+     * Sắp xếp điểm theo thứ tự: [top-left, top-right, bottom-right, bottom-left].
+     * Điểm có y nhỏ nhất = top, y lớn nhất = bottom.
+     * Trong mỗi hàng, sắp xếp theo x (trái → phải).
+     * @param pointsMat MatOfPoint chứa 4 điểm của khung tứ giác
+     * @return MatOfPoint với các điểm đã sắp xếp theo thứ tự chuẩn
+     */
     private MatOfPoint sortPoints(MatOfPoint pointsMat) {
         Point[] pts = pointsMat.toArray();
         Point[] rect = new Point[4];
 
+        // SẮP XẾP THEO CHIỀU DỌC (Y):
+        // Điểm có y nhỏ nhất = top, y lớn nhất = bottom
         Arrays.sort(pts, (p1, p2) -> Double.compare(p1.y, p2.y));
 
+        // Tách thành 2 hàng: top (2 điểm đầu) và bottom (2 điểm cuối)
         Point[] topPoints = Arrays.copyOfRange(pts, 0, 2);
         Point[] bottomPoints = Arrays.copyOfRange(pts, 2, 4);
 
+        // SẮP XẾP THEO CHIỀU NGANG (X) TRONG MỖI HÀNG:
+        // Top row: trái → phải
         Arrays.sort(topPoints, (p1, p2) -> Double.compare(p1.x, p2.x));
-        rect[0] = topPoints[0];
-        rect[1] = topPoints[1];
+        rect[0] = topPoints[0];    // top-left
+        rect[1] = topPoints[1];    // top-right
 
+        // Bottom row: trái → phải
         Arrays.sort(bottomPoints, (p1, p2) -> Double.compare(p1.x, p2.x));
-        rect[3] = bottomPoints[0];
-        rect[2] = bottomPoints[1];
+        rect[3] = bottomPoints[0]; // bottom-left
+        rect[2] = bottomPoints[1]; // bottom-right
 
         return new MatOfPoint(rect);
     }

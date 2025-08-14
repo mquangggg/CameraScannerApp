@@ -162,10 +162,6 @@ implementation("com.google.mlkit:text-recognition:16.0.1")
 // Image Processing
 implementation("androidx.exifinterface:exifinterface:1.4.1")
 implementation("com.vanniktech:android-image-cropper:4.5.0")
-implementation("com.github.yalantis:ucrop:2.2.10")
-
-// PDF & File Management
-implementation("com.github.barteksc:pdfium-android:1.9.0")
 
 // UI & Utilities
 implementation("com.github.bumptech.glide:glide:4.12.0")

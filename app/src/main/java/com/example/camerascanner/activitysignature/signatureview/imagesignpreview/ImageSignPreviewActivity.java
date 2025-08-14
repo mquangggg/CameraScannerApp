@@ -72,6 +72,9 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
         tvColorHex = findViewById(R.id.tvColorHex);
     }
 
+    /**
+     * Lấy dữ liệu URI của ảnh và chữ ký, cùng với vị trí ban đầu của chữ ký, từ Intent.
+     */
     private void getDataFromIntent() {
         imageUri = getIntent().getParcelableExtra("imageUri");
         signatureUri = getIntent().getParcelableExtra("signatureUri");
@@ -79,6 +82,10 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
         boundingBoxTop = getIntent().getFloatExtra("boundingBoxTop", 0f);
     }
 
+    /**
+     * Thiết lập AmbilWarnaDialog để người dùng chọn màu.
+     * Cập nhật màu đã chọn vào giao diện và áp dụng màu mới cho chữ ký.
+     */
     private void setupColorPicker() {
         // Set initial color
         updateColorPreview(selectedColor);
@@ -109,7 +116,8 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
     }
 
     /**
-     * Apply màu mới cho signature overlay
+     * Áp dụng màu mới đã chọn cho chữ ký.
+     * Tạo một bitmap chữ ký mới với màu đã chọn và cập nhật lên `signatureOverlay`.
      */
     private void applyColorToSignatureOverlay() {
         if (originalSignatureBitmap != null) {
@@ -125,29 +133,33 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
     }
 
     /**
-     * Tạo bitmap chữ ký với màu mới
+     * Tạo một bản sao của bitmap chữ ký ban đầu và áp dụng một lớp màu mới lên nó.
+     *
+     * @param originalBitmap Bitmap chữ ký gốc.
+     * @param newColor       Màu mới muốn áp dụng.
+     * @return Bitmap chữ ký mới đã được tô màu.
      */
     private Bitmap createColoredSignatureBitmap(Bitmap originalBitmap, int newColor) {
         if (originalBitmap == null) return null;
 
-        // Create a mutable copy
+        // Tạo bản sao có thể chỉnh sửa
         Bitmap coloredBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true);
 
-        // Create canvas to draw on the bitmap
+        // Tạo canvas để vẽ lên bitmap
         Canvas canvas = new Canvas(coloredBitmap);
 
-        // Create paint with color filter
+        // Tạo đối tượng Paint với bộ lọc màu (color filter)
         Paint paint = new Paint();
         paint.setColorFilter(new android.graphics.PorterDuffColorFilter(newColor, PorterDuff.Mode.SRC_ATOP));
 
-        // Draw the original bitmap with the color filter
+        // Vẽ bitmap gốc với bộ lọc màu lên canvas
         canvas.drawBitmap(originalBitmap, 0, 0, paint);
 
         return coloredBitmap;
     }
 
     /**
-     * Update color preview button and hex text
+     * Cập nhật giao diện của nút chọn màu và text hiển thị mã màu.
      */
     private void updateColorPreview(int color) {
         // Update button background color
@@ -177,6 +189,10 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
                 .start();
     }
 
+    /**
+     * Tải ảnh gốc và chữ ký từ các URI tương ứng.
+     * Thiết lập `SignatureOverlay` sau khi `ImageView` đã được layout.
+     */
     private void loadImageAndSignature() {
         if (imageUri != null) {
             originalImageBitmap = getBitmapFromUri(imageUri);
@@ -203,6 +219,11 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
         btnCancel.setOnClickListener(v -> finish());
     }
 
+    /**
+     * Thiết lập `SignatureView` để hiển thị và tương tác với chữ ký.
+     * Cài đặt chế độ không vẽ, hiển thị khung và khả năng thay đổi kích thước.
+     * Tính toán vị trí ban đầu của khung chữ ký dựa trên dữ liệu bounding box đã truyền.
+     */
     private void setupSignatureOverlay() {
         signatureOverlay.setDrawingMode(false);
         signatureOverlay.showSignatureFrame(true);
@@ -224,6 +245,12 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
         }
     }
 
+    /**
+     * Chuyển đổi tọa độ bounding box của chữ ký từ kích thước bitmap gốc sang kích thước
+     * tương ứng trên `ImageView` hiển thị.
+     *
+     * @return Một `RectF` chứa tọa độ đã điều chỉnh cho `SignatureView`.
+     */
     private RectF calculateAdjustedSignatureFrame() {
         if (originalImageBitmap == null || originalSignatureBitmap == null) return new RectF();
 
@@ -254,6 +281,10 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
         );
     }
 
+    /**
+     * Tải bitmap chữ ký từ URI.
+     * Tạo một phiên bản bitmap đã được tô màu dựa trên màu đã chọn ban đầu.
+     */
     private void loadSignatureBitmap() {
         if (signatureUri == null) {
             originalSignatureBitmap = null;
@@ -274,6 +305,15 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
         }
     }
 
+    /**
+     * Hợp nhất chữ ký và ảnh gốc trên một luồng nền.
+     *
+     * 1. Lấy khung và góc xoay cuối cùng của chữ ký từ `SignatureView`.
+     * 2. Chuyển đổi tọa độ từ UI sang tọa độ bitmap thực tế.
+     * 3. Hợp nhất hai bitmap (ảnh gốc và chữ ký đã xoay).
+     * 4. Lưu ảnh đã hợp nhất vào bộ nhớ cache.
+     * 5. Gửi URI của ảnh đã hợp nhất trở lại Activity gọi và kết thúc.
+     */
     private void mergeImagesAndFinish() {
         RectF signatureFrame = signatureOverlay.getSignatureFrame();
         float rotationAngle = signatureOverlay.getRotationAngle();
@@ -285,15 +325,18 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
 
         new Thread(() -> {
             try {
+                // Giảm kích thước ảnh gốc nếu cần để tránh lỗi bộ nhớ
                 Bitmap processedImage = resizeIfNeeded(originalImageBitmap, 1080, 1920);
+                // Chuyển đổi khung chữ ký từ tọa độ màn hình sang tọa độ bitmap
                 RectF realImageFrame = convertUICoordinatesToImageCoordinates(signatureFrame, processedImage);
 
                 Log.d("DEBUG", "Converted frame: " + realImageFrame);
                 Log.d("DEBUG", "Rotation angle: " + Math.toDegrees(rotationAngle));
                 Log.d("DEBUG", "Selected color: " + String.format("#%06X", (0xFFFFFF & selectedColor)));
 
-                // Sử dụng signature đã được apply màu
+                // Hợp nhất ảnh gốc và chữ ký
                 Bitmap mergedImage = mergeBitmapWithRotation(processedImage, currentColoredSignature, realImageFrame, rotationAngle);
+                // Lưu ảnh đã hợp nhất vào bộ nhớ cache
                 Uri mergedImageUri = saveBitmapToCache(mergedImage);
 
                 if (mergedImage != null && !mergedImage.isRecycled()) mergedImage.recycle();
@@ -319,6 +362,14 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
         }).start();
     }
 
+    /**
+     * Chuyển đổi tọa độ của khung chữ ký từ không gian UI (trên ImageView) sang
+     * không gian của bitmap gốc.
+     *
+     * @param uiFrame      Khung chữ ký trong tọa độ UI.
+     * @param actualBitmap Bitmap gốc.
+     * @return `RectF` chứa tọa độ đã được chuyển đổi.
+     */
     private RectF convertUICoordinatesToImageCoordinates(RectF uiFrame, Bitmap actualBitmap) {
         if (actualBitmap == null) return new RectF();
 
@@ -344,6 +395,16 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
         return new RectF(realLeft, realTop, realRight, realBottom);
     }
 
+    /**
+     * Hợp nhất hai bitmap: bitmap nền và bitmap chữ ký.
+     * Chữ ký sẽ được vẽ lên bitmap nền tại vị trí và góc xoay được chỉ định.
+     *
+     * @param baseBitmap    Bitmap ảnh nền.
+     * @param overlayBitmap Bitmap chữ ký.
+     * @param overlayFrame  Vị trí và kích thước của chữ ký trên bitmap nền.
+     * @param rotationAngle Góc xoay của chữ ký (radian).
+     * @return Bitmap đã được hợp nhất.
+     */
     private Bitmap mergeBitmapWithRotation(Bitmap baseBitmap, Bitmap overlayBitmap, RectF overlayFrame, float rotationAngle) {
         Bitmap mergedBitmap = baseBitmap.copy(baseBitmap.getConfig(), true);
         Canvas canvas = new Canvas(mergedBitmap);
@@ -364,6 +425,12 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
         return mergedBitmap;
     }
 
+    /**
+     * Lấy bitmap từ một URI, xử lý xoay ảnh dựa trên dữ liệu EXIF.
+     *
+     * @param uri URI của file ảnh.
+     * @return Bitmap đã được xử lý.
+     */
     private Bitmap getBitmapFromUri(Uri uri) {
         try {
             InputStream input = getContentResolver().openInputStream(uri);
@@ -386,6 +453,12 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
         }
     }
 
+    /**
+     * Chuyển đổi giá trị hướng ảnh từ EXIF thành góc xoay (độ).
+     *
+     * @param exifOrientation Giá trị hướng ảnh từ EXIF.
+     * @return Góc xoay tương ứng (0, 90, 180, 270).
+     */
     private int exifToDegrees(int exifOrientation) {
         switch (exifOrientation) {
             case ExifInterface.ORIENTATION_ROTATE_90: return 90;
@@ -395,6 +468,12 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
         }
     }
 
+    /**
+     * Lưu một bitmap vào thư mục cache của ứng dụng dưới dạng file JPEG.
+     *
+     * @param bitmap Bitmap cần lưu.
+     * @return URI của file đã lưu, hoặc null nếu lỗi.
+     */
     private Uri saveBitmapToCache(Bitmap bitmap) {
         try {
             File cachePath = new File(getCacheDir(), "merged_images");
@@ -410,6 +489,14 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
         }
     }
 
+    /**
+     * Giảm kích thước bitmap nếu nó lớn hơn kích thước tối đa cho phép.
+     *
+     * @param bitmap   Bitmap cần kiểm tra.
+     * @param maxWidth  Chiều rộng tối đa.
+     * @param maxHeight Chiều cao tối đa.
+     * @return Bitmap đã được resize hoặc bitmap gốc nếu không cần.
+     */
     private Bitmap resizeIfNeeded(Bitmap bitmap, int maxWidth, int maxHeight) {
         if (bitmap.getWidth() <= maxWidth && bitmap.getHeight() <= maxHeight) return bitmap;
         float ratio = Math.min((float) maxWidth / bitmap.getWidth(), (float) maxHeight / bitmap.getHeight());
@@ -431,6 +518,9 @@ public class ImageSignPreviewActivity extends BaseActivity implements SignatureV
     @Override
     public void onFrameResized(RectF frame) {}
 
+    /**
+     * Giải phóng tài nguyên bitmap khi Activity bị hủy để tránh rò rỉ bộ nhớ.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();

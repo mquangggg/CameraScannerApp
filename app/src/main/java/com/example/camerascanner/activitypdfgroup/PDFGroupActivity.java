@@ -105,6 +105,11 @@ public class PDFGroupActivity extends BaseActivity implements
         mainHandler = new Handler(Looper.getMainLooper());
     }
 
+    /**
+     * Khôi phục trạng thái Activity từ Bundle đã lưu.
+     * Tải lại danh sách ảnh từ các URI đã lưu bằng cách sử dụng một luồng nền.
+     * Sau khi tải xong, cập nhật UI trên luồng chính.
+     */
     private void restoreFromSavedState(Bundle savedInstanceState) {
         imageList = new ArrayList<>();
         ArrayList<String> savedUriStrings = savedInstanceState.getStringArrayList("savedImageUris");
@@ -155,6 +160,11 @@ public class PDFGroupActivity extends BaseActivity implements
         }
     }
 
+    /**
+     * Xử lý dữ liệu được truyền từ Activity trước (thường là CameraActivity).
+     * Tải bitmap của ảnh đã xử lý từ URI được cung cấp trên một luồng nền
+     * và thêm vào danh sách ảnh nếu thành công.
+     */
     private void processInitialIntentData() {
         Intent intent = getIntent();
         if (intent != null) {
@@ -233,6 +243,10 @@ public class PDFGroupActivity extends BaseActivity implements
         }
     }
 
+    /**
+     * Chuyển đổi giữa chế độ xem lưới (Grid View) và xem danh sách (List View) cho RecyclerView.
+     * Cập nhật số cột của GridLayoutManager và thông báo cho adapter.
+     */
     private void toggleLayoutView() {
         if (recyclerViewImages != null) {
             RecyclerView.LayoutManager currentLayoutManager = recyclerViewImages.getLayoutManager();
@@ -256,6 +270,10 @@ public class PDFGroupActivity extends BaseActivity implements
         }
     }
 
+    /**
+     * Cập nhật giao diện người dùng dựa trên trạng thái hiện tại của danh sách ảnh.
+     * Thay đổi tiêu đề, hiển thị/ẩn trạng thái rỗng và bật/tắt nút "Xác nhận".
+     */
     private void updateUI() {
         // Update title
         if (tvTitle != null) {
@@ -286,16 +304,28 @@ public class PDFGroupActivity extends BaseActivity implements
         }
     }
 
+    /**
+     * Mở CameraActivity để người dùng chụp thêm ảnh.
+     * Gửi cờ 'FROM_PDF_GROUP' để CameraActivity biết cách xử lý kết quả.
+     */
     private void handleAddMoreImages() {
         Intent intent = new Intent(PDFGroupActivity.this, CameraActivity.class);
         intent.putExtra("FROM_PDF_GROUP", true);
         startActivityForResult(intent, REQUEST_ADD_IMAGE);
     }
 
+    /**
+     * Xử lý kết quả trả về từ các Activity khác (CameraActivity hoặc ImagePreviewActivity).
+     *
+     * @param requestCode Mã yêu cầu xác định Activity nào trả về kết quả.
+     * @param resultCode  Mã kết quả (RESULT_OK, RESULT_CANCELED, v.v.).
+     * @param data        Intent chứa dữ liệu trả về.
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        // Xử lý kết quả khi thêm ảnh mới từ CameraActivity
         if (requestCode == REQUEST_ADD_IMAGE) {
             if (resultCode == RESULT_OK && data != null) {
                 String processedImageUriString = data.getStringExtra("processedImageUri");
@@ -344,7 +374,9 @@ public class PDFGroupActivity extends BaseActivity implements
                     });
                 }
             }
-        } else if (requestCode == REQUEST_IMAGE_PREVIEW) {
+        }
+        // Xử lý kết quả khi chỉnh sửa ảnh từ ImagePreviewActivity
+        else if (requestCode == REQUEST_IMAGE_PREVIEW) {
             if (resultCode == RESULT_OK && data != null) {
                 String updatedImageUriString = data.getStringExtra("updatedImageUri");
                 int imagePosition = data.getIntExtra("imagePosition", -1);
@@ -395,6 +427,10 @@ public class PDFGroupActivity extends BaseActivity implements
         }
     }
 
+    /**
+     * Cập nhật các thành phần giao diện người dùng như tiêu đề, trạng thái trống, và nút xác nhận.
+     * Chú thích này gần giống với `updateUI()` nhưng được tách ra để sử dụng trong `onActivityResult`.
+     */
     private void updateUIComponents() {
         if (tvTitle != null) {
             String title = getString(R.string.captured_images_title, (imageList != null ? imageList.size() : 0));
@@ -447,6 +483,10 @@ public class PDFGroupActivity extends BaseActivity implements
         finish();
     }
 
+    /**
+     * Xử lý sự kiện khi người dùng nhấn nút "Tạo PDF".
+     * Kiểm tra xem có ảnh nào không và hiển thị hộp thoại để nhập tên file PDF.
+     */
     private void handleCreatePDF() {
         if (imageList.isEmpty()) {
             Toast.makeText(this, getString(R.string.no_images_for_pdf), Toast.LENGTH_SHORT).show();
@@ -455,6 +495,12 @@ public class PDFGroupActivity extends BaseActivity implements
         DialogHelper.showPdfFileNameDialog(this, this::createPDFWithFileName);
     }
 
+    /**
+     * Bắt đầu quá trình tạo PDF sau khi người dùng đã nhập tên file.
+     * Kiểm tra quyền ghi bộ nhớ nếu cần và gọi hàm `performCreatePDF`.
+     *
+     * @param fileName Tên file PDF được nhập bởi người dùng.
+     */
     private void createPDFWithFileName(String fileName) {
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q && !PermissionHelper.hasStoragePermission(this)) {
             PermissionHelper.requestStoragePermission(this);
@@ -463,6 +509,16 @@ public class PDFGroupActivity extends BaseActivity implements
         performCreatePDF(fileName);
     }
 
+    /**
+     * Thực hiện việc tạo file PDF trên một luồng nền để tránh làm tắc UI.
+     *
+     * 1. Tải lại các bitmap từ file nếu cần thiết.
+     * 2. Gọi `pdfGenerator.createMultiPagePdf` để tạo PDF.
+     * 3. Xử lý kết quả (thành công/thất bại) trên luồng chính.
+     * 4. Dọn dẹp các file tạm sau khi hoàn tất.
+     *
+     * @param fileName Tên file PDF sẽ được tạo.
+     */
     private void performCreatePDF(String fileName) {
         Toast.makeText(this, getString(R.string.creating_pdf), Toast.LENGTH_SHORT).show();
         setUIEnabled(false);
@@ -515,6 +571,9 @@ public class PDFGroupActivity extends BaseActivity implements
         });
     }
 
+    /**
+     * Xóa file ảnh tạm đã được tạo trước đó.
+     */
     private void cleanupTempFile() {
         if (tempProcessedImageUri != null) {
             try {
@@ -528,6 +587,10 @@ public class PDFGroupActivity extends BaseActivity implements
         }
     }
 
+    /**
+     * Đặt lại trạng thái của Activity sau khi PDF đã được tạo thành công.
+     * Giải phóng bộ nhớ của các bitmap và xóa danh sách ảnh.
+     */
     private void resetActivityState() {
         for (ImageItem item : imageList) {
             if (item.getBitmap() != null && !item.getBitmap().isRecycled()) {
@@ -540,6 +603,10 @@ public class PDFGroupActivity extends BaseActivity implements
         updateUI();
     }
 
+    /**
+     * Điều hướng người dùng về MainActivity.
+     * Sử dụng cờ để xóa tất cả các Activity khác trên stack.
+     */
     private void navigateToMainActivity() {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -548,6 +615,12 @@ public class PDFGroupActivity extends BaseActivity implements
     }
 
     //region OnImageActionListener implementations
+    /**
+     * Xử lý sự kiện khi một ảnh trong danh sách được nhấp vào.
+     * Mở ImagePreviewActivity để xem và chỉnh sửa ảnh đó.
+     *
+     * @param position Vị trí của ảnh được nhấp.
+     */
     @Override
     public void onImageClick(int position) {
         if (position >= 0 && position < imageList.size()) {
@@ -564,6 +637,12 @@ public class PDFGroupActivity extends BaseActivity implements
         }
     }
 
+    /**
+     * Xử lý sự kiện khi người dùng xóa một ảnh khỏi danh sách.
+     * Giải phóng bộ nhớ của bitmap và cập nhật lại UI.
+     *
+     * @param position Vị trí của ảnh cần xóa.
+     */
     @Override
     public void onImageDelete(int position) {
         if (position >= 0 && position < imageList.size()) {
@@ -576,6 +655,13 @@ public class PDFGroupActivity extends BaseActivity implements
         }
     }
 
+    /**
+     * Xử lý sự kiện khi người dùng sắp xếp lại thứ tự ảnh bằng cách kéo và thả.
+     * Cập nhật vị trí của ảnh trong danh sách và thay đổi tên ảnh tương ứng với thứ tự mới.
+     *
+     * @param fromPosition Vị trí ban đầu của ảnh.
+     * @param toPosition   Vị trí đích của ảnh.
+     */
     @Override
     public void onImageReorder(int fromPosition, int toPosition) {
         if (fromPosition != toPosition) {
@@ -597,6 +683,10 @@ public class PDFGroupActivity extends BaseActivity implements
         super.onBackPressed();
     }
 
+    /**
+     * Giải phóng các tài nguyên khi Activity bị hủy.
+     * Tắt dịch vụ luồng nền và giải phóng bộ nhớ của tất cả các bitmap để tránh rò rỉ bộ nhớ.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();

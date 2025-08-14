@@ -188,7 +188,12 @@ public class CropActivity extends BaseActivity {
         });
     }
 
-    // Thêm method mới để setup crop từ khung đã phát hiện
+    /**
+     * THIẾT LẬP KHUNG CROP TỪ KHUNG ĐÃ PHÁT HIỆN TỪ CAMERA:
+     * Sử dụng khung tứ giác được phát hiện từ CameraActivity để tự động thiết lập điểm crop.
+     * Chuyển đổi tọa độ từ image space sang view space và hiển thị lên CustomCropView.
+     * Nếu dữ liệu không hợp lệ, fallback về OCR detection.
+     */
     private void setupCropFromDetectedQuadrilateral() {
         float[] quadPoints = getIntent().getFloatArrayExtra("detectedQuadrilateral");
         int originalImageWidth = getIntent().getIntExtra("originalImageWidth", 0);
@@ -201,9 +206,10 @@ public class CropActivity extends BaseActivity {
                 float x = quadPoints[i * 2];
                 float y = quadPoints[i * 2 + 1];
 
-                // Scale điểm từ kích thước phát hiện về kích thước bitmap gốc
-                float scaleX = (float) originalBitmapLoaded.getWidth() / originalImageWidth;
-                float scaleY = (float) originalBitmapLoaded.getHeight() / originalImageHeight;
+                            // SCALE ĐIỂM TỪ KÍCH THƯỚC PHÁT HIỆN VỀ KÍCH THƯỚC BITMAP GỐC:
+            // Camera phát hiện ở độ phân giải thấp (640x480), cần scale về kích thước bitmap thực tế
+            float scaleX = (float) originalBitmapLoaded.getWidth() / originalImageWidth;
+            float scaleY = (float) originalBitmapLoaded.getHeight() / originalImageHeight;
 
                 detectedPointsInOriginalImage.add(new PointF(x * scaleX, y * scaleY));
             }
@@ -225,6 +231,13 @@ public class CropActivity extends BaseActivity {
         }
     }
 
+    /**
+     * LƯU BITMAP ĐÃ CROP VÀO CACHE:
+     * Tạo file JPEG với chất lượng 90% và lưu vào thư mục cache của ứng dụng.
+     * Tên file được tạo tự động với timestamp để tránh trùng lặp.
+     * @param bitmap Bitmap đã được crop và transform
+     * @return Uri của file đã lưu hoặc null nếu lỗi
+     */
     private Uri saveBitmapToCache(Bitmap bitmap) {
         String fileName = "cropped_image_" + System.currentTimeMillis() + ".jpeg";
         File cachePath = new File(getCacheDir(), "cropped_images");
@@ -241,6 +254,13 @@ public class CropActivity extends BaseActivity {
         }
     }
 
+    /**
+     * XỬ LÝ ẢNH ĐỂ NHẬN DẠNG VĂN BẢN BẰNG ML KIT:
+     * Sử dụng TextRecognizer để phát hiện văn bản trong ảnh.
+     * Kết quả nhận dạng được sử dụng để tự động thiết lập điểm crop.
+     * Đây là fallback khi không có khung phát hiện từ camera.
+     * @param imageUri URI của ảnh cần xử lý
+     */
     private void processImageForTextDetection(Uri imageUri) {
         try {
             InputImage inputImage = InputImage.fromFilePath(this, imageUri);
@@ -260,6 +280,15 @@ public class CropActivity extends BaseActivity {
         }
     }
 
+    /**
+     * THIẾT LẬP ĐIỂM CROP BAN ĐẦU TỪ VĂN BẢN ĐÃ NHẬN DẠNG:
+     * Phân tích bounding box của tất cả text block để tìm khung bao quanh văn bản.
+     * Tự động thêm padding 20px để tạo khoảng trắng xung quanh văn bản.
+     * Nếu không tìm thấy văn bản, sử dụng toàn bộ ảnh làm khung crop.
+     * @param recognizedText Kết quả nhận dạng văn bản từ ML Kit
+     * @param bitmapWidth Chiều rộng bitmap gốc
+     * @param bitmapHeight Chiều cao bitmap gốc
+     */
     private void setInitialCropPointsFromText(Text recognizedText, int bitmapWidth, int bitmapHeight) {
         int minX = Integer.MAX_VALUE;
         int minY = Integer.MAX_VALUE;
@@ -280,17 +309,21 @@ public class CropActivity extends BaseActivity {
 
         ArrayList<PointF> initialBitmapPoints = new ArrayList<>();
 
+        // XỬ LÝ TRƯỜNG HỢP KHÔNG TÌM THẤY VĂN BẢN:
         if (minX == Integer.MAX_VALUE) {
             Log.d(TAG, "Không tìm thấy văn bản hoặc bounding box hợp lệ. Sử dụng toàn bộ ảnh.");
-            initialBitmapPoints.add(new PointF(0, 0));
-            initialBitmapPoints.add(new PointF(bitmapWidth, 0));
-            initialBitmapPoints.add(new PointF(bitmapWidth, bitmapHeight));
-            initialBitmapPoints.add(new PointF(0, bitmapHeight));
+            // Sử dụng 4 góc của ảnh làm khung crop mặc định
+            initialBitmapPoints.add(new PointF(0, 0));                    // top-left
+            initialBitmapPoints.add(new PointF(bitmapWidth, 0));          // top-right
+            initialBitmapPoints.add(new PointF(bitmapWidth, bitmapHeight)); // bottom-right
+            initialBitmapPoints.add(new PointF(0, bitmapHeight));         // bottom-left
         } else {
+            // THÊM PADDING XUNG QUANH VĂN BẢN:
+            // Tạo khoảng trắng 20px để văn bản không bị cắt sát mép
             int padding = 20;
-            minX = Math.max(0, minX - padding);
+            minX = Math.max(0, minX - padding);           // Đảm bảo không âm
             minY = Math.max(0, minY - padding);
-            maxX = Math.min(bitmapWidth, maxX + padding);
+            maxX = Math.min(bitmapWidth, maxX + padding);  // Đảm bảo không vượt quá ảnh
             maxY = Math.min(bitmapHeight, maxY + padding);
 
             initialBitmapPoints.add(new PointF(minX, minY));
@@ -308,6 +341,14 @@ public class CropActivity extends BaseActivity {
         customCropView.invalidate();
     }
 
+    /**
+     * CHUYỂN ĐỔI TỌA ĐỘ TỪ BITMAP SANG VIEW:
+     * Sử dụng ma trận chuyển đổi để chuyển tọa độ từ không gian bitmap sang không gian view.
+     * Cần thiết để hiển thị chính xác vị trí crop trên CustomCropView.
+     * @param bitmapX Tọa độ X trong bitmap gốc
+     * @param bitmapY Tọa độ Y trong bitmap gốc
+     * @return PointF với tọa độ đã chuyển đổi sang view space
+     */
     private PointF transformBitmapPointToViewPoint(float bitmapX, float bitmapY) {
         if (originalBitmapLoaded == null || customCropView.getWidth() == 0 || customCropView.getHeight() == 0) {
             return new PointF(bitmapX, bitmapY);
@@ -320,6 +361,14 @@ public class CropActivity extends BaseActivity {
         return new PointF(pts[0], pts[1]);
     }
 
+    /**
+     * CHUYỂN ĐỔI TỌA ĐỘ TỪ VIEW SANG BITMAP:
+     * Sử dụng ma trận chuyển đổi ngược để chuyển tọa độ từ không gian view sang không gian bitmap.
+     * Cần thiết để thực hiện crop chính xác trên bitmap gốc.
+     * @param viewX Tọa độ X trong view
+     * @param viewY Tọa độ Y trong view
+     * @return float[] với tọa độ đã chuyển đổi sang bitmap space [x, y]
+     */
     private float[] transformViewPointToBitmapPoint(float viewX, float viewY) {
         if (originalBitmapLoaded == null || customCropView.getWidth() == 0 || customCropView.getHeight() == 0) {
             return new float[]{viewX, viewY};
@@ -335,18 +384,32 @@ public class CropActivity extends BaseActivity {
         return new float[]{pts[0], pts[1]};
     }
 
+    /**
+     * TẠO MA TRẬN CHUYỂN ĐỔI TỪ BITMAP SANG VIEW:
+     * Tính toán ma trận để scale và translate bitmap sao cho vừa với view.
+     * Sử dụng FIT_CENTER strategy: giữ nguyên tỷ lệ khung hình, căn giữa ảnh.
+     * @param bitmapWidth Chiều rộng bitmap gốc
+     * @param bitmapHeight Chiều cao bitmap gốc
+     * @param viewWidth Chiều rộng view hiển thị
+     * @param viewHeight Chiều cao view hiển thị
+     * @return Matrix để chuyển đổi tọa độ
+     */
     private Matrix getImageToViewMatrix(int bitmapWidth, int bitmapHeight, int viewWidth, int viewHeight) {
         Matrix matrix = new Matrix();
         float scale;
         float dx = 0, dy = 0;
 
+        // TÍNH TOÁN TỶ LỆ SCALE:
+        // Lấy tỷ lệ nhỏ hơn để đảm bảo ảnh vừa với view
         float scaleX = (float) viewWidth / bitmapWidth;
         float scaleY = (float) viewHeight / bitmapHeight;
 
         if (scaleX < scaleY) {
+            // View hẹp hơn - scale theo chiều rộng, căn giữa theo chiều cao
             scale = scaleX;
             dy = (viewHeight - bitmapHeight * scale) / 2f;
         } else {
+            // View cao hơn - scale theo chiều cao, căn giữa theo chiều rộng
             scale = scaleY;
             dx = (viewWidth - bitmapWidth * scale) / 2f;
         }
@@ -356,19 +419,33 @@ public class CropActivity extends BaseActivity {
         return matrix;
     }
 
+    /**
+     * SẮP XẾP 4 ĐIỂM THEO THỨ TỰ CHUẨN:
+     * Sắp xếp điểm theo thứ tự: [top-left, top-right, bottom-right, bottom-left].
+     * Điểm có y nhỏ nhất = top, y lớn nhất = bottom.
+     * Trong mỗi hàng, sắp xếp theo x (trái → phải).
+     * @param pointsMat MatOfPoint chứa 4 điểm của khung tứ giác
+     * @return MatOfPoint với các điểm đã sắp xếp theo thứ tự chuẩn
+     */
     private MatOfPoint sortPoints(MatOfPoint pointsMat) {
         Point[] pts = pointsMat.toArray();
         Point[] rect = new Point[4];
 
+        // SẮP XẾP THEO CHIỀU DỌC (Y):
+        // Điểm có y nhỏ nhất = top, y lớn nhất = bottom
         Arrays.sort(pts, (p1, p2) -> Double.compare(p1.y, p2.y));
 
+        // Tách thành 2 hàng: top (2 điểm đầu) và bottom (2 điểm cuối)
         Point[] topPoints = Arrays.copyOfRange(pts, 0, 2);
         Point[] bottomPoints = Arrays.copyOfRange(pts, 2, 4);
 
+        // SẮP XẾP THEO CHIỀU NGANG (X) TRONG MỖI HÀNG:
+        // Top row: trái → phải
         Arrays.sort(topPoints, (p1, p2) -> Double.compare(p1.x, p2.x));
         rect[0] = topPoints[0]; // Top-Left
         rect[1] = topPoints[1]; // Top-Right
 
+        // Bottom row: trái → phải
         Arrays.sort(bottomPoints, (p1, p2) -> Double.compare(p1.x, p2.x));
         rect[3] = bottomPoints[0]; // Bottom-Left
         rect[2] = bottomPoints[1]; // Bottom-Right
@@ -376,6 +453,15 @@ public class CropActivity extends BaseActivity {
         return new MatOfPoint(rect);
     }
 
+    /**
+     * THỰC HIỆN BIẾN ĐỔI PHỐI CẢNH (PERSPECTIVE TRANSFORM):
+     * Sử dụng OpenCV để biến đổi ảnh từ khung tứ giác nghiêng thành hình chữ nhật thẳng.
+     * Tính toán kích thước đích dựa trên chiều rộng và chiều cao lớn nhất của khung.
+     * Sử dụng getPerspectiveTransform và warpPerspective để thực hiện transform.
+     * @param originalBitmap Bitmap gốc cần transform
+     * @param cropPoints 4 điểm crop đã được sắp xếp theo thứ tự chuẩn
+     * @return Bitmap đã được biến đổi phối cảnh hoặc null nếu lỗi
+     */
     private Bitmap performPerspectiveTransform(Bitmap originalBitmap, ArrayList<PointF> cropPoints) {
         if (originalBitmap == null || cropPoints == null || cropPoints.size() != 4) {
             Log.e(TAG, "Dữ liệu đầu vào không hợp lệ cho biến đổi phối cảnh.");
@@ -394,6 +480,8 @@ public class CropActivity extends BaseActivity {
         MatOfPoint sortedPointsMat = sortPoints(unsortedMatOfPoint);
         Point[] sortedPts = sortedPointsMat.toArray();
 
+        // TÍNH TOÁN KÍCH THƯỚC ĐÍCH CHO ẢNH SAU KHI TRANSFORM:
+        // Sử dụng công thức khoảng cách Euclidean để tính chiều rộng và chiều cao
         double widthTop = Math.sqrt(Math.pow(sortedPts[0].x - sortedPts[1].x, 2) + Math.pow(sortedPts[0].y - sortedPts[1].y, 2));
         double widthBottom = Math.sqrt(Math.pow(sortedPts[3].x - sortedPts[2].x, 2) + Math.pow(sortedPts[3].y - sortedPts[2].y, 2));
         int targetWidth = (int) Math.max(widthTop, widthBottom);
@@ -410,6 +498,8 @@ public class CropActivity extends BaseActivity {
             return null;
         }
 
+        // THIẾT LẬP ĐIỂM NGUỒN VÀ ĐÍCH CHO PERSPECTIVE TRANSFORM:
+        // srcPoints: 4 điểm của khung tứ giác nghiêng (đã sắp xếp)
         MatOfPoint2f srcPoints = new MatOfPoint2f(
                 sortedPts[0], // Trên-Trái
                 sortedPts[1], // Trên-Phải
@@ -417,11 +507,12 @@ public class CropActivity extends BaseActivity {
                 sortedPts[3]  // Dưới-Trái
         );
 
+        // dstPoints: 4 điểm của hình chữ nhật đích (thẳng, không nghiêng)
         MatOfPoint2f dstPoints = new MatOfPoint2f(
-                new Point(0, 0),
-                new Point(targetWidth - 1, 0),
-                new Point(targetWidth - 1, targetHeight - 1),
-                new Point(0, targetHeight - 1)
+                new Point(0, 0),                                    // top-left
+                new Point(targetWidth - 1, 0),                      // top-right
+                new Point(targetWidth - 1, targetHeight - 1),       // bottom-right
+                new Point(0, targetHeight - 1)                      // bottom-left
         );
 
         Mat transformedMat = new Mat();
@@ -429,6 +520,9 @@ public class CropActivity extends BaseActivity {
         Bitmap resultBitmap = null;
 
         try {
+            // THỰC HIỆN PERSPECTIVE TRANSFORM VỚI OPENCV:
+            // 1. getPerspectiveTransform: Tính ma trận chuyển đổi từ 4 điểm nguồn sang 4 điểm đích
+            // 2. warpPerspective: Áp dụng ma trận để biến đổi ảnh
             perspectiveTransformMatrix = Imgproc.getPerspectiveTransform(srcPoints, dstPoints);
             Imgproc.warpPerspective(originalMat, transformedMat, perspectiveTransformMatrix, new org.opencv.core.Size(targetWidth, targetHeight));
 
@@ -450,28 +544,41 @@ public class CropActivity extends BaseActivity {
         return resultBitmap;
     }
 
+    /**
+     * LẤY BITMAP VỚI ORIENTATION ĐÚNG TỪ EXIF:
+     * Đọc metadata EXIF của ảnh để xác định orientation và xoay ảnh cho đúng.
+     * Xử lý các trường hợp xoay 90°, 180°, 270° để ảnh hiển thị đúng hướng.
+     * Sử dụng ExifInterface để đọc thông tin orientation.
+     * @param imageUri URI của ảnh cần xử lý
+     * @return Bitmap đã được xoay đúng orientation
+     * @throws IOException Nếu không thể đọc ảnh hoặc EXIF data
+     */
     private Bitmap getCorrectlyOrientedBitmap(Uri imageUri) throws IOException {
         Bitmap originalBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
 
+        // ĐỌC EXIF DATA ĐỂ XÁC ĐỊNH ORIENTATION:
+        // ExifInterface chứa thông tin về hướng xoay của ảnh
         InputStream input = getContentResolver().openInputStream(imageUri);
         androidx.exifinterface.media.ExifInterface exif = new androidx.exifinterface.media.ExifInterface(input);
         int orientation = exif.getAttributeInt(androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION,
                 androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL);
         input.close();
 
+        // XOAY ẢNH THEO ORIENTATION TỪ EXIF:
+        // Sử dụng Matrix để xoay ảnh về hướng đúng
         Matrix matrix = new Matrix();
         switch (orientation) {
             case androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_90:
-                matrix.postRotate(90);
+                matrix.postRotate(90);    // Xoay 90° theo chiều kim đồng hồ
                 break;
             case androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_180:
-                matrix.postRotate(180);
+                matrix.postRotate(180);   // Xoay 180° (lật ngược)
                 break;
             case androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270:
-                matrix.postRotate(270);
+                matrix.postRotate(270);   // Xoay 270° (tương đương -90°)
                 break;
             default:
-                return originalBitmap;
+                return originalBitmap;    // Không cần xoay
         }
 
         Bitmap rotatedBitmap = Bitmap.createBitmap(originalBitmap, 0, 0,

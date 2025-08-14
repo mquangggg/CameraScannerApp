@@ -80,7 +80,5 @@ dependencies {
     implementation ("com.github.bumptech.glide:glide:4.12.0")
 
     implementation("org.opencv:opencv:4.11.0")
-    implementation("com.github.yalantis:ucrop:2.2.10")
-
     implementation("com.github.yukuku:ambilwarna:2.0.1")
 }

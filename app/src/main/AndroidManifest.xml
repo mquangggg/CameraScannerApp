@@ -38,11 +38,6 @@
         <activity android:name=".activityocr.OCRActivity" android:exported="false"/>
         <activity android:name=".activitymain.OCRDetailActivity" android:exported="false"/>
         <activity android:name=".activitymain.MeActivity" android:exported="false"/>
-        <activity
-            android:name="com.yalantis.ucrop.UCropActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
-
 
 
         <provider
