@@ -4,6 +4,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
@@ -14,6 +15,7 @@ import android.util.Log;
 
 import androidx.core.content.FileProvider;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -127,8 +129,10 @@ public class PdfGenerator {
                     PdfDocument.Page page = pdfDocument.startPage(pageInfo);
                     Canvas canvas = page.getCanvas();
 
+                    Bitmap compressedBitmap = compressBitmap(bitmap, PAGE_WIDTH, 2000, 70);
+
                     // Vẽ ảnh fill full page
-                    drawBitmapFullPage(canvas, bitmap, pageHeight);
+                    drawBitmapFullPage(canvas, compressedBitmap, pageHeight);
 
                     pdfDocument.finishPage(page);
 
@@ -309,4 +313,22 @@ public class PdfGenerator {
         // Trả về Uri từ đối tượng File.
         return Uri.fromFile(pdfFile);
     }
+    private Bitmap compressBitmap(Bitmap bitmap, int maxWidth, int maxHeight, int quality) {
+        // Scale ảnh theo kích thước tối đa
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        float ratio = Math.min((float) maxWidth / width, (float) maxHeight / height);
+
+        int newWidth = Math.round(width * ratio);
+        int newHeight = Math.round(height * ratio);
+
+        Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true);
+
+        // Nén JPEG để giảm dung lượng
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, quality, out);
+
+        return BitmapFactory.decodeByteArray(out.toByteArray(), 0, out.size());
+    }
+
 }
