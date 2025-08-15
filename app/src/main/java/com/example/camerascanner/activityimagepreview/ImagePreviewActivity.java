@@ -51,11 +51,11 @@ public class ImagePreviewActivity extends BaseActivity {
     private Button btnRotatePreview,btnSign,btnGenPDF,btnMakeOcr,btnCrop;
     private Button btnConfirmPreview;
     private Uri imageUri;
-    private int rotationAngle = 0; // Để theo dõi góc xoay hiện tại
+    private int rotationAngle = 0; // Theo dõi góc xoay hiện tại
 
     private static final int REQUEST_SIGNATURE = 102;
-    private static final int REQUEST_CROP = 104; // Request code cho crop
-    private static final int REQUEST_PDF_GEN_PREVIEW = 103; // Thêm dòng này
+    private static final int REQUEST_CROP = 104;
+    private static final int REQUEST_PDF_GEN_PREVIEW = 103;
     private JpegGenerator jpegGenerator;
     private ExecutorService executorService;
     private Handler mainHandler;

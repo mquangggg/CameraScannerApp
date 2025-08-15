@@ -239,9 +239,6 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
     private void initLaunchers() {
         galleryLauncher = registerForActivityResult(new ActivityResultContracts.GetMultipleContents(), uris -> {
             if (uris != null && !uris.isEmpty() && !isDestroyed) {
-                // Hiển thị một Toast để thông báo đang xử lý
-                //Toast.makeText(this, getString(R.string.processing_images), Toast.LENGTH_LONG).show();
-
                 // Sử dụng ExecutorService để xử lý trong luồng nền
                 Executors.newSingleThreadExecutor().execute(() -> {
                     ArrayList<String> newUriStrings = new ArrayList<>();

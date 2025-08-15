@@ -72,10 +72,8 @@ dependencies {
     implementation("androidx.camera:camera-camera2:1.4.2")
     implementation("androidx.camera:camera-lifecycle:1.4.2")
     implementation("androidx.camera:camera-view:1.4.2")
-    implementation ("androidx.camera:camera-core:1.4.2")    // CameraX Extensions (nếu bạn cần các tính năng mở rộng như HDR, Night Mode, v.v.)
-    implementation ("androidx.camera:camera-extensions:1.4.2") // Hoặc phiên bản mới nhất, ổn định
-
-    // ML Kit để nhận diện đối tượng (hoặc nhận dạng văn bản nếu đó là mục đích chính của bạn)
+    implementation ("androidx.camera:camera-core:1.4.2")
+    implementation ("androidx.camera:camera-extensions:1.4.2")
 
     implementation ("com.github.bumptech.glide:glide:4.12.0")
 
