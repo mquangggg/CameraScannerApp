@@ -140,10 +140,21 @@
 
 ## Công nghệ
 
-- **OpenCV 4.11.0** - Computer vision và image processing
-- **Google ML Kit** - Text recognition và object detection
-- **CameraX 1.4.2** - Camera handling với lifecycle management
-- **Android 7.0+** - Target platform (API 24+)
+- **OpenCV 4.11.0** – Computer Vision và xử lý ảnh (contour detection, transform, filter, …)
+- **Google ML Kit** – Nhận diện văn bản (Text Recognition)on-device
+- **CameraX 1.4.2** – Xử lý camera với quản lý vòng đời (Lifecycle-aware), hỗ trợ PreviewView
+- **Thư viện khác**
+    - **Glide** – Tải và hiển thị ảnh hiệu quả, hỗ trợ cache mạnh mẽ
+    - **ExifInterface** – Đọc và xử lý thông tin orientation của ảnh
+    - **android-image-cropper** – Xây dựng nhanh UI crop ảnh tùy chỉnh
+    - **AmbilWarna** – Chọn màu cho chữ ký số
+
+## Nền tảng & Build
+- **Java 24** – Ngôn ngữ lập trình chính
+- **ViewBinding** – Liên kết view an toàn và nhanh chóng
+- **compileSdk 35** – SDK biên dịch
+- **minSdk 24** – Yêu cầu tối thiểu (Android 7.0+)
+- **targetSdk 35** – SDK mục tiêu
 
 ## Dependencies
 
