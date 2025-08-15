@@ -64,6 +64,18 @@
         android:focusable="true"
         android:foreground="?android:attr/selectableItemBackgroundBorderless" />
 
+    <ImageButton
+        android:id="@+id/btnXepItem"
+        android:layout_width="43dp"
+        android:layout_height="50dp"
+        android:layout_gravity="end|top"
+        android:background="@drawable/ic_view_grid"
+        android:clickable="true"
+        android:elevation="12dp"
+        android:focusable="true"
+        android:foreground="?android:attr/selectableItemBackgroundBorderless"
+        android:visibility="visible" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewImages"
         android:layout_width="match_parent"

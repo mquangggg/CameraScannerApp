@@ -17,6 +17,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.camerascanner.R;
@@ -52,8 +53,9 @@ public class PDFGroupActivity extends BaseActivity implements
     private RecyclerView recyclerViewImages;
     private View layoutEmptyState;
     private Button btnCancel;
-    private ImageButton btnXepHang;
+    private ImageButton btnXepHang,btnXepItem;
     private boolean isGridView = true;
+    private boolean isDragModeEnabled = false;
     private Button btnConfirm;
 
     // Data
@@ -97,6 +99,7 @@ public class PDFGroupActivity extends BaseActivity implements
         btnCancel = findViewById(R.id.btnCancel);
         btnConfirm = findViewById(R.id.btnConfirm);
         btnXepHang = findViewById(R.id.btnXepHang);
+        btnXepItem = findViewById(R.id.btnXepItem);
     }
 
     private void initializeHelpers() {
@@ -222,6 +225,14 @@ public class PDFGroupActivity extends BaseActivity implements
             recyclerViewImages.setLayoutManager(layoutManager);
             adapter = new ImageGroupAdapter(this, imageList, this);
             recyclerViewImages.setAdapter(adapter);
+
+            SimpleItemTouchHelperCallback callback = new SimpleItemTouchHelperCallback(adapter);
+            ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
+            itemTouchHelper.attachToRecyclerView(recyclerViewImages);
+
+            // Gán ItemTouchHelper cho adapter
+            adapter.setItemTouchHelper(itemTouchHelper);
+
         }
     }
 
@@ -241,6 +252,26 @@ public class PDFGroupActivity extends BaseActivity implements
         if (btnXepHang != null) {
             btnXepHang.setOnClickListener(v -> toggleLayoutView());
         }
+        if (btnXepItem != null) {
+            btnXepItem.setOnClickListener(v -> toggleDragMode());
+        }
+    }
+    // Thêm phương thức mới để chuyển đổi trạng thái kéo thả
+    private void toggleDragMode() {
+        isDragModeEnabled = !isDragModeEnabled;
+        if (adapter != null) {
+            adapter.setDragEnabled(isDragModeEnabled);
+            Toast.makeText(this, isDragModeEnabled ?
+                    "Đã bật chế độ sắp xếp" :
+                    "Đã tắt chế độ sắp xếp", Toast.LENGTH_SHORT).show();
+        }
+        // Cập nhật biểu tượng nút để phản ánh trạng thái
+        if (btnXepItem != null) {
+            btnXepItem.setBackgroundResource(isDragModeEnabled ?
+                    R.drawable.ic_home_white : // Thay đổi icon kéo thả
+                    R.drawable.ic_view_grid); // Icon ban đầu
+        }
+
     }
 
     /**
@@ -255,11 +286,16 @@ public class PDFGroupActivity extends BaseActivity implements
 
                 if (isGridView) {
                     layoutManager.setSpanCount(1);
+                    adapter.setDragEnabled(false);
+                    btnXepItem.setVisibility(View.GONE);
                     isGridView = false;
                     Toast.makeText(this, getString(R.string.switch_to_list_view), Toast.LENGTH_SHORT).show();
                 } else {
                     layoutManager.setSpanCount(2);
                     isGridView = true;
+                    isDragModeEnabled = false;
+                    btnXepItem.setBackgroundResource(R.drawable.ic_view_grid);
+                    btnXepItem.setVisibility(View.VISIBLE);
                     Toast.makeText(this, getString(R.string.switch_to_grid_view), Toast.LENGTH_SHORT).show();
                 }
 
@@ -664,17 +700,13 @@ public class PDFGroupActivity extends BaseActivity implements
      */
     @Override
     public void onImageReorder(int fromPosition, int toPosition) {
-        if (fromPosition != toPosition) {
-            ImageItem item = imageList.remove(fromPosition);
-            imageList.add(toPosition, item);
-            adapter.notifyItemMoved(fromPosition, toPosition);
-            for (int i = 0; i < imageList.size(); i++) {
-                String newName = getString(R.string.image_name_format, (i + 1));
-                imageList.get(i).setName(newName);
-            }
-            updateUI();
-            Toast.makeText(this, getString(R.string.images_reordered), Toast.LENGTH_SHORT).show();
+        for (int i = 0; i < imageList.size(); i++) {
+            String newName = getString(R.string.image_name_format, (i + 1));
+            imageList.get(i).setName(newName);
         }
+
+        // Cập nhật giao diện nếu cần
+        updateUI();
     }
     //endregion
 
