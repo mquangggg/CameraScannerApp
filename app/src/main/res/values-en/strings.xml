@@ -209,6 +209,8 @@
     <string name="no_valid_images_for_pdf">No valid images to create PDF</string>
     <string name="switch_to_list_view">Switched to list view</string>
     <string name="switch_to_grid_view">Switched to grid view</string>
+    <string name="images_loaded_from_gallery">Loaded %1$d images from gallery</string>
+    <string name="cannot_load_any_image">Không thể tải bất kỳ ảnh nào từ thư viện</string>
 
     <!-- layout -->
     <string name="error">Error</string>

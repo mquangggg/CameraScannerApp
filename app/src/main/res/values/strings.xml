@@ -216,6 +216,9 @@
     <string name="switch_to_grid_view">Chuyển sang chế độ lưới</string>
     <string name="no_images_yet">Chưa có ảnh nào\nNhấn \'Thêm ảnh\' để bắt đầu</string>
 
+    <string name="images_loaded_from_gallery">Đã tải %1$d ảnh từ thư viện</string>
+    <string name="cannot_load_any_image">Không thể tải bất kỳ ảnh nào từ thư viện</string>
+
     <!-- Layout -->
     <string name="error">Lỗi</string>
     <string name="pdf_save">Lưu PDF</string>

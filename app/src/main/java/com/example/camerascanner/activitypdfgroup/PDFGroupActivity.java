@@ -171,32 +171,67 @@ public class PDFGroupActivity extends BaseActivity implements
     private void processInitialIntentData() {
         Intent intent = getIntent();
         if (intent != null) {
-            String processedImageUriString = intent.getStringExtra("processedImageUri");
-            if (processedImageUriString != null && imageList.isEmpty()) {
-                tempProcessedImageUri = Uri.parse(processedImageUriString);
-                setUIEnabled(false);
+            // Lấy danh sách URI từ Intent (cho chế độ nhiều ảnh)
+            ArrayList<String> processedImageUriStrings = intent.getStringArrayListExtra("processedImageUris");
 
+            if (processedImageUriStrings != null && !processedImageUriStrings.isEmpty()) {
+                setUIEnabled(false);
                 executorService.execute(() -> {
-                    Bitmap bitmap = null;
-                    try {
-                        bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), tempProcessedImageUri);
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error loading bitmap from URI", e);
+                    List<ImageItem> loadedImages = new ArrayList<>();
+                    for (String uriString : processedImageUriStrings) {
+                        try {
+                            Uri imageUri = Uri.parse(uriString);
+                            Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+                            if (bitmap != null) {
+                                String imageName = getString(R.string.image_name_format, (loadedImages.size() + 1));
+                                loadedImages.add(new ImageItem(bitmap, imageName, uriString));
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error loading bitmap from URI: " + uriString, e);
+                        }
                     }
 
-                    final Bitmap finalBitmap = bitmap;
                     mainHandler.post(() -> {
                         setUIEnabled(true);
-                        if (finalBitmap != null) {
-                            String imageName = getString(R.string.image_name_format, 1);
-                            ImageItem firstImage = new ImageItem(finalBitmap, imageName, tempProcessedImageUri.toString());
-                            imageList.add(firstImage);
+                        if (!loadedImages.isEmpty()) {
+                            imageList.addAll(loadedImages);
                             updateUI();
+                            Toast.makeText(this, getString(R.string.images_loaded_from_gallery, loadedImages.size()), Toast.LENGTH_SHORT).show();
                         } else {
-                            Toast.makeText(this, getString(R.string.cannot_load_processed_image), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, getString(R.string.cannot_load_any_image), Toast.LENGTH_SHORT).show();
                         }
                     });
                 });
+            }
+            // Giữ logic cũ để xử lý trường hợp một ảnh duy nhất từ CameraActivity
+            else {
+                String processedImageUriString = intent.getStringExtra("processedImageUri");
+                if (processedImageUriString != null && imageList.isEmpty()) {
+                    tempProcessedImageUri = Uri.parse(processedImageUriString);
+                    setUIEnabled(false);
+
+                    executorService.execute(() -> {
+                        Bitmap bitmap = null;
+                        try {
+                            bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), tempProcessedImageUri);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error loading bitmap from URI", e);
+                        }
+
+                        final Bitmap finalBitmap = bitmap;
+                        mainHandler.post(() -> {
+                            setUIEnabled(true);
+                            if (finalBitmap != null) {
+                                String imageName = getString(R.string.image_name_format, 1);
+                                ImageItem firstImage = new ImageItem(finalBitmap, imageName, tempProcessedImageUri.toString());
+                                imageList.add(firstImage);
+                                updateUI();
+                            } else {
+                                Toast.makeText(this, getString(R.string.cannot_load_processed_image), Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    });
+                }
             }
 
             // Get style info
@@ -662,10 +697,13 @@ public class PDFGroupActivity extends BaseActivity implements
         if (position >= 0 && position < imageList.size()) {
             String imageUriString = imageList.get(position).getFilePath();
             if (imageUriString != null) {
+                Uri imageUri = Uri.parse(imageUriString);
                 Intent previewIntent = new Intent(this, ImagePreviewActivity.class);
-                previewIntent.putExtra("imageUri", imageUriString);
+                previewIntent.putExtra("imageUri", imageUri);
                 previewIntent.putExtra("FROM_PDF_GROUP_PREVIEW", true);
                 previewIntent.putExtra("imagePosition", position);
+                // Thêm cờ quyền truy cập
+                previewIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 startActivityForResult(previewIntent, REQUEST_IMAGE_PREVIEW);
             } else {
                 Toast.makeText(this, getString(R.string.no_image_data_found), Toast.LENGTH_SHORT).show();

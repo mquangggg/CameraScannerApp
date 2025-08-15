@@ -103,9 +103,8 @@ public class ImagePreviewActivity extends BaseActivity {
             imagePosition = intents.getIntExtra("imagePosition", -1);
            }
 
-        String imageUriString = getIntent().getStringExtra("imageUri");
-        if (imageUriString != null) {
-            imageUri = Uri.parse(imageUriString);
+        imageUri = intents.getParcelableExtra("imageUri");
+        if (imageUri != null) {
             Log.d(TAG, "ImagePreviewActivity: Received URI: " + imageUri.toString()); // Log khi nhận URI
             loadImageWithRotation();
         } else {
@@ -471,7 +470,7 @@ public class ImagePreviewActivity extends BaseActivity {
      * TẢI ẢNH VỚI GÓC XOAY HIỆN TẠI:
      * Sử dụng Glide để tải ảnh từ URI với góc xoay được áp dụng.
      * Sử dụng RequestOptions và Rotate transform để xoay ảnh theo rotationAngle.
-     * @param rotationAngle Góc xoay hiện tại (0°, 90°, 180°, 270°)
+
      */
     private void loadImageWithRotation() {
         // THIẾT LẬP REQUEST OPTIONS VỚI ROTATE TRANSFORM:

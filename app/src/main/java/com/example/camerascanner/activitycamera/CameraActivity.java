@@ -1,6 +1,7 @@
 package com.example.camerascanner.activitycamera;
 
 import android.Manifest;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -50,6 +51,10 @@ import org.opencv.imgproc.CLAHE;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -232,17 +237,85 @@ public class CameraActivity extends BaseActivity implements AppPermissionHandler
     }
 
     private void initLaunchers() {
-        galleryLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
-            if (uri != null && !isDestroyed) {
-                selectedImageUri = uri;
-                Log.d(TAG, "Ảnh được tải từ thư viện, URI gốc: " + selectedImageUri);
-                // Chuyển sang CropActivity từ thư viện
-                startCropActivity(selectedImageUri, null);
+        galleryLauncher = registerForActivityResult(new ActivityResultContracts.GetMultipleContents(), uris -> {
+            if (uris != null && !uris.isEmpty() && !isDestroyed) {
+                // Hiển thị một Toast để thông báo đang xử lý
+                //Toast.makeText(this, getString(R.string.processing_images), Toast.LENGTH_LONG).show();
+
+                // Sử dụng ExecutorService để xử lý trong luồng nền
+                Executors.newSingleThreadExecutor().execute(() -> {
+                    ArrayList<String> newUriStrings = new ArrayList<>();
+                    for (Uri uri : uris) {
+                        try {
+                            // Sao chép và lưu tệp ảnh vào bộ nhớ cache của ứng dụng
+                            File tempFile = copyAndSaveImageFromUri(uri);
+                            if (tempFile != null) {
+                                Uri tempUri = Uri.fromFile(tempFile);
+                                newUriStrings.add(tempUri.toString());
+                            }
+                        } catch (IOException e) {
+                            Log.e(TAG, "Error copying file from gallery URI: " + uri.toString(), e);
+                        }
+                    }
+
+                    // Sau khi xử lý xong, chuyển về luồng chính để khởi chạy Activity mới
+                    runOnUiThread(() -> {
+                        if (!newUriStrings.isEmpty()) {
+                            // Khởi động PDFGroupActivity và truyền danh sách URI mới
+                            Intent pdfGroupIntent = new Intent(CameraActivity.this, PDFGroupActivity.class);
+                            pdfGroupIntent.putStringArrayListExtra("processedImageUris", newUriStrings);
+                            startActivity(pdfGroupIntent);
+                            finish(); // Đóng CameraActivity
+                        } else {
+                            Toast.makeText(this, getString(R.string.failed_to_get_image_from_gallery), Toast.LENGTH_SHORT).show();
+                            Log.e(TAG, "Danh sách URI từ thư viện rỗng.");
+                        }
+                    });
+                });
             } else if (!isDestroyed) {
                 Toast.makeText(this, getString(R.string.failed_to_get_image_from_gallery), Toast.LENGTH_SHORT).show();
-                Log.e(TAG, "selectedImageUri rỗng sau khi xử lý kết quả thư viện.");
+                Log.e(TAG, "Danh sách URI từ thư viện rỗng.");
             }
         });
+    }
+    /**
+     * Sao chép nội dung của một URI ảnh vào một tệp tạm trong bộ nhớ cache.
+     * @param uri URI của ảnh cần sao chép.
+     * @return File đã được sao chép hoặc null nếu thất bại.
+     */
+    private File copyAndSaveImageFromUri(Uri uri) throws IOException {
+        if (uri == null) {
+            return null;
+        }
+
+        ContentResolver contentResolver = getContentResolver();
+        String filename = "gallery_image_" + System.currentTimeMillis() + ".jpeg";
+        File tempFile = new File(getCacheDir(), filename);
+
+        try (InputStream inputStream = contentResolver.openInputStream(uri);
+             OutputStream outputStream = new FileOutputStream(tempFile)) {
+
+            if (inputStream == null) {
+                Log.e(TAG, "InputStream is null for URI: " + uri);
+                return null;
+            }
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            outputStream.flush();
+            Log.d(TAG, "Image copied to: " + tempFile.getAbsolutePath());
+            return tempFile;
+
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to copy image from URI: " + uri, e);
+            if (tempFile.exists()) {
+                tempFile.delete();
+            }
+            throw e;
+        }
     }
 
     /**
