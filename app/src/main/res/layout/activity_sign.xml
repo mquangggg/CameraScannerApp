@@ -13,7 +13,7 @@
         android:layout_weight="1"
         android:text="@string/sign_here"
         android:gravity="center"
-        android:textColor="@color/white"
+        android:textColor="@color/black"
         android:background="@color/green_accent"/>
 
     <com.example.camerascanner.activitysignature.signatureview.signature.SignatureView
@@ -30,7 +30,7 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:padding="16dp"
-        android:background="@drawable/vien_den">
+        android:background="@drawable/vien_den_nen_trang">
 
         <TextView
             android:layout_width="wrap_content"
@@ -75,9 +75,9 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:layout_marginEnd="10dp"
-            android:background="@drawable/vuongbogoc"
+            android:background="@drawable/search_background"
             android:text="@string/delete_sign"
-            android:textColor="@color/white" />
+            android:textColor="@color/black" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btnYesSign"
@@ -88,7 +88,7 @@
             android:layout_marginEnd="10dp"
             android:background="@drawable/login_background"
             android:text="@string/confirm"
-            android:textColor="@color/white" />
+            android:textColor="@color/black" />
 
     </LinearLayout>
 

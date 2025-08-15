@@ -14,7 +14,7 @@
         android:layout_weight="1"
         android:text="@string/edit_signature"
         android:gravity="center"
-        android:textColor="@color/white"
+        android:textColor="@color/black"
         android:background="@color/green_accent"/>
 
     <FrameLayout

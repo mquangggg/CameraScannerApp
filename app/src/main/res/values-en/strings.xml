@@ -160,6 +160,7 @@
     <!-- Activity -->
     <string name="error_merging_images_missing_elements">Failed to merge images. Missing original image or signature.</string>
     <!-- layout -->
+    <string name="pdf_save">Save PDF</string>
     <string name="edit_signature">Edit signature</string>
 
 
@@ -215,6 +216,7 @@
     <string name="loading">Loading</string>
     <string name="delete">Delete</string>
     <string name="add_more">Add More</string>
+    <string name="no_images_yet">No images yet\nPress \'Add image\' to start</string>
 
     <!-- DialogHelper-->
     <string name="save_pdf_title">Save PDF</string>

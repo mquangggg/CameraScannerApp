@@ -214,9 +214,11 @@
     <string name="no_valid_images_for_pdf">Không có ảnh hợp lệ để tạo PDF</string>
     <string name="switch_to_list_view">Chuyển sang chế độ danh sách</string>
     <string name="switch_to_grid_view">Chuyển sang chế độ lưới</string>
+    <string name="no_images_yet">Chưa có ảnh nào\nNhấn \'Thêm ảnh\' để bắt đầu</string>
 
     <!-- Layout -->
     <string name="error">Lỗi</string>
+    <string name="pdf_save">Lưu PDF</string>
     <string name="success">Thành công</string>
     <string name="loading">Đang tải</string>
     <string name="delete">Xóa</string>

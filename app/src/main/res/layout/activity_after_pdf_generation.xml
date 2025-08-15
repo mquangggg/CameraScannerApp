@@ -94,7 +94,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Chưa có ảnh nào\nNhấn 'Thêm ảnh' để bắt đầu"
+            android:text="@string/no_images_yet"
             android:textColor="@android:color/darker_gray"
             android:textAlignment="center"
             android:lineSpacingExtra="4dp" />
@@ -125,7 +125,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
-            android:background="@drawable/vien_den"
+            android:background="@drawable/search_background"
             android:text="@string/cancel"
             android:textColor="@color/black" />
 
@@ -134,7 +134,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/confirm"
+            android:text="@string/pdf_save"
             android:background="@drawable/login_background"
             android:textColor="@color/black"
             android:layout_marginStart="8dp"

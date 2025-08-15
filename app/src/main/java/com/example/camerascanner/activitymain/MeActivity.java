@@ -78,7 +78,7 @@ public class MeActivity extends AppCompatActivity {
                     finish(); // Kết thúc MeActivity khi chuyển về MainActivity
                     return true;
                 }else if(itemID == R.id.nav_tools){
-                    Toast.makeText(MeActivity.this, "Chức năng Tools sẽ sớm ra mắt!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MeActivity.this, getString(R.string.tools), Toast.LENGTH_SHORT).show();
                     return true;
                 }else return itemID == R.id.nav_me; // Đã ở MeActivity, không làm gì
             }
@@ -100,7 +100,7 @@ public class MeActivity extends AppCompatActivity {
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(MeActivity.this);
-        builder.setTitle("Chọn ngôn ngữ");
+        builder.setTitle(getString(R.string.choose_language));
         builder.setSingleChoiceItems(languages, checkedItem, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -149,7 +149,7 @@ public class MeActivity extends AppCompatActivity {
             checkedItem = 1; // Tối
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(MeActivity.this);
-        builder.setTitle("Chọn giao diện");
+        builder.setTitle(getString(R.string.choose_theme));
         builder.setSingleChoiceItems(themes, checkedItem, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {

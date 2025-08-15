@@ -38,7 +38,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:layout_marginStart="16dp"
-                        android:text="Quang Vuc"
+                        android:text=""
                         android:textColor="@color/black"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -46,7 +46,7 @@
                     <Button
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Đăng nhập"
+                        android:text=""
                         android:textColor="@color/white"
                         android:backgroundTint="@color/green_accent"
                         android:paddingStart="12dp"
@@ -55,7 +55,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Sử dụng một tài khoản khác"
+                    android:text=""
                     android:textColor="@color/black"
                     android:textSize="14sp"
                     android:layout_marginStart="20dp"
@@ -75,7 +75,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:layout_marginStart="16dp"
-                        android:text="Nâng cấp tài khoản của bạn"
+                        android:text=""
                         android:textColor="@color/black"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -83,7 +83,7 @@
                     <Button
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Nâng cấp ngay"
+                        android:text=""
                         android:textColor="@color/white"
                         android:backgroundTint="@color/green_accent"
                         android:paddingStart="12dp"
@@ -92,7 +92,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Mở khóa đặc quyền"
+                    android:text=""
                     android:textColor="@color/black"
                     android:textSize="14sp"
                     android:layout_marginStart="20dp"
@@ -104,15 +104,16 @@
 
             <TextView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Tài khoản của tôi"
-                android:textColor="@color/black"
-                android:textSize="14sp"
+                android:layout_height="0dp"
                 android:layout_marginStart="20dp"
-                android:layout_marginTop="10dp"/>
-
-
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="10dp"
+                android:layout_weight="1"
+                android:background="@drawable/vien_den_nen_trang"
+                android:paddingStart="5dp"
+                android:text="Setting:"
+                android:textColor="@color/black"
+                android:textSize="14sp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
