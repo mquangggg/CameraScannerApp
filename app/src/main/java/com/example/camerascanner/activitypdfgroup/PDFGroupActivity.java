@@ -301,11 +301,7 @@ public class PDFGroupActivity extends BaseActivity implements
                     "Đã tắt chế độ sắp xếp", Toast.LENGTH_SHORT).show();
         }
         // Cập nhật biểu tượng nút để phản ánh trạng thái
-        if (btnXepItem != null) {
-            btnXepItem.setBackgroundResource(isDragModeEnabled ?
-                    R.drawable.ic_home_white : // Thay đổi icon kéo thả
-                    R.drawable.ic_view_grid); // Icon ban đầu
-        }
+
 
     }
 

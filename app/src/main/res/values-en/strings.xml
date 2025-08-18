@@ -83,7 +83,7 @@
     <string name="error_loading_processing_image_background">Error loading or processing image in background: %1$s</string>
     <string name="error_failed_to_load_image">Error: Failed to load image.</string>
     <string name="status_converting_to_black_white">Converting image to black and white...</string>
-    <string name="status_generating_pdf">Generating PDF...</string>
+    <string name="status_generating_pdf">Generating Image...</string>
     <string name="permission_required_to_save_pdf">Storage access permission is required to save PDF.</string>
     <string name="error_no_permission_to_save_pdf">Error: No permission to save PDF.</string>
     <string name="error_no_processed_image_for_pdf">No processed image to create PDF.</string>
@@ -106,7 +106,7 @@
     <string name="jpeg_saved_success">JPEG image saved successfully: %1$s</string>
     <string name="no_image_to_save_jpeg">No image to save as JPEG.</string>
     <string name="preview_updated">Preview updated.</string>
-    <string name="image_ready_for_pdf">Image is ready to create PDF.</string>
+    <string name="image_ready_for_pdf">Image is ready to create.</string>
     <string name="bw_image_ready">Black and white image is ready.</string>
     <string name="bw_mode_selected">Black and White mode selected</string>
     <string name="pro_mode_selected">Pro mode selected</string>
@@ -116,10 +116,10 @@
 
     <!-- layout -->
     <string name="save_JPG">Save JPG</string>
-    <string name="status_generating_and_loading_pdf_preview">Generating and loading PDF preview...</string>
+    <string name="status_generating_and_loading_pdf_preview">Generating and loading image preview...</string>
     <string name="delete_and_cancel">Cancel</string>
     <string name="save_PDF">Save PDF</string>
-    <string name="preview_PDF">Preview PDF</string>
+    <string name="preview_PDF">Preview Image</string>
     <string name="original">Original</string>
     <string name="black_and_white">BW</string>
 

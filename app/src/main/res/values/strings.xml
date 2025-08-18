@@ -89,7 +89,7 @@
     <string name="error_loading_processing_image_background">Lỗi khi tải hoặc xử lý ảnh trong background: %1$s</string>
     <string name="error_failed_to_load_image">Lỗi: Không tải được ảnh.</string>
     <string name="status_converting_to_black_white">Đang chuyển đổi ảnh sang trắng đen...</string>
-    <string name="status_generating_pdf">Đang tạo PDF...</string>
+    <string name="status_generating_pdf">Đang tạo ảnh...</string>
     <string name="permission_required_to_save_pdf">Cần quyền truy cập bộ nhớ để lưu PDF.</string>
     <string name="error_no_permission_to_save_pdf">Lỗi: Không có quyền lưu PDF.</string>
     <string name="error_no_processed_image_for_pdf">Không có ảnh đã xử lý để tạo PDF.</string>
@@ -112,7 +112,7 @@
     <string name="jpeg_saved_success">Ảnh JPEG đã được lưu thành công: </string>
     <string name="no_image_to_save_jpeg">Không có ảnh để lưu JPEG.</string>
     <string name="preview_updated">Đã cập nhật bản xem trước.</string>
-    <string name="image_ready_for_pdf">Ảnh đã sẵn sàng để tạo PDF.</string>
+    <string name="image_ready_for_pdf">Ảnh đã sẵn sàng để chuyển đổi.</string>
     <string name="bw_image_ready">Ảnh trắng đen đã sẵn sàng.</string>
     <string name="bw_mode_selected">Chế độ Trắng đen được chọn</string>
     <string name="pro_mode_selected">Chế độ Pro được chọn</string>
@@ -123,10 +123,10 @@
     <!-- layout -->
 
     <string name="save_JPG">Lưu JPG</string>
-    <string name="status_generating_and_loading_pdf_preview">Đang tạo và tải PDF xem trước...</string>
+    <string name="status_generating_and_loading_pdf_preview">Đang tạo và tải ảnh xem trước...</string>
     <string name="delete_and_cancel">Hủy</string>
     <string name="save_PDF">Lưu PDF</string>
-    <string name="preview_PDF">Xem trước PDF</string>
+    <string name="preview_PDF">Xem trước ảnh</string>
     <string name="original">Gốc</string>
     <string name="black_and_white">Trắng đen</string>
 

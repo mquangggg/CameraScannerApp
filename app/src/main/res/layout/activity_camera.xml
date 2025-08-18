@@ -22,7 +22,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <androidx.camera.view.PreviewView
+    <androidx.camera.view.PreviewVie
 
         android:id="@+id/previewView"
         android:layout_width="0dp"
